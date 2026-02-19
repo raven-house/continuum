@@ -1,0 +1,41 @@
+GET http://0.0.0.0:3004/health
+
+### Fetch Token Listings
+GET http://0.0.0.0:3004/listings/devnet/12345
+
+
+
+### Fetch Token Listings
+GET http://0.0.0.0:3004/listings/devnet/all?collection_id=new_devnet_test_yash_01&token_id=6605
+
+### Fetch Owner Tokens
+GET http://0.0.0.0:3004/owner/devnet/tokens/0x299a00f1eaf786a77b663d8294be8b74c9cc50670b54f9faeb778050f1e2b0bf
+
+
+
+### Fetch Owner Tokens Production
+GET https://api.ravenhouse.xyz/owner/devnet/0x0164a298f850545d77421fd97928f9907bdd9391bb05464dacedead73ce7c937/6565
+
+### Fetch collection listing from home page || Production
+GET https://api.ravenhouse.xyz/stats/devnet/collections
+
+
+
+### Create API key
+POST http://0.0.0.0:3004/api-keys
+Content-Type: application/json
+x-admin-token: abc123
+
+{
+  "name": "raven-bridge"
+}
+
+
+### Validate API key
+POST http://0.0.0.0:3004/api-keys/validate
+Content-Type: application/json
+
+{
+  "apiKey": "rh_8FZRlGLoHum2XOoWk-TUMzjaaRG5Alo9zumnQnPB4eQ"
+}
+

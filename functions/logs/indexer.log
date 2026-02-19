@@ -1,0 +1,236 @@
+2025-11-28 18:18:18 [INFO]: Cron jobs scheduled. DEVNET: every 25 seconds
+2025-11-28 18:18:19 [INFO]: MongoDB connected successfully with connection pooling
+2025-11-28 18:18:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:18:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:18:31 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:48:31.286Z
+2025-11-28 18:18:31 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:18:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:18:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:18:56 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:48:56.276Z
+2025-11-28 18:18:56 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:19:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:19:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:19:06 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:49:06.262Z
+2025-11-28 18:19:06 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:19:19 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:19:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:19:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:19:31 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:49:31.254Z
+2025-11-28 18:19:31 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:19:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:19:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:19:56 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:49:56.312Z
+2025-11-28 18:19:56 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:20:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:20:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:20:06 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:50:06.243Z
+2025-11-28 18:20:06 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:20:19 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:20:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:20:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:20:31 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:50:31.252Z
+2025-11-28 18:20:31 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:20:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:20:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:20:56 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:50:56.256Z
+2025-11-28 18:20:56 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:21:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:21:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:21:06 [ERROR]: Indexer failed. Error: Error: Error fetching from host https://devnet.aztec.network/: [FailedToOpenSocket: Was there a typo in the url or port?] {
+  code: 'FailedToOpenSocket',
+  path: 'https://devnet.aztec.network/',
+  errno: 0
+}, Mode: DEVNET, Time: 2025-11-28T12:51:06.245Z
+2025-11-28 18:21:06 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:21:13 [INFO]: Shutting down gracefully...
+2025-11-28 18:21:14 [INFO]: Cron jobs scheduled. DEVNET: every 25 seconds
+2025-11-28 18:21:15 [INFO]: MongoDB connected successfully with connection pooling
+2025-11-28 18:21:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:21:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:21:26 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:51:26.044Z
+2025-11-28 18:21:26 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:21:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:21:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:21:51 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:51:51.130Z
+2025-11-28 18:21:51 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:22:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:22:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:22:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:52:00.558Z
+2025-11-28 18:22:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:22:15 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:22:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:22:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:22:26 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:52:26.050Z
+2025-11-28 18:22:26 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:22:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:22:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:22:50 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:52:50.526Z
+2025-11-28 18:22:50 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:23:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:23:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:23:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:53:00.505Z
+2025-11-28 18:23:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:23:15 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:23:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:23:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:23:26 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:53:26.325Z
+2025-11-28 18:23:26 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:23:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:23:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:23:50 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:53:50.975Z
+2025-11-28 18:23:50 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:24:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:24:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:24:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:54:00.495Z
+2025-11-28 18:24:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:24:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:24:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:24:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:24:26 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:54:26.182Z
+2025-11-28 18:24:26 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:24:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:24:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:24:51 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:54:51.239Z
+2025-11-28 18:24:51 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:25:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:25:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:25:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:55:00.495Z
+2025-11-28 18:25:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:25:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:25:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:25:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:25:25 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:55:25.978Z
+2025-11-28 18:25:25 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:25:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:25:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:25:50 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:55:50.489Z
+2025-11-28 18:25:50 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:26:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:26:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:26:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:56:00.488Z
+2025-11-28 18:26:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:26:15 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:26:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:26:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:26:25 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:56:25.962Z
+2025-11-28 18:26:25 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:26:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:26:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:26:51 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:56:51.080Z
+2025-11-28 18:26:51 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:27:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:27:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:27:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:57:00.589Z
+2025-11-28 18:27:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:27:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:27:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:27:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:27:25 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:57:25.967Z
+2025-11-28 18:27:25 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:27:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:27:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:27:51 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:57:51.030Z
+2025-11-28 18:27:51 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:28:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:28:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:28:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:58:00.485Z
+2025-11-28 18:28:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:28:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:28:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:28:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:28:25 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:58:25.493Z
+2025-11-28 18:28:25 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:28:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:28:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:28:51 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:58:51.042Z
+2025-11-28 18:28:51 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:29:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:29:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:29:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:59:00.497Z
+2025-11-28 18:29:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:29:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:29:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:29:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:29:26 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:59:26.112Z
+2025-11-28 18:29:26 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:29:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:29:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:29:50 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T12:59:50.988Z
+2025-11-28 18:29:50 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:30:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:30:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:30:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:00:00.481Z
+2025-11-28 18:30:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:30:15 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:30:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:30:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:30:25 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:00:25.979Z
+2025-11-28 18:30:25 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:30:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:30:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:30:50 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:00:50.984Z
+2025-11-28 18:30:50 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:31:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:31:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:31:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:01:00.479Z
+2025-11-28 18:31:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:31:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:31:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:31:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:31:25 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:01:25.513Z
+2025-11-28 18:31:25 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:31:50 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:31:50 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:31:50 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:01:50.974Z
+2025-11-28 18:31:50 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:32:00 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:32:00 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:32:00 [INFO]: Indexer finished successfully. Mode: DEVNET, Time: 2025-11-28T13:02:00.478Z
+2025-11-28 18:32:00 [INFO]: Indexer instance for mode DEVNET completed and cleaned up
+2025-11-28 18:32:14 [INFO]: MongoDB connections - current: 21, available: 419409
+2025-11-28 18:32:25 [INFO]: Scheduled task triggered for DEVNET
+2025-11-28 18:32:25 [INFO]: Starting indexer for mode: DEVNET
+2025-11-28 18:32:25 [INFO]: Shutting down gracefully...
+2025-11-28 18:32:27 [INFO]: Cron jobs scheduled. DEVNET: every 25 seconds
+2025-11-28 18:32:28 [INFO]: MongoDB connected successfully with connection pooling
+2025-11-28 18:32:34 [INFO]: Shutting down gracefully...
+2026-01-06 17:16:09 [INFO]: Cron jobs scheduled. DEVNET: every 25 seconds
+2026-01-06 17:16:11 [INFO]: MongoDB connected successfully with connection pooling
+2026-01-06 17:16:12 [INFO]: Shutting down gracefully...
+2026-01-06 17:26:55 [INFO]: Cron jobs scheduled. DEVNET: every 25 seconds
+2026-01-06 17:26:57 [INFO]: MongoDB connected successfully with connection pooling
+2026-01-06 17:27:00 [INFO]: Scheduled task triggered for DEVNET
+2026-01-06 17:27:00 [INFO]: Starting indexer for mode: DEVNET
+2026-01-06 17:27:00 [INFO]: Shutting down gracefully...

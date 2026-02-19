@@ -1,0 +1,23 @@
+name: mongodb
+
+services:
+  mongodb:
+    image: mongodb/mongodb-community-server:latest
+    restart: always
+    container_name: mongodb
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: root
+      MONGODB_INITDB_ROOT_PASSWORD: rh320419290
+    networks:
+      - mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      - data:/data/db
+
+networks:
+  mongodb:
+    driver: bridge
+
+volumes:
+  data:
