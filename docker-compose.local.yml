@@ -1,23 +1,88 @@
-name: mongodb
+version: '3.8'
+
+# Local Development Docker Compose
+# This configuration mounts source code as volumes for hot reloading
 
 services:
   mongodb:
-    image: mongodb/mongodb-community-server:latest
-    restart: always
-    container_name: mongodb
-    environment:
-      MONGODB_INITDB_ROOT_USERNAME: root
-      MONGODB_INITDB_ROOT_PASSWORD: rh320419290
-    networks:
-      - mongodb
+    image: mongo:7
+    container_name: continuum-mongodb-local
+    restart: unless-stopped
     ports:
-      - 27017:27017
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: continuum
     volumes:
-      - data:/data/db
+      - mongodb_data_local:/data/db
+      - ./database/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - continuum-network-local
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-networks:
-  mongodb:
-    driver: bridge
+  # Indexer for local development (with volume mount for hot reload)
+  indexer:
+    image: oven/bun:1
+    container_name: continuum-indexer-local
+    working_dir: /app
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      CONTINUUM_DB_CONNECTION_STRING: mongodb://root:password@mongodb:27017
+      CONTINUUM_DB_NAME: continuum
+      CONTINUUM_INDEXER_INTERVAL: 30000
+      CONTINUUM_INDEXER_BLOCK_RANGE: 14
+      CONTINUUM_INDEXER_MAX_RETRIES: 3
+      CONTINUUM_AZTEC_NODE_URL_SANDBOX: http://host.docker.internal:8080
+      CONTINUUM_ARTIFACTS_PATH: /app/artifacts
+      NODE_ENV: development
+    volumes:
+      - ./functions:/app
+      - ./artifacts:/app/artifacts:ro
+      - ./artifacts.json:/app/artifacts.json:ro
+      - /app/node_modules
+    networks:
+      - continuum-network-local
+    command: ["bun", "run", "start"]
+
+  # API for local development (with volume mount for hot reload)
+  api:
+    image: node:20-alpine
+    container_name: continuum-api-local
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      CONTINUUM_DB_CONNECTION_STRING: mongodb://root:password@mongodb:27017
+      CONTINUUM_DB_NAME: continuum
+      CONTINUUM_API_PORT: 3000
+      CONTINUUM_API_HOST: 0.0.0.0
+      CONTINUUM_CORS_ORIGIN: '*'
+      CONTINUUM_ARTIFACTS_PATH: /app/artifacts
+      NODE_ENV: development
+    volumes:
+      - ./api:/app
+      - ./artifacts:/app/artifacts:ro
+      - ./artifacts.json:/app/artifacts.json:ro
+      - /app/node_modules
+    networks:
+      - continuum-network-local
+    command: ["npm", "run", "dev"]
 
 volumes:
-  data:
+  mongodb_data_local:
+    name: continuum_mongodb_data_local
+
+networks:
+  continuum-network-local:
+    name: continuum-network-local
+    driver: bridge
