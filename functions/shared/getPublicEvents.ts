@@ -18,7 +18,6 @@ export const logPublicEventsFromNode = async ({
   })
   return logs
 
-
 }
 
 export const decodeEvents = (logs: ExtendedPublicLog[], eventMetadataDef: any) => {

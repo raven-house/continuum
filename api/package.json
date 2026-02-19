@@ -9,8 +9,8 @@
   },
   "scripts": {
     "test": "node --test test/**/*.test.js",
-    "start": "fastify start -w -l info -P -p 3004 -a 0.0.0.0 app.js",
-    "dev": "fastify start -w -l info -P -p 3004 -a 0.0.0.0 app.js",
+    "start": "fastify start -w -l info -P -p 3004 -a 0.0.0.0 --body-limit 104857600 app.js",
+    "dev": "fastify start -w -l info -P -p 3004 -a 0.0.0.0 --body-limit 104857600 app.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "delete:collections": "bun run scripts/delete-collections.js",

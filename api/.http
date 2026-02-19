@@ -1,41 +1,58 @@
-GET http://0.0.0.0:3004/health
+###
+# Health check
+GET http://localhost:3004/health
 
-### Fetch Token Listings
-GET http://0.0.0.0:3004/listings/devnet/12345
-
-
-
-### Fetch Token Listings
-GET http://0.0.0.0:3004/listings/devnet/all?collection_id=new_devnet_test_yash_01&token_id=6605
-
-### Fetch Owner Tokens
-GET http://0.0.0.0:3004/owner/devnet/tokens/0x299a00f1eaf786a77b663d8294be8b74c9cc50670b54f9faeb778050f1e2b0bf
-
-
-
-### Fetch Owner Tokens Production
-GET https://api.ravenhouse.xyz/owner/devnet/0x0164a298f850545d77421fd97928f9907bdd9391bb05464dacedead73ce7c937/6565
-
-### Fetch collection listing from home page || Production
-GET https://api.ravenhouse.xyz/stats/devnet/collections
-
-
-
-### Create API key
-POST http://0.0.0.0:3004/api-keys
-Content-Type: application/json
-x-admin-token: abc123
-
-{
-  "name": "raven-bridge"
-}
-
-
-### Validate API key
-POST http://0.0.0.0:3004/api-keys/validate
+###
+# Upload contract ABI
+POST http://localhost:3004/contracts/upload
 Content-Type: application/json
 
 {
-  "apiKey": "rh_8FZRlGLoHum2XOoWk-TUMzjaaRG5Alo9zumnQnPB4eQ"
+  "name": "MyNFTContract",
+  "abi": {
+    "name": "nft_contract",
+    "outputs": {
+      "structs": {
+        "events": [
+          {
+            "kind": "struct",
+            "path": "nft_contract::Transfer",
+            "fields": [
+              { "name": "from", "type": { "kind": "struct", "path": "aztec::protocol_types::address::aztec_address::AztecAddress", "fields": [{ "name": "inner", "type": { "kind": "field" } }] } },
+              { "name": "to", "type": { "kind": "struct", "path": "aztec::protocol_types::address::aztec_address::AztecAddress", "fields": [{ "name": "inner", "type": { "kind": "field" } }] } },
+              { "name": "token_id", "type": { "kind": "field" } }
+            ]
+          },
+          {
+            "kind": "struct",
+            "path": "nft_contract::Mint",
+            "fields": [
+              { "name": "to", "type": { "kind": "struct", "path": "aztec::protocol_types::address::aztec_address::AztecAddress", "fields": [{ "name": "inner", "type": { "kind": "field" } }] } },
+              { "name": "token_id", "type": { "kind": "field" } }
+            ]
+          }
+        ]
+      }
+    }
+  }
 }
 
+###
+# Get all contracts
+GET http://localhost:3004/contracts?page=1&limit=10
+
+###
+# Get contract by ID (replace with actual ID)
+GET http://localhost:3004/contracts/67b6f2a8c9d8e7f5a4b3c2d1
+
+###
+# Find event by selector (replace with actual selector)
+GET http://localhost:3004/contracts/event/0x12345678
+
+###
+# Delete contract by ID (replace with actual ID)
+DELETE http://localhost:3004/contracts/67b6f2a8c9d8e7f5a4b3c2d1
+
+###
+# Get all listings (existing endpoint)
+GET http://localhost:3004/listings/sandbox/all?page=1&limit=10

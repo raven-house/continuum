@@ -7,7 +7,7 @@ export default fp(
       dotenv: true,
       schema: {
         type: 'object',
-        required: ['RD_PORT', 'RD_ADMIN_TOKEN'],
+        required: ['RD_PORT'],
         properties: {
           RD_HOST: {
             type: 'string',

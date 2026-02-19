@@ -1434,60 +1434,60 @@ export class DBStore {
   /** @type {import('mongodb').Collection<import('mongodb').Document>} */
   get #listingCreated() {
     return (this.#_listingCreated ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('listing_created')));
   }
   get #listingSold() {
     return (this.#_listingSold ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('listing_sold')));
   }
   get #listingCancelled() {
     return (this.#_listingCancelled ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('listing_cancelled')));
   }
   get #nftTransfer() {
     return (this.#_nftTransfer ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('nft_transfer')));
   }
   get #offerCreated() {
     return (this.#_offerCreated ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('offer_created')));
   }
   get #offerAccepted() {
     return (this.#_offerAccepted ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('offer_accepted')));
   }
   get #offerCancelled() {
     return (this.#_offerCancelled ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('offer_cancelled')));
   }
   get #metadataUpdate() {
     return (this.#_metadataUpdate ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('metadata_update')));
   }
 
   get #voucherClaimed() {
     return (this.#_voucherClaimed ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('voucher_claimed')));
   }
 
   get #collectionStats() {
     return (this.#_collectionStats ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('collection_stats')));
   }
 
   get #collectionStatsHistory() {
     return (this.#_collectionStatsHistory ??= this.#mongodb.client
-      .db(process.env.RH_DB_NAME)
+      .db(process.env.CONTINUUM_DB_NAME)
       .collection(this._getCollectionName('collection_stats_history')));
   }
 }

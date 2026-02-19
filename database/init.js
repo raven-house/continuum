@@ -7,6 +7,7 @@ db = db.getSiblingDB('continuum');
 db.createCollection('events');
 db.createCollection('sync_state');
 db.createCollection('artifacts');
+db.createCollection('contracts');
 
 // Create indexes for events collection
 db.events.createIndex({ "artifact_id": 1, "event_type": 1, "block_number": -1 });
@@ -25,6 +26,12 @@ db.sync_state.createIndex({ "is_syncing": 1 });
 db.artifacts.createIndex({ "id": 1 }, { unique: true });
 db.artifacts.createIndex({ "address": 1 });
 db.artifacts.createIndex({ "enabled": 1 });
+
+// Create indexes for contracts collection (ABI upload)
+db.contracts.createIndex({ "contractName": 1 });
+db.contracts.createIndex({ "createdAt": -1 });
+db.contracts.createIndex({ "events.eventSelector": 1 });
+db.contracts.createIndex({ "events.name": 1 });
 
 // Insert sample artifact configuration (disabled by default)
 db.artifacts.insertOne({
@@ -48,5 +55,5 @@ db.artifacts.insertOne({
 });
 
 print('Continuum database initialized successfully!');
-print('Created collections: events, sync_state, artifacts');
+print('Created collections: events, sync_state, artifacts, contracts');
 print('Created indexes for optimal query performance');

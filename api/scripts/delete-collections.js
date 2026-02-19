@@ -107,13 +107,13 @@ function getSupabaseClient() {
 }
 
 async function getMongoClient() {
-  const { RH_DB_CONNECTION_STRING } = process.env;
+  const { CONTINUUM_DB_CONNECTION_STRING } = process.env;
 
-  if (!RH_DB_CONNECTION_STRING) {
-    throw new Error('RH_DB_CONNECTION_STRING must be set in environment');
+  if (!CONTINUUM_DB_CONNECTION_STRING) {
+    throw new Error('CONTINUUM_DB_CONNECTION_STRING must be set in environment');
   }
 
-  const client = new MongoClient(RH_DB_CONNECTION_STRING);
+  const client = new MongoClient(CONTINUUM_DB_CONNECTION_STRING);
   await client.connect();
   return client;
 }
@@ -269,7 +269,7 @@ async function main() {
     // Connect to databases
     const supabase = getSupabaseClient();
     mongoClient = await getMongoClient();
-    const db = mongoClient.db(process.env.RH_DB_NAME);
+    const db = mongoClient.db(process.env.CONTINUUM_DB_NAME);
 
     // Get collections to delete (either specific ID or bulk list)
     const collections = await getCollectionsToDelete(supabase, targetId);

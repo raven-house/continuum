@@ -139,6 +139,26 @@ curl http://localhost:3000/artifacts
 curl http://localhost:3000/artifacts/my-contract
 ```
 
+### Contract ABI Upload (New)
+```bash
+# Upload contract ABI and extract events with selectors
+curl -X POST http://localhost:3000/contracts/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "MyContract",
+    "abi": { /* Noir ABI JSON */ }
+  }'
+
+# List all uploaded contracts
+curl http://localhost:3000/contracts?page=1&limit=10
+
+# Get specific contract by ID
+curl http://localhost:3000/contracts/<contract-id>
+
+# Find event by selector
+curl http://localhost:3000/contracts/event/0x12345678
+```
+
 ## Project Structure
 
 ```
