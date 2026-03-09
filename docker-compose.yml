@@ -59,7 +59,7 @@ services:
       - indexer_logs:/app/logs
     networks:
       - continuum-network
-    command: ["npm", "run", "start"]
+    command: ["bun", "run", "start"]
 
   # REST API Server
   api:
@@ -69,7 +69,7 @@ services:
     container_name: continuum-api
     restart: unless-stopped
     ports:
-      - "${CONTINUUM_API_PORT:-3000}:3000"
+      - "${CONTINUUM_API_PORT:-3004}:3004"
     depends_on:
       mongodb:
         condition: service_healthy

@@ -3,18 +3,17 @@ import ListingCreatedStore from './ListingCreatedStore'
 import { getAztecNode } from '../shared/aztecNode'
 import { decodeEvents, logPublicEventsFromNode } from '../shared/getPublicEvents'
 import { getBlockTimestamps } from '../shared/utils'
-import { NFTContract } from '../../artifacts/NFT'
+import { NFTContract , NFTEscrowContract } from "@ravenhouse/omni-sdk/contracts/l2"
 // import { NFTVoucherContract } from '../../artifacts/NFTVoucher'
 import ListingCancelledStore from './ListingCancelledStore'
 import ListingSoldStore from './ListingSoldStore'
 import NFTTTransferStore from './NFTTTransferStore'
 import OfferCreatedStore from './OfferCreatedStore'
-import { NFTEscrowContract } from '../../artifacts/NFTEscrow'
 import OfferAcceptedStore from './OfferAcceptedStore'
 import OfferCancelledStore from './OfferCancelledStore'
 import MetadataUpdateStore from './ MetadataUpdateStore'
 import VoucherClaimedStore from './VouchereClaimedStore'
-import { DEVNET, SANDBOX, TESTNET } from '../../aztec-config'
+import { DEVNET, SANDBOX, TESTNET } from '../shared/aztec-config'
 
 export const BLOCK_RANGE = 14
 
