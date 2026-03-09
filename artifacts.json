@@ -7,13 +7,8 @@
       "id": "example-nft",
       "name": "Example NFT Contract",
       "description": "Example NFT contract with Transfer and MetadataUpdate events",
-      "artifact_path": "./artifacts-example/NFT.ts",
-      "addresses": {
-        "devnet": "",
-        "testnet": "",
-        "sandbox": ""
-      },
-      "enabled": false,
+      "artifact_path": "./artifacts/NFT.ts",
+      "enabled": true,
       "event_types": ["NFTTransfer", "MetadataUpdate"],
       "start_block": {
         "devnet": 0,
