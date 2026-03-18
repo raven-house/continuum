@@ -117,6 +117,55 @@ export default async function (fastify) {
     }
   );
 
+  fastify.post(
+    '/recover',
+    { schema: schemas.recover },
+    async (request, reply) => {
+      const { secretKey } = request.body;
+
+      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+
+      const migrationKey = await db
+        .collection(COLLECTION)
+        .findOne(
+          { secretKey },
+          { projection: { walletAddress: 1, network: 1 } }
+        );
+
+      if (!migrationKey) {
+        reply.notFound('No migration key found for the provided secret key');
+        return;
+      }
+
+      const { walletAddress, network } = migrationKey;
+
+      const events = await db
+        .collection('events')
+        .find({
+          $or: [
+            { 'data.owner': walletAddress },
+            { 'data.to': walletAddress },
+            { 'data.from': walletAddress },
+            { 'data.seller': walletAddress },
+            { 'data.buyer': walletAddress },
+            { 'data.claimer': walletAddress }
+          ]
+        })
+        .sort({ block_number: -1 })
+        .toArray();
+
+      return {
+        valid: true,
+        walletAddress,
+        network,
+        events: events.map(e => ({
+          ...e,
+          _id: e._id.toString()
+        }))
+      };
+    }
+  );
+
   // ─────────────────────────────────────────────────────────────
   // POST /migration/verify
   // Body: { secretKey: string }

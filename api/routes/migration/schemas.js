@@ -68,6 +68,48 @@ const schemas = Object.freeze({
     }
   },
 
+  recover: {
+    $id: 'migration-recover',
+    tags,
+    description:
+      'Given a migration secret key, return all indexed events associated with that wallet address.',
+    body: {
+      type: 'object',
+      required: ['secretKey'],
+      properties: {
+        secretKey: {
+          type: 'string',
+          description: 'The 64-char hex migration key'
+        }
+      }
+    },
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          valid: { type: 'boolean' },
+          walletAddress: { type: 'string' },
+          network: { type: 'string' },
+          events: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                _id: { type: 'string' },
+                artifact_id: { type: 'string' },
+                event_type: { type: 'string' },
+                block_number: { type: 'number' },
+                contract_address: { type: 'string' },
+                timestamp: { type: 'number' },
+                data: { type: 'object' }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
   verify: {
     $id: 'migration-verify',
     tags,
