@@ -57,14 +57,14 @@ services:
     container_name: continuum-api-local
     working_dir: /app
     ports:
-      - "3000:3000"
+      - "3004:3004"
     depends_on:
       mongodb:
         condition: service_healthy
     environment:
       CONTINUUM_DB_CONNECTION_STRING: mongodb://root:password@mongodb:27017
       CONTINUUM_DB_NAME: continuum
-      CONTINUUM_API_PORT: 3000
+      CONTINUUM_API_PORT: 3004
       CONTINUUM_API_HOST: 0.0.0.0
       CONTINUUM_CORS_ORIGIN: '*'
       CONTINUUM_ARTIFACTS_PATH: /app/artifacts

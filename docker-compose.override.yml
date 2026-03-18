@@ -1,0 +1,17 @@
+# Development overrides — automatically merged with docker-compose.yml by Docker Compose.
+# Mounts source files as volumes so code changes are live without rebuilding.
+#
+# Dev:  docker compose up -d          (uses docker-compose.yml + this file)
+# Prod: docker compose -f docker-compose.yml up -d   (this file ignored)
+
+services:
+  indexer:
+    volumes:
+      - ./functions:/app
+      - /app/node_modules
+
+  api:
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev"]
