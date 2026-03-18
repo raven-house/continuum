@@ -1,20 +1,16 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY api/package.json api/package-lock.json* api/bun.lockb* ./
+# Install build dependencies for native modules (canvas, etc.)
+RUN apk add --no-cache python3 make g++ cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev
 
-# Install dependencies (support both npm and bun)
-RUN if [ -f bun.lockb ]; then \
-        apk add --no-cache curl && \
-        curl -fsSL https://bun.sh/install | bash && \
-        export PATH="$HOME/.bun/bin:$PATH" && \
-        bun install --frozen-lockfile; \
-    else \
-        npm ci; \
-    fi
+# Copy package files
+COPY api/package.json api/bun.lockb ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY api/ ./
@@ -38,6 +34,7 @@ COPY --from=builder /app/plugins ./plugins
 COPY --from=builder /app/routes ./routes
 COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/services ./services
 
 # Environment
 ENV NODE_ENV=production

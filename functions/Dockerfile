@@ -13,14 +13,9 @@ RUN bun install --frozen-lockfile
 COPY functions/ ./
 
 # Production stage
-FROM oven/bun:1-slim
+FROM oven/bun:1
 
 WORKDIR /app
-
-# Install necessary packages for native modules
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy dependencies from builder
 COPY --from=builder /app/node_modules ./node_modules
@@ -30,8 +25,7 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/index.ts ./
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/types ./types
-COPY --from=builder /app/logs ./logs
+COPY --from=builder /app/types.d.ts ./
 
 # Create logs directory
 RUN mkdir -p /app/logs

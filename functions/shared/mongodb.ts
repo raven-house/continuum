@@ -19,11 +19,11 @@ class MongoDBConnection {
       return this.db;
     }
 
-    if (!process.env.RH_DB_CONNECTION_STRING) {
+    if (!process.env.CONTINUUM_DB_CONNECTION_STRING) {
       throw new Error('MongoDB connection string is not defined');
     }
 
-    this.client = new MongoClient(process.env.RH_DB_CONNECTION_STRING, {
+    this.client = new MongoClient(process.env.CONTINUUM_DB_CONNECTION_STRING, {
       maxPoolSize: 50, // Adjust based on your needs (10-100 is typical)
       minPoolSize: 5,
       maxIdleTimeMS: 30000,
@@ -33,7 +33,7 @@ class MongoDBConnection {
     });
 
     await this.client.connect();
-    this.db = this.client.db(process.env.RH_DB_NAME);
+    this.db = this.client.db(process.env.CONTINUUM_DB_NAME);
 
     return this.db;
   }
