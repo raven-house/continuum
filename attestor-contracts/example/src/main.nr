@@ -67,9 +67,9 @@ pub contract AttestorExample {
     /// The attestation must sign the following fields:
     ///   [PUBLIC_INCREMENT_DOMAIN, contract_address, caller, increment_value]
     ///
-    /// This ensures the attester authorized this specific caller to increment
-    /// the counter by a specific amount on this specific contract.
-    #[external("public")]
+    /// Schnorr verification happens in private context (AVM does not support Blake2s).
+    /// The actual state update is enqueued as an internal public call.
+    #[external("private")]
     fn increment_public_counter(increment_value: Field, signature: [u8; 64]) {
         let config = self.storage.config.read();
         let attester_pubkey = EmbeddedCurvePoint {
@@ -86,12 +86,11 @@ pub contract AttestorExample {
             increment_value,
         ];
 
-        // Verify the attestation
+        // Verify the attestation in private context
         assert_valid_attestation(attester_pubkey, signature, fields);
 
-        // Increment the counter
-        let current = self.storage.public_counter.read();
-        self.storage.public_counter.write(current + increment_value);
+        // Enqueue public state update
+        self.enqueue_self._increment_counter_internal(increment_value);
     }
 
     /// Increment the public counter from a private context if attestation is valid.
