@@ -1,0 +1,33 @@
+{
+  "name": "@aztec-fpc/attestation-lib",
+  "version": "0.1.0",
+  "description": "Minimal Schnorr attestation library for Aztec",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts"
+  },
+  "dependencies": {
+    "@aztec/aztec.js": "4.1.0-nightly.20260312.2",
+    "@aztec/foundation": "4.1.0-nightly.20260312.2",
+    "@aztec/stdlib": "4.1.0-nightly.20260312.2"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "license": "Apache-2.0"
+}
