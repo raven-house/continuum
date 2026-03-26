@@ -13,7 +13,7 @@ use ::aztec::macros::aztec;
 #[aztec]
 pub contract AttestorExample {
     use aztec::{
-        macros::{functions::{external, initializer, view}, storage::storage},
+        macros::{functions::{external, initializer, only_self, view}, storage::storage},
                 protocol::{address::AztecAddress, traits::{Deserialize, Packable, Serialize, ToField}},
         state_vars::{PublicImmutable, PublicMutable},
     };
@@ -124,17 +124,13 @@ pub contract AttestorExample {
         assert_valid_attestation(attester_pubkey, signature, fields);
 
         // Queue public state update via internal call
-        self.context.call_public_function(
-            self.context.this_address(),
-            comptime { FunctionSelector::from_signature("_increment_counter_internal(Field)") },
-            [increment_value].as_slice(),
-        );
+        self.enqueue_self._increment_counter_internal(increment_value);
     }
 
     /// Internal function to increment counter (called from private function).
     /// This is internal-only and should not be called directly.
     #[external("public")]
-    #[internal]
+    #[only_self]
     fn _increment_counter_internal(increment_value: Field) {
         let current = self.storage.public_counter.read();
         self.storage.public_counter.write(current + increment_value);
