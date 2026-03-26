@@ -14,13 +14,11 @@ use ::aztec::macros::aztec;
 pub contract AttestorExample {
     use aztec::{
         macros::{functions::{external, initializer, only_self, view}, storage::storage},
-                protocol::{address::AztecAddress, traits::{Deserialize, Packable, Serialize, ToField}},
+                protocol::{traits::{Deserialize, Packable, Serialize, ToField}},
         state_vars::{PublicImmutable, PublicMutable},
     };
     use std::embedded_curve_ops::EmbeddedCurvePoint;
-    use attestation_lib::{
-        assert_pubkey_on_curve, assert_valid_attestation, compute_attestation_hash,
-    };
+    use attestation_lib::assert_valid_attestation;
 
     /// Grumpkin curve parameter B for on-curve validation
     global GRUMPKIN_CURVE_B: Field = 17;
