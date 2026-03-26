@@ -7,8 +7,9 @@ An app state migration service that allows projects to migrate public and privat
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────────┐
 │  MongoDB    │◄───│   Indexer   │◄───│  Fastify API    │
-│  (Events &  │    │  (Cron Jobs)│    │  (REST Server)  │
-│   SyncState)│    │             │    │                 │
+│  (Events,   │    │  (Cron Jobs)│    │  (REST Server)  │
+│   SyncState,│    │             │    │  :3004          │
+│   Migration)│    │             │    │                 │
 └─────────────┘    └─────────────┘    └─────────────────┘
                             │
                             ▼
@@ -40,7 +41,7 @@ An app state migration service that allows projects to migrate public and privat
    ```
 
 3. **Configure artifacts**
-   
+
    Edit `artifacts.json` to add your Aztec contract artifacts:
    ```json
    {
@@ -68,81 +69,108 @@ An app state migration service that allows projects to migrate public and privat
 
 4. **Start all services**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
-   This will start:
+   This starts:
    - MongoDB on port 27017
    - Event Indexer (background service)
-   - REST API on port 3000
+   - REST API on port 3004
 
 5. **Check service status**
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 6. **View logs**
    ```bash
    # All services
-   docker-compose logs -f
-   
+   docker compose logs -f
+
    # Specific service
-   docker-compose logs -f indexer
-   docker-compose logs -f api
-   docker-compose logs -f mongodb
+   docker compose logs -f indexer
+   docker compose logs -f api
+   docker compose logs -f mongodb
    ```
 
 7. **Stop services**
    ```bash
-   docker-compose down
+   docker compose down
    ```
 
    To also remove the MongoDB volume (WARNING: deletes all data):
    ```bash
-   docker-compose down -v
+   docker compose down -v
    ```
+
+## Development
+
+### Live Reload (no rebuild on code changes)
+
+`docker-compose.override.yml` is automatically merged in when you run `docker compose up -d` locally. It mounts the source files as volumes so changes are reflected without rebuilding.
+
+```bash
+# First time — build images to bake in dependencies
+docker compose up -d --build
+
+# After any code change — just restart, no rebuild
+docker compose up -d
+
+# Only rebuild when adding/removing npm packages
+docker compose up -d --build
+```
+
+### Production deploy
+
+In production, explicitly pass only the base file so the override is ignored and self-contained built images are used:
+
+```bash
+docker compose -f docker-compose.yml up -d
+```
 
 ## API Endpoints
 
+All endpoints are on port **3004**.
+
 ### Health Check
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3004/health
 ```
 
 ### Get Events
 ```bash
 # Get all events for an artifact
-curl http://localhost:3000/events/my-contract
+curl http://localhost:3004/events/my-contract
 
 # Get specific event type
-curl http://localhost:3000/events/my-contract/Transfer
+curl http://localhost:3004/events/my-contract/Transfer
 
 # With pagination and block range
-curl "http://localhost:3000/events/my-contract?event_type=Transfer&from_block=1000&to_block=2000&page=1&limit=100"
+curl "http://localhost:3004/events/my-contract?event_type=Transfer&from_block=1000&to_block=2000&page=1&limit=100"
 ```
 
 ### Get Sync Status
 ```bash
 # Get sync status for all artifacts
-curl http://localhost:3000/sync
+curl http://localhost:3004/sync
 
 # Get sync status for specific artifact
-curl http://localhost:3000/sync/my-contract
+curl http://localhost:3004/sync/my-contract
 ```
 
 ### List Artifacts
 ```bash
 # List all registered artifacts
-curl http://localhost:3000/artifacts
+curl http://localhost:3004/artifacts
 
 # Get specific artifact details
-curl http://localhost:3000/artifacts/my-contract
+curl http://localhost:3004/artifacts/my-contract
 ```
 
-### Contract ABI Upload (New)
+### Contract ABI Upload
 ```bash
 # Upload contract ABI and extract events with selectors
-curl -X POST http://localhost:3000/contracts/upload \
+curl -X POST http://localhost:3004/contracts/upload \
   -H "Content-Type: application/json" \
   -d '{
     "name": "MyContract",
@@ -150,40 +178,64 @@ curl -X POST http://localhost:3000/contracts/upload \
   }'
 
 # List all uploaded contracts
-curl http://localhost:3000/contracts?page=1&limit=10
+curl "http://localhost:3004/contracts?page=1&limit=10"
 
 # Get specific contract by ID
-curl http://localhost:3000/contracts/<contract-id>
+curl http://localhost:3004/contracts/<contract-id>
 
 # Find event by selector
-curl http://localhost:3000/contracts/event/0x12345678
+curl http://localhost:3004/contracts/event/0x12345678
+```
+
+### Migration Keys
+
+Migration keys let users prove ownership of their old-rollup wallet when Aztec upgrades to a new rollup. Each wallet gets one key, stored securely in MongoDB.
+
+```bash
+# Register (or retrieve) a migration key for a wallet
+curl -X POST http://localhost:3004/migration/register \
+  -H "Content-Type: application/json" \
+  -d '{ "walletAddress": "0x...", "network": "devnet" }'
+
+# Check if a wallet has a key (key is masked in response)
+curl http://localhost:3004/migration/0x...
+
+# Verify a secret key → resolve to wallet address (used during new-rollup migration)
+curl -X POST http://localhost:3004/migration/verify \
+  -H "Content-Type: application/json" \
+  -d '{ "secretKey": "<64-char hex key>" }'
 ```
 
 ## Project Structure
 
 ```
 continuum/
-├── docker-compose.yml        # Docker Compose configuration
-├── .env.example             # Environment variables template
-├── artifacts.json           # Contract artifacts configuration
+├── docker-compose.yml           # Production Docker Compose
+├── docker-compose.override.yml  # Dev overrides (auto-merged locally, ignored in prod)
+├── docker-compose.local.yml     # Alternative local-only setup
+├── .env.example                 # Environment variables template
+├── artifacts.json               # Contract artifacts configuration
 │
-├── database/                # MongoDB initialization
-│   └── init.js             # Database setup script
+├── database/                    # MongoDB initialization
+│   └── init.js                  # Collections, indexes, sample data
 │
-├── functions/               # Event indexer
-│   ├── Dockerfile          # Indexer service container
-│   ├── index.ts            # Main entry point
-│   ├── lib/                # Indexer logic
-│   └── shared/             # Shared utilities
+├── functions/                   # Event indexer
+│   ├── Dockerfile               # Indexer container
+│   ├── index.ts                 # Cron scheduler entry point
+│   ├── lib/                     # Indexer logic (EventIndexer, ArtifactRegistry)
+│   └── shared/                  # Shared utilities (aztecNode, mongodb, utils)
 │
-├── api/                     # REST API server
-│   ├── Dockerfile          # API service container
-│   ├── app.js              # Fastify app
-│   ├── routes/             # API routes
-│   └── plugins/            # Fastify plugins
+├── api/                         # REST API server (Fastify, port 3004)
+│   ├── Dockerfile               # API container
+│   ├── app.js                   # Fastify app entry
+│   ├── routes/                  # Route handlers
+│   │   ├── health/
+│   │   ├── contracts/
+│   │   ├── listings/
+│   │   └── migration/           # Migration key endpoints
+│   └── plugins/                 # Fastify plugins (mongodb, cors, env)
 │
-└── artifacts/               # Contract artifacts (user-provided)
-    └── (your .json files)
+└── artifacts/                   # Contract artifacts (user-provided .json files)
 ```
 
 ## Configuration
@@ -198,9 +250,11 @@ continuum/
 | `CONTINUUM_DB_NAME` | Database name | `continuum` |
 | `CONTINUUM_INDEXER_INTERVAL` | Indexer run interval (ms) | `30000` |
 | `CONTINUUM_INDEXER_BLOCK_RANGE` | Blocks per batch | `14` |
-| `CONTINUUM_AZTEC_NODE_URL_*` | Aztec node URLs per network | - |
-| `CONTINUUM_API_PORT` | API server port | `3000` |
-| `CONTINUUM_ARTIFACTS_PATH` | Path to artifacts | `./artifacts` |
+| `CONTINUUM_AZTEC_NODE_URL_DEVNET` | Aztec node URL for devnet | - |
+| `CONTINUUM_AZTEC_NODE_URL_TESTNET` | Aztec node URL for testnet | - |
+| `CONTINUUM_AZTEC_NODE_URL_SANDBOX` | Aztec node URL for sandbox | `http://sandbox:8080` |
+| `CONTINUUM_API_PORT` | API server port | `3004` |
+| `CONTINUUM_ARTIFACTS_PATH` | Path to artifacts directory | `./artifacts` |
 
 ### Artifact Configuration
 
@@ -211,53 +265,20 @@ Each artifact in `artifacts.json` supports:
 - `artifact_path`: Path to the contract artifact JSON file
 - `addresses`: Contract addresses per network (devnet, testnet, sandbox)
 - `enabled`: Whether to index this artifact
-- `event_types`: List of event types to index (from `events()` method)
+- `event_types`: List of event types to index
 - `start_block`: Block to start indexing from per network
 
-## Development
+## Database Collections
 
-### Local Development (without Docker)
+| Collection | Purpose |
+|---|---|
+| `events` | All indexed contract events |
+| `sync_state` | Last indexed block per artifact per network |
+| `artifacts` | Artifact configuration and metadata |
+| `contracts` | Uploaded contract ABIs and extracted event selectors |
+| `migration_keys` | Wallet → secret key mappings for rollup migration |
 
-1. **Install dependencies**
-   ```bash
-   cd database && npm install
-   cd ../functions && bun install
-   cd ../api && npm install
-   ```
-
-2. **Start MongoDB**
-   ```bash
-   docker run -d -p 27017:27017 \
-     -e MONGO_INITDB_ROOT_USERNAME=root \
-     -e MONGO_INITDB_ROOT_PASSWORD=password \
-     mongo:7
-   ```
-
-3. **Start Indexer**
-   ```bash
-   cd functions
-   cp .env.example .env
-   # Edit .env with local settings
-   bun run start
-   ```
-
-4. **Start API**
-   ```bash
-   cd api
-   cp .env.example .env
-   # Edit .env with local settings
-   npm run dev
-   ```
-
-### Database Schema
-
-The MongoDB database contains three main collections:
-
-- **events**: All indexed events with metadata
-- **sync_state**: Last indexed block per artifact
-- **artifacts**: Artifact configuration and metadata
-
-See `database/init.js` for the full schema and indexes.
+See `database/init.js` for the full schema and indexes. Collections and indexes are created automatically when MongoDB first initializes.
 
 ## Troubleshooting
 
@@ -265,36 +286,36 @@ See `database/init.js` for the full schema and indexes.
 
 ```bash
 # Check MongoDB is running
-docker-compose ps mongodb
+docker compose ps mongodb
 
 # Check MongoDB logs
-docker-compose logs mongodb
+docker compose logs mongodb
 
 # Connect to MongoDB shell
-docker-compose exec mongodb mongosh -u root -p password
+docker compose exec mongodb mongosh -u root -p password
 ```
 
 ### Indexer Not Processing Events
 
 ```bash
 # Check indexer logs
-docker-compose logs -f indexer
+docker compose logs -f indexer
 
 # Verify artifact configuration
-curl http://localhost:3000/artifacts
+curl http://localhost:3004/artifacts
 
 # Check sync status
-curl http://localhost:3000/sync
+curl http://localhost:3004/sync
 ```
 
 ### API Not Responding
 
 ```bash
 # Check API logs
-docker-compose logs -f api
+docker compose logs -f api
 
 # Verify API is running
-curl http://localhost:3000/health
+curl http://localhost:3004/health
 ```
 
 ## License

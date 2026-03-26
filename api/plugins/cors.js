@@ -21,9 +21,10 @@ export default fp(async fastify => {
 });
 
 const allowedOrigins = [
-  "https://bridge.ravenhouse.xyz",
+  'https://bridge.ravenhouse.xyz',
   'https://ravenhouse.xyz',
   'https://app.ravenhouse.xyz',
+  'http://localhost:3000',
   'http://localhost:3004',
   'https://staging-app.ravenhouse.xyz'
 ];

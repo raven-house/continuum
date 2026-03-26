@@ -8,41 +8,48 @@ db.createCollection('events');
 db.createCollection('sync_state');
 db.createCollection('artifacts');
 db.createCollection('contracts');
+db.createCollection('migration_keys');
 
 // Create indexes for events collection
-db.events.createIndex({ "artifact_id": 1, "event_type": 1, "block_number": -1 });
-db.events.createIndex({ "block_number": 1 });
-db.events.createIndex({ "artifact_address": 1, "block_number": -1 });
-db.events.createIndex({ "tx_hash": 1 });
-db.events.createIndex({ "timestamp": -1 });
-db.events.createIndex({ "created_at": 1 });
+db.events.createIndex({ artifact_id: 1, event_type: 1, block_number: -1 });
+db.events.createIndex({ block_number: 1 });
+db.events.createIndex({ artifact_address: 1, block_number: -1 });
+db.events.createIndex({ tx_hash: 1 });
+db.events.createIndex({ timestamp: -1 });
+db.events.createIndex({ created_at: 1 });
 
 // Create indexes for sync_state collection
-db.sync_state.createIndex({ "artifact_id": 1 }, { unique: true });
-db.sync_state.createIndex({ "network": 1 });
-db.sync_state.createIndex({ "is_syncing": 1 });
+db.sync_state.createIndex({ artifact_id: 1 }, { unique: true });
+db.sync_state.createIndex({ network: 1 });
+db.sync_state.createIndex({ is_syncing: 1 });
 
 // Create indexes for artifacts collection
-db.artifacts.createIndex({ "id": 1 }, { unique: true });
-db.artifacts.createIndex({ "address": 1 });
-db.artifacts.createIndex({ "enabled": 1 });
+db.artifacts.createIndex({ id: 1 }, { unique: true });
+db.artifacts.createIndex({ address: 1 });
+db.artifacts.createIndex({ enabled: 1 });
 
 // Create indexes for contracts collection (ABI upload)
-db.contracts.createIndex({ "contractName": 1 });
-db.contracts.createIndex({ "createdAt": -1 });
-db.contracts.createIndex({ "events.eventSelector": 1 });
-db.contracts.createIndex({ "events.name": 1 });
+db.contracts.createIndex({ contractName: 1 });
+db.contracts.createIndex({ createdAt: -1 });
+db.contracts.createIndex({ 'events.eventSelector': 1 });
+db.contracts.createIndex({ 'events.name': 1 });
+
+// Create indexes for migration_keys collection
+db.migration_keys.createIndex({ walletAddress: 1 }, { unique: true });
+db.migration_keys.createIndex({ secretKey: 1 }, { unique: true });
+db.migration_keys.createIndex({ network: 1 });
+db.migration_keys.createIndex({ createdAt: -1 });
 
 // Insert sample artifact configuration (disabled by default)
 db.artifacts.insertOne({
-  id: "example-artifact",
-  name: "Example Contract",
-  description: "Example artifact configuration - replace with your own",
-  artifact_path: "./artifacts/Example.json",
+  id: 'example-artifact',
+  name: 'Example Contract',
+  description: 'Example artifact configuration - replace with your own',
+  artifact_path: './artifacts/Example.json',
   addresses: {
-    devnet: "",
-    testnet: "",
-    sandbox: ""
+    devnet: '',
+    testnet: '',
+    sandbox: ''
   },
   enabled: false,
   event_types: [],
@@ -55,5 +62,7 @@ db.artifacts.insertOne({
 });
 
 print('Continuum database initialized successfully!');
-print('Created collections: events, sync_state, artifacts, contracts');
+print(
+  'Created collections: events, sync_state, artifacts, contracts, migration_keys'
+);
 print('Created indexes for optimal query performance');

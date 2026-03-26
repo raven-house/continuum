@@ -2,7 +2,7 @@ import path from 'path'
 import { ArtifactRegistry, type LoadedArtifact } from './ArtifactRegistry'
 import { logPublicEventsFromNode, decodeEvents } from '../shared/getPublicEvents'
 import { getAztecNode } from '../shared/aztecNode'
-import { getBlockTimestamps } from '../shared/utils'
+import { getBlockTimestamps, serializeEventData } from '../shared/utils'
 import { mongodbConnection } from '../shared/mongodb'
 import logger from '../shared/logger'
 import { DEVNET, SANDBOX, TESTNET } from '../shared/aztec-config'
@@ -160,8 +160,9 @@ export class EventIndexer {
   }
 }
 
-// blockNumber and contractAddress are stored as top-level fields, not inside data
+// blockNumber and contractAddress are stored as top-level fields, not inside data.
+// serializeEventData converts Aztec SDK types (AztecAddress, Fr, BigInt) to plain strings.
 function stripMeta(event: Record<string, any>): Record<string, any> {
   const { blockNumber, contractAddress, ...data } = event
-  return data
+  return serializeEventData(data) as Record<string, any>
 }
