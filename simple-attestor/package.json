@@ -14,12 +14,14 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts"
+    "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts",
+    "deploy-example": "bun run src/deploy-example.ts"
   },
   "dependencies": {
     "@aztec/aztec.js": "4.1.0-nightly.20260312.2",
     "@aztec/foundation": "4.1.0-nightly.20260312.2",
-    "@aztec/stdlib": "4.1.0-nightly.20260312.2"
+    "@aztec/stdlib": "4.1.0-nightly.20260312.2",
+    "@aztec/wallets": "4.1.0-nightly.20260312.2"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
