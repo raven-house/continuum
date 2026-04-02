@@ -18,6 +18,7 @@
 
 import { Fr } from "@aztec/aztec.js/fields";
 import { Schnorr } from "@aztec/foundation/crypto/schnorr";
+import { GrumpkinScalar } from "@aztec/foundation/curves/grumpkin";
 import { deriveSigningKey } from "@aztec/stdlib/keys";
 import { computeInnerAuthWitHash } from "@aztec/stdlib/auth-witness";
 
@@ -47,7 +48,7 @@ export interface Attestation {
 export class Attester {
   private constructor(
     private readonly schnorr: Schnorr,
-    private readonly signingKey: Buffer,
+    private readonly signingKey: GrumpkinScalar,
     public readonly publicKey: PublicKey,
   ) { }
 
