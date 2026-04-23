@@ -1,11 +1,13 @@
 /**
- * Claim script for MigrationClaims — demonstrates the full attestation flow.
+ * Claim script for MigrationClaims — full attestation flow via Continuum API.
  *
- * Simulates a user claiming their migrated state on the new rollup:
- *   1. Attester (Continuum) signs the claim off-chain
- *   2. User submits the claim + signature to the contract
- *   3. Contract verifies the Schnorr signature in private context
- *   4. State is updated: user's claimed amount is recorded
+ * Flow:
+ *   1. Connect to Aztec node + reconstruct deployer wallet
+ *   2. GET ${API_URL}/migration/attestation?address=...&contract=...
+ *      → API queries MongoDB for NFT balance, signs with ATTESTER_SECRET
+ *      → Returns { amount, sigBytes, signature }
+ *   3. Submit claim(amount, sigBytes) to the MigrationClaims contract
+ *   4. Read back state to confirm
  *
  * Run deploy-migration first to get the required env vars.
  *
@@ -13,9 +15,9 @@
  *   bun run claim-migration
  *
  * Required env vars:
+ *   API_URL                     - Continuum API URL (e.g. http://localhost:3004)
  *   MIGRATION_CONTRACT_ADDRESS  - Address of the deployed MigrationClaims contract
  *   CONTRACT_SALT               - Salt used when deploying the contract (from deploy-migration output)
- *   ATTESTER_SECRET             - Attester's secret key (from deploy-migration output)
  *   ATTESTER_PUBKEY_X           - Attester public key X (from deploy-migration output)
  *   ATTESTER_PUBKEY_Y           - Attester public key Y (from deploy-migration output)
  *   DEPLOYER_SECRET             - Deployer wallet secret (from deploy-migration output)
@@ -23,7 +25,6 @@
  *
  * Optional env vars:
  *   AZTEC_NODE_URL  - Aztec node URL (default: https://rpc.testnet.aztec-labs.com)
- *   CLAIM_AMOUNT    - Amount to claim (default: 10)
  */
 
 import { readFileSync } from "fs";
@@ -37,14 +38,9 @@ import { loadContractArtifact, type NoirCompiledContract } from "@aztec/aztec.js
 import { createAztecNodeClient } from "@aztec/aztec.js/node";
 import { EmbeddedWallet } from "@aztec/wallets/embedded";
 
-import { Attester, signatureToBytes } from "./index.js";
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const TESTNET_URL = "https://rpc.testnet.aztec-labs.com";
-
-// Domain separator matching the Noir contract's CLAIM_DOMAIN = 0x434c4d ("CLM")
-const CLAIM_DOMAIN = new Fr(0x434c4d);
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -52,18 +48,50 @@ function requireEnv(name: string): string {
   return value;
 }
 
+type AttestationPayload = {
+  address: string;
+  contractAddress: string;
+  amount: number;
+  signature: string;
+  sigBytes: number[];
+  hash: string;
+  attestedAt: string;
+};
+
+function parseAttestationPayload(payload: unknown): AttestationPayload {
+  const candidate =
+    payload && typeof payload === "object" && "attestation" in payload
+      ? (payload as { attestation: unknown }).attestation
+      : payload;
+
+  if (!candidate || typeof candidate !== "object") {
+    throw new Error(`Unexpected attestation response: ${JSON.stringify(payload)}`);
+  }
+
+  const attestation = candidate as Partial<AttestationPayload>;
+  if (
+    typeof attestation.amount !== "number" ||
+    typeof attestation.signature !== "string" ||
+    !Array.isArray(attestation.sigBytes) ||
+    typeof attestation.attestedAt !== "string"
+  ) {
+    throw new Error(`Malformed attestation response: ${JSON.stringify(payload)}`);
+  }
+
+  return attestation as AttestationPayload;
+}
+
 async function main() {
-  console.log("=== MigrationClaims — Claim Demo ===\n");
+  console.log("=== MigrationClaims — Claim via Continuum API ===\n");
 
   const NODE_URL = process.env.AZTEC_NODE_URL ?? TESTNET_URL;
+  const API_URL = requireEnv("API_URL").replace(/\/+$/, "");
   const CONTRACT_ADDRESS = requireEnv("MIGRATION_CONTRACT_ADDRESS");
   const CONTRACT_SALT = requireEnv("CONTRACT_SALT");
-  const ATTESTER_SECRET = requireEnv("ATTESTER_SECRET");
   const ATTESTER_PUBKEY_X = requireEnv("ATTESTER_PUBKEY_X");
   const ATTESTER_PUBKEY_Y = requireEnv("ATTESTER_PUBKEY_Y");
   const DEPLOYER_SECRET = requireEnv("DEPLOYER_SECRET");
   const DEPLOYER_SALT = requireEnv("DEPLOYER_SALT");
-  const claimAmount = parseInt(process.env.CLAIM_AMOUNT ?? "10");
 
   const isSandbox = NODE_URL.includes("localhost");
   const isRemote = !isSandbox;
@@ -87,8 +115,6 @@ async function main() {
   console.log(`   ✓ User address: ${userAddress.toString()}`);
 
   // 3. Load the MigrationClaims contract artifact and register it with the PXE
-  //    The PXE needs the contract instance (address + class ID + deployment params) to simulate
-  //    private functions. We reconstruct it from the saved deployment parameters.
   console.log("\n3. Loading MigrationClaims artifact and registering with PXE...");
   const artifactPath = join(
     __dirname,
@@ -98,7 +124,6 @@ async function main() {
   const artifact = loadContractArtifact(artifactJson as NoirCompiledContract);
   const contractAddress = AztecAddress.fromString(CONTRACT_ADDRESS);
 
-  // Reconstruct the contract instance from deployment parameters so the PXE can look up the ABI
   const contractInstance = await getContractInstanceFromInstantiationParams(artifact, {
     salt: Fr.fromString(CONTRACT_SALT),
     deployer: userAddress,
@@ -120,21 +145,32 @@ async function main() {
     return;
   }
 
-  // 5. Attester signs the claim
-  //    Fields: [CLAIM_DOMAIN, contract_address, user_address, amount]
-  //    This matches the order checked inside MigrationClaims.claim()
-  console.log(`\n4. Attester signing claim for ${claimAmount} units...`);
-  const attester = await Attester.create(Fr.fromString(ATTESTER_SECRET));
-  const amount = new Fr(claimAmount);
-  const fields = [CLAIM_DOMAIN, contractAddress.toField(), userAddress.toField(), amount];
-  const { hash, signature } = await attester.attest(fields);
-  const sigBytes = signatureToBytes(signature);
-  console.log(`   ✓ Signed (hash: ${hash.toString().slice(0, 20)}...)`);
-  console.log(`   Public key x: ${attester.publicKey.x.toString().slice(0, 20)}...`);
+  // 5. Fetch attestation from Continuum API
+  console.log(`\n4. Fetching attestation from Continuum API...`);
+  const attestationUrl =
+    `${API_URL}/migration/attestation` +
+    `?address=${userAddress.toString()}&contract=${contractAddress.toString()}`;
+  console.log(`   GET ${attestationUrl}`);
+
+  const response = await fetch(attestationUrl);
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`API returned ${response.status}: ${body}`);
+  }
+
+  const attestation = parseAttestationPayload(await response.json());
+
+  console.log(`   ✓ Attestation received:`);
+  console.log(`     amount:    ${attestation.amount}`);
+  console.log(`     signature: ${attestation.signature.slice(0, 22)}...`);
+  console.log(`     attestedAt: ${attestation.attestedAt}`);
+
+  const amount = new Fr(BigInt(attestation.amount));
+  const sigBytes = attestation.sigBytes;
 
   // 6. Submit claim to the contract
-  console.log(`\n5. Submitting claim(amount=${claimAmount}, signature) to contract...`);
-  console.log("   (private proof generation — this may take a moment on testnet)");
+  console.log(`\n5. Submitting claim(amount=${attestation.amount}) to MigrationClaims contract...`);
+  console.log("   (private proof generation — this may take a moment)");
   const { receipt } = await contract.methods
     .claim(amount, sigBytes)
     .send({ from: userAddress, wait: { timeout: 1800000 } });

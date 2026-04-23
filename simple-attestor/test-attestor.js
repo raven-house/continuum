@@ -31,6 +31,7 @@ async function main() {
     // Step 3: Create attestation (hash + sign)
     console.log("\n3. Creating attestation...");
     const attestation = await attester.attest(fields);
+    console.log({attestation})
     console.log("   ✓ Attestation created");
     console.log(`   Hash: ${attestation.hash.toString()}`);
     console.log(`   Signature: ${attestation.signature.slice(0, 30)}...${attestation.signature.slice(-10)}`);

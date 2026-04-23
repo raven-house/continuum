@@ -5,163 +5,283 @@ Continuum solves one of the hardest problems in rollup development: **how do use
 When an Aztec L2 rollup migrates to a new version, all on-chain state is reset. Users who held NFTs, tokens, or other assets on the old rollup need a way to prove those holdings and recreate them on the new rollup — without trusting any single party and without requiring access to the old rollup's private data.
 
 Continuum provides a **cryptographic bridge** between old and new rollup state using:
+
 1. An **event indexer** that reads public events from the old rollup
-2. An **attester service** that signs user state claims with a Schnorr key
+2. A **REST API** that computes user balances and signs attestation claims with a Schnorr key
 3. A **Noir smart contract** on the new rollup that verifies those signatures and records the migration
 
 ---
 
-## System Overview
+## Full System Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     OLD ROLLUP (deprecated)                  │
-│                                                              │
-│   NFT Contract ──► public events (transfers, mints, etc.)   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ Continuum indexes events
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     CONTINUUM SERVICE                         │
-│                                                              │
-│  ┌─────────────────┐    ┌─────────────────────────────────┐ │
-│  │ Event Indexer   │───►│ MongoDB (per-user state)        │ │
-│  │ (cron, 25s)     │    └─────────────────────────────────┘ │
-│  └─────────────────┘                    │                   │
-│                                         ▼                   │
-│  ┌─────────────────┐    ┌─────────────────────────────────┐ │
-│  │ Attester        │    │ REST API                        │ │
-│  │ (Schnorr keys)  │◄───│ GET /state/:address             │ │
-│  └────────┬────────┘    └─────────────────────────────────┘ │
-│           │ signs claim                                      │
-└───────────┼─────────────────────────────────────────────────┘
-            │ { amount, signature }
-            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     NEW ROLLUP (current)                     │
-│                                                              │
-│   MigrationClaims contract                                   │
-│   ├─ verifies Schnorr signature (private context)           │
-│   ├─ records claimed amount per user                        │
-│   ├─ prevents double-claiming                               │
-│   └─ emits MigrationClaimed event (for Continuum to index)  │
-└─────────────────────────────────────────────────────────────┘
++------------------------------------------------------------------+
+|                    OLD ROLLUP (deprecated)                        |
+|                                                                    |
+|   NFT Contract --> public NFTTransfer events                      |
+|                    (from, to, token_id per block)                 |
++-------------------------------+----------------------------------+
+                                |
+                    Continuum indexes events every 25s
+                                |
+                                v
++------------------------------------------------------------------+
+|                     CONTINUUM SERVICE (Docker)                    |
+|                                                                    |
+|  +-------------------+     +----------------------------------+   |
+|  | Event Indexer     |---> | MongoDB: events collection       |   |
+|  | (cron, every 25s) |     | { artifact_id, event_type,       |   |
+|  |                   |     |   block_number, data.from,       |   |
+|  | Reads: Aztec node |     |   data.to, data.token_id }       |   |
+|  | Writes: MongoDB   |     +------------------+---------------+   |
+|  +-------------------+                        |                   |
+|                                               v                   |
+|  +-------------------+     +----------------------------------+   |
+|  | Schnorr Attester  |<--- | REST API: Fastify                |   |
+|  | (ATTESTER_SECRET) |     | GET /migration/attestation       |   |
+|  |                   |     |   ?address=0x...&contract=0x...  |   |
+|  | Signs:            |     |                                  |   |
+|  |  Poseidon2(       |     | 1. Count received NFTs           |   |
+|  |   [CLM, C, U, N] |     | 2. Subtract sent NFTs            |   |
+|  |  )                |     | 3. Sign balance with Schnorr     |   |
+|  +--------+----------+     | 4. Return { amount, sigBytes }   |   |
+|           |                +----------------------------------+   |
++-----------+------------------------------------------------------+
+            |
+            | { amount, signature, sigBytes }
+            v
++------------------------------------------------------------------+
+|                     NEW ROLLUP (current Aztec testnet)           |
+|                                                                    |
+|   MigrationClaims contract (Noir)                                |
+|   +- verifies Schnorr signature in private context              |
+|   +- asserts claim[user] == 0  (prevents double-claiming)       |
+|   +- records claimed_amount[user] = N                           |
+|   +- increments total_claimed                                   |
+|   +- emits MigrationClaimed { user, amount }                    |
++------------------------------------------------------------------+
 ```
+
+---
+
+## Step-by-Step Demo Flow
+
+### Terminal 1 — Start the Docker Stack
+
+```bash
+cd continuum
+docker compose -f docker-compose.local.yml up
+```
+
+This starts:
+- **MongoDB** — stores indexed events
+- **Event Indexer** — polls Aztec testnet every 25s, decodes NFTTransfer events, stores in MongoDB
+- **REST API** — Fastify server on port 3004
+
+### Terminal 2 — Seed "Old Rollup" State
+
+```bash
+DEMO_ADDRESS=0x27b6f... bun run demo/seed-demo-events.js
+```
+
+Inserts 3 NFTTransfer mint events for the demo address in MongoDB. This simulates what the indexer would have stored from the old rollup (the address held 3 NFTs before the migration).
+
+Output:
+```
+Seeded 3 new + 0 updated NFTTransfer events
+Demo address: 0x27b6f...
+Expected API response: { amount: 3, ... }
+```
+
+### Terminal 3 — Get Signed Attestation from API
+
+```bash
+curl "http://localhost:3004/migration/attestation?address=0x27b6f...&contract=0x0fa59..."
+```
+
+The API:
+1. Queries MongoDB: counts NFTs received by address (3), subtracts NFTs sent away (0)
+2. Signs `Poseidon2([CLM_DOMAIN, contract, address, 3])` with `ATTESTER_SECRET`
+3. Returns the signed claim
+
+Output:
+```json
+{
+  "address": "0x27b6f...",
+  "contractAddress": "0x0fa59...",
+  "amount": 3,
+  "signature": "0x...",
+  "sigBytes": [12, 34, ...],
+  "attestedAt": "2026-04-23T12:00:00.000Z"
+}
+```
+
+### Terminal 4 — Submit Claim to the New Rollup
+
+```bash
+API_URL=http://localhost:3004 \
+MIGRATION_CONTRACT_ADDRESS=0x0fa59... \
+CONTRACT_SALT=0x... \
+ATTESTER_PUBKEY_X=0x... \
+ATTESTER_PUBKEY_Y=0x... \
+DEPLOYER_SECRET=0x... \
+DEPLOYER_SALT=0x... \
+bun run claim-migration
+```
+
+The script:
+1. Connects to the Aztec testnet, reconstructs the deployer wallet
+2. Calls `GET /migration/attestation` — receives `{ amount: 3, sigBytes: [...] }`
+3. Submits `claim(amount=3, signature)` to the MigrationClaims contract
+4. Private proof is generated; Schnorr signature is verified inside the circuit
+5. State is updated, `MigrationClaimed` event is emitted
+
+Output:
+```
+=== MigrationClaims - Claim via Continuum API ===
+
+1. Connecting to Aztec node... Connected
+2. Reconstructing deployer wallet... User address: 0x27b6f...
+3. Loading MigrationClaims artifact... Contract registered
+4. Fetching attestation from Continuum API...
+   GET http://localhost:3004/migration/attestation?address=0x27b6f...&contract=0x0fa59...
+   Attestation received: amount=3, signature=0x1a2b3c...
+5. Submitting claim(amount=3) to MigrationClaims contract...
+   Claim accepted! Tx hash: 0x...
+6. Reading post-claim state...
+   claimed_amount for 0x27b6f...: 3
+   total_claimed (all users): 3
+   has_claimed: true
+7. Testing double-claim prevention...
+   Second claim correctly rejected: already claimed
+
+=== Demo Complete ===
+```
+
+---
+
+## How the NFT Balance is Computed
+
+The indexer stores one document per decoded public event:
+
+```json
+{
+  "artifact_id": "example-nft",
+  "event_type": "NFTTransfer",
+  "block_number": 1042,
+  "contract_address": "0xabc...",
+  "data": {
+    "from": "0x0000...0000",
+    "to": "0x27b6f...",
+    "token_id": "0x0000...0001"
+  },
+  "timestamp": 1745000000
+}
+```
+
+The attestation endpoint computes balance as:
+
+```
+received = count(event_type=NFTTransfer AND data.to=address)
+sent     = count(event_type=NFTTransfer AND data.from=address)
+balance  = received - sent
+```
+
+Mints have `data.from = 0x000...000` (zero address). A user who received 5 NFTs and sent 2 away would show `balance = 3`. This is the amount they can claim on the new rollup.
 
 ---
 
 ## How the Attestation Works
 
-### The Cryptographic Primitives
+### Cryptographic Primitives
 
-Continuum uses **Schnorr signatures over the Grumpkin curve** — the same elliptic curve that Aztec uses internally for account keys. This is a natural fit because:
+Continuum uses **Schnorr signatures over the Grumpkin curve** — the same elliptic curve that Aztec uses internally for account keys:
 
-- Aztec's private VM (not the AVM) supports Grumpkin Schnorr natively
-- The `schnorr` Noir library provides `assert_valid_signature`
-- Hashing is done with **Poseidon2**, which is cheap inside ZK circuits
+- The private VM supports Grumpkin Schnorr natively
+- Hashing uses **Poseidon2**, which is efficient inside ZK circuits
+- The on-chain Noir library `assert_valid_attestation` handles verification
 
-### Off-Chain: Signing a Claim
+### Off-Chain Signing (API)
 
-The attester holds a secret key (`ATTESTER_SECRET`) and its derived Grumpkin public key (`ATTESTER_PUBKEY_X/Y`). To attest that address `U` may claim `N` units on contract `C`:
+```javascript
+// api/lib/attester.js
+const CLAIM_DOMAIN = new Fr(0x434c4d); // "CLM"
 
-```
-hash = Poseidon2([ CLAIM_DOMAIN, C, U, N ])
-signature = Schnorr.sign(hash, attester_secret_key)
-```
-
-`CLAIM_DOMAIN = 0x434c4d` ("CLM") is a domain separator that prevents signature reuse across different contract methods.
-
-In TypeScript (`simple-attestor/src/index.ts`):
-```typescript
-const attester = await Attester.create(ATTESTER_SECRET);
-const fields = [CLAIM_DOMAIN, contractAddress.toField(), userAddress.toField(), amount];
-const { signature } = await attester.attest(fields);  // Poseidon2 hash + Schnorr sign
+const fields = [CLAIM_DOMAIN, contractFr, userFr, amountFr];
+const hash = await computeInnerAuthWitHash(fields);  // Poseidon2
+const sig = await schnorr.constructSignature(hash.toBuffer(), signingKey);
 ```
 
-### On-Chain: Verifying the Claim
+`CLAIM_DOMAIN = 0x434c4d` ("CLM") is a domain separator that prevents a valid signature for `claim()` from being replayed against a different contract method.
 
-The `MigrationClaims` contract stores the attester's public key immutably at deployment. When a user calls `claim(amount, signature)`:
+### On-Chain Verification (Noir)
 
-1. **Private context** — Schnorr verification runs inside the private VM (the AVM does not support Blake2s, which Schnorr requires internally)
-2. The contract reconstructs the expected fields: `[CLAIM_DOMAIN, contract_addr, msg_sender, amount]`
-3. Calls `assert_valid_attestation(pubkey, signature, fields)` from `attestation_lib`
-4. If valid, enqueues an internal public call: `_record_claim_internal(caller, amount)`
-5. The public call checks no prior claim exists, writes the amount, increments total, emits event
-
-```
-          User Browser / CLI
-                │
-    claim(amount=10, sig=0x...)
-                │
-    ┌───────────▼──────────────────────────────────────────┐
-    │ [PRIVATE CONTEXT] claim()                            │
-    │  1. Read attester pubkey from PublicImmutable        │
-    │  2. Build fields = [CLM_DOMAIN, contract, user, 10]  │
-    │  3. assert_valid_attestation(pubkey, sig, fields) ✓  │
-    │  4. enqueue_self._record_claim_internal(user, 10)    │
-    └──────────────────────┬───────────────────────────────┘
-                           │ enqueued
-    ┌──────────────────────▼───────────────────────────────┐
-    │ [PUBLIC CONTEXT] _record_claim_internal()            │
-    │  1. assert claimed[user] == 0  (no double-claim)     │
-    │  2. claimed[user] = 10                               │
-    │  3. total_claimed += 10                              │
-    │  4. emit MigrationClaimed { user, amount: 10 }       │
-    └──────────────────────────────────────────────────────┘
+```noir
+// attestor-contracts/migration_contract/src/main.nr
+#[external("private")]
+fn claim(amount: Field, signature: [u8; 64]) {
+    let fields = [
+        CLAIM_DOMAIN,
+        self.context.this_address().to_field(),
+        self.msg_sender().to_field(),
+        amount,
+    ];
+    assert_valid_attestation(attester_pubkey, signature, fields);
+    self.enqueue_self._record_claim_internal(caller, amount);
+}
 ```
 
-### Why Private Context for Verification?
+The contract reconstructs the same field array using on-chain data (contract address, msg_sender) so the user cannot forge a claim for a different address or amount.
 
-Schnorr signature verification uses Blake2s internally, which is **not available in the AVM** (Aztec Virtual Machine used for public functions). It is available in the private VM. That's why `claim()` is a private function even though it only updates public state — the signature check happens in private, then the state update is enqueued as a public call.
+### Why Private Context for Signature Verification?
+
+Schnorr signature verification uses **Blake2s** internally. Blake2s is available in the **private VM** but **not in the AVM** (Aztec Virtual Machine used for public functions). That's why `claim()` is declared as a private function even though it only updates public state — the signature check runs privately, then the state update is enqueued as a public call via `enqueue_self._record_claim_internal(caller, amount)`.
 
 ---
 
-## The Attester Library
+## The Attestation Flow in Detail
 
-Two components implement the attestation protocol, one on each side of the boundary:
-
-### `attestor-contracts/attestation_lib/` (Noir)
-
-```noir
-pub fn assert_valid_attestation<let N: u32>(
-    pubkey: EmbeddedCurvePoint,
-    signature: [u8; 64],
-    fields: [Field; N],
-) {
-    let hash = compute_inner_authwit_hash(fields);  // Poseidon2
-    schnorr::assert_valid_signature(pubkey, signature, hash.to_be_bytes::<32>());
-}
 ```
-
-### `simple-attestor/src/index.ts` (TypeScript)
-
-```typescript
-export class Attester {
-  async attest(fields: Fr[]): Promise<Attestation> {
-    const hash = await computeInnerAuthWitHash(fields);  // same Poseidon2
-    const sig = await this.schnorr.constructSignature(hash.toBuffer(), this.signingKey);
-    return { hash, signature: `0x${Buffer.from(sig.toBuffer()).toString("hex")}` };
-  }
-}
+User CLI
+    |
+    claim(amount=3, sig=0x...)
+    |
++---v-----------------------------------------------------+
+| [PRIVATE CONTEXT] claim()                               |
+|  1. Read attester pubkey from PublicImmutable           |
+|  2. Build fields = [CLM, contract_addr, msg_sender, 3]  |
+|  3. assert_valid_attestation(pubkey, sig, fields)       |
+|  4. enqueue_self._record_claim_internal(user, 3)        |
++-----------------------------------+---------------------+
+                                    | enqueued
++-----------------------------------v---------------------+
+| [PUBLIC CONTEXT] _record_claim_internal()               |
+|  1. assert claimed[user] == 0  (no double-claim)        |
+|  2. claimed[user] = 3                                   |
+|  3. total_claimed += 3                                  |
+|  4. emit MigrationClaimed { user, amount: 3 }           |
++---------------------------------------------------------+
 ```
-
-Both sides use `computeInnerAuthWitHash` (Poseidon2) and Schnorr over Grumpkin — they are symmetric by design.
 
 ---
 
 ## Security Properties
 
 ### Domain Separation
-Every contract method that uses attestations has its own domain constant (`CLAIM_DOMAIN = 0x434c4d`). A valid signature for `claim()` cannot be replayed against a different method, even on the same contract.
+
+`CLAIM_DOMAIN = 0x434c4d` ("CLM") is included in every signed payload. A signature for `claim()` cannot be replayed against a different method on the same contract, or against a different contract that happens to use the same attester key.
 
 ### Caller Binding
-The user's address (`msg_sender()`) is included in the signed fields. A signature issued to address `A` is cryptographically invalid when submitted by address `B`. The attester decides who gets to claim and for how much.
+
+The user's address (`msg_sender()`) is embedded in the signed fields. A signature issued to address `A` is cryptographically invalid when submitted by address `B`. The attester controls who gets to claim and for how much.
 
 ### No Double-Claiming
-The contract's `_record_claim_internal` asserts `claimed[user] == 0` before writing. A second claim from the same address always reverts, regardless of signature validity.
+
+`_record_claim_internal` asserts `claimed[user] == 0` before writing. A second call from the same address always reverts, regardless of whether the signature is valid.
 
 ### On-Curve Public Key Validation
-The constructor validates that the attester's public key lies on the Grumpkin curve (`y² = x³ − 17`) before storing it. A malformed key would make all future attestations unverifiable.
+
+The constructor validates that the attester's public key lies on the Grumpkin curve (`y^2 = x^3 - 17`) before storing it. A malformed key would silently make all future attestations unverifiable — the constructor catches this at deployment time.
 
 ---
 
@@ -169,60 +289,57 @@ The constructor validates that the attester's public key lies on the Grumpkin cu
 
 ```
 continuum/
-├── attestor-contracts/
-│   ├── attestation_lib/      # Noir: Schnorr verification library (reusable)
-│   │   └── src/lib.nr
-│   ├── example/              # Noir: simple counter demo (already deployed)
-│   │   └── src/main.nr
-│   └── migration_contract/   # Noir: per-user migration registry (this MVP)
-│       └── src/main.nr
-│
-├── simple-attestor/          # TypeScript: attester + deploy/claim scripts
-│   └── src/
-│       ├── index.ts               # Attester class + signatureToBytes
-│       ├── bridge-fee-juice.ts    # L1→L2 fee juice bridging
-│       ├── deploy-example.ts      # Deploy the example counter contract
-│       ├── deploy-migration.ts    # Deploy MigrationClaims
-│       └── claim-migration.ts     # Create attestation + call claim()
-│
-├── functions/                # Event indexer (cron job, reads old rollup)
-├── api/                      # Fastify REST API
-└── database/                 # MongoDB init scripts
++-- attestor-contracts/
+|   +-- attestation_lib/      # Noir: Schnorr verification library (reusable)
+|   |   +-- src/lib.nr        #   assert_valid_attestation()
+|   +-- migration_contract/   # Noir: per-user migration registry
+|   |   +-- src/main.nr       #   MigrationClaims contract
+|   +-- example/              # Noir: simple counter demo
+|
++-- simple-attestor/          # TypeScript: deploy + claim scripts
+|   +-- src/
+|       +-- index.ts               # Attester class (Schnorr signing)
+|       +-- bridge-fee-juice.ts    # L1->L2 fee juice bridging
+|       +-- deploy-migration.ts    # Deploy MigrationClaims
+|       +-- claim-migration.ts     # Fetch attestation from API + submit claim
+|
++-- api/                      # Fastify REST API
+|   +-- lib/attester.js       # Schnorr signing (mirrors simple-attestor/src/index.ts)
+|   +-- routes/migration/
+|       +-- index.js          # Migration key routes (legacy)
+|       +-- attestation.js    # GET /migration/attestation (new)
+|
++-- functions/                # Event indexer (cron, reads Aztec testnet)
++-- database/                 # MongoDB init scripts
++-- demo/
+    +-- seed-demo-events.js   # Seed test NFT events for demo
 ```
 
 ---
 
-## Running the Demo
+## Running the Full Demo
 
 ### Prerequisites
 
-- `aztec-nargo` installed (for compiling Noir contracts)
+- Docker + Docker Compose
 - `bun` installed
+- `aztec` installed (for compiling Noir contracts)
 - A Sepolia-funded Ethereum private key (for testnet fee juice bridging)
-- Access to the Aztec testnet: `https://rpc.testnet.aztec-labs.com`
 
-### Step 1 — Compile the Migration Contract
+### Step 1 — Compile and Deploy the Migration Contract
 
 ```bash
+# Compile
 cd attestor-contracts/migration_contract
-aztec-nargo compile
+aztec compile
 # Output: target/migration_contract-MigrationClaims.json
-```
 
-### Step 2 — Deploy
-
-```bash
-cd simple-attestor
-bun install
-
-# Testnet
+# Deploy (testnet)
+cd ../../simple-attestor
 L1_PRIVATE_KEY=0x<your-sepolia-key> bun run deploy-migration
-
-# Sandbox (no fee juice needed)
-AZTEC_NODE_URL=http://localhost:8080 bun run deploy-migration
 ```
 
-Copy the printed values into your `.env`:
+Copy the printed env vars into `api/.env`:
 
 ```
 MIGRATION_CONTRACT_ADDRESS=0x...
@@ -231,76 +348,48 @@ ATTESTER_PUBKEY_X=0x...
 ATTESTER_PUBKEY_Y=0x...
 DEPLOYER_SECRET=0x...
 DEPLOYER_SALT=0x...
+CONTRACT_SALT=0x...
 ```
 
-### Step 3 — Claim
+### Step 2 — Start Docker Stack
 
 ```bash
-# Testnet
+docker compose -f docker-compose.local.yml up
+```
+
+### Step 3 — Seed Demo Events
+
+```bash
+DEMO_ADDRESS=<your-deployer-address> bun run demo/seed-demo-events.js
+```
+
+### Step 4 — Verify API Returns Attestation
+
+```bash
+curl "http://localhost:3004/migration/attestation?address=<DEMO_ADDRESS>&contract=<CONTRACT_ADDRESS>"
+```
+
+### Step 5 — Submit Claim on New Rollup
+
+```bash
+API_URL=http://localhost:3004 \
 MIGRATION_CONTRACT_ADDRESS=0x... \
-ATTESTER_SECRET=0x... \
+CONTRACT_SALT=0x... \
+ATTESTER_PUBKEY_X=0x... \
+ATTESTER_PUBKEY_Y=0x... \
 DEPLOYER_SECRET=0x... \
 DEPLOYER_SALT=0x... \
-CLAIM_AMOUNT=42 \
-bun run claim-migration
-
-# Sandbox
-AZTEC_NODE_URL=http://localhost:8080 \
-MIGRATION_CONTRACT_ADDRESS=0x... \
-# ... rest of vars
 bun run claim-migration
 ```
-
-Expected output:
-```
-=== MigrationClaims — Claim Demo ===
-1. Connecting to Aztec node...   ✓ Connected
-2. Reconstructing deployer wallet...   ✓ User address: 0x...
-3. Loading MigrationClaims artifact...   ✓ Contract loaded
-4. Attester signing claim for 42 units...   ✓ Signed
-5. Submitting claim(amount=42, signature) to contract...   ✓ Claim accepted!
-6. Reading post-claim state...
-   claimed_amount for 0x...: 42
-   total_claimed (all users): 42
-   has_claimed: true
-7. Testing double-claim prevention...
-   ✓ Second claim correctly rejected: already claimed
-```
-
----
-
-## Full Migration Flow (Production Vision)
-
-In the complete system, the attester is not the same wallet as the user. The flow is:
-
-```
-User (address U) ──► Continuum API: "what can I claim?"
-                           │
-                           ▼
-                  Query indexed events for address U
-                  → Found: 5 NFTs on old rollup
-                           │
-                           ▼
-                  Attester signs: [CLM_DOMAIN, contract, U, 5]
-                  → Returns { amount: 5, signature: 0x... }
-                           │
-                           ▼
-User submits claim(amount=5, signature) to MigrationClaims
-                           │
-                           ▼
-Contract verifies → user gets 5 units on new rollup ✓
-```
-
-The key insight: **the attester doesn't need to trust the user, and the user doesn't need to trust the attester's database** — the Schnorr signature binds the claim to a specific address and amount, and the Noir contract enforces that binding on-chain.
 
 ---
 
 ## Extending This Pattern
 
-The `attestation_lib` is generic. The same `assert_valid_attestation` call can be used for any use case where a trusted off-chain service needs to gate on-chain state updates:
+The `attestation_lib` is generic — the same `assert_valid_attestation` call can gate any on-chain state update behind an off-chain attestation:
 
 - NFT migrations with metadata preservation
-- Token balance migrations
+- Token balance migrations between rollup versions
 - Access control lists signed by an operator
 - Oracle-gated contract interactions
 
@@ -312,4 +401,4 @@ The only contract-specific logic is:
 
 ## Aztec Version
 
-All Noir contracts target `aztec = v4.2.0-aztecnr-rc.2`. TypeScript packages use `@aztec/aztec.js@4.2.0-aztecnr-rc.2`.
+All Noir contracts target `aztec = v4.2.0-aztecnr-rc.2`. TypeScript and JavaScript packages use `@aztec/aztec.js@4.2.0-aztecnr-rc.2`, `@aztec/foundation@4.2.0-aztecnr-rc.2`, and `@aztec/stdlib@4.2.0-aztecnr-rc.2`.

@@ -13,13 +13,84 @@
 
 import { randomBytes } from 'crypto';
 import schemas from './schemas.js';
+import { createAttestation } from '../../lib/attester.js';
 
 const COLLECTION = 'migration_keys';
+const AZTEC_ADDRESS_PARAM = ':walletAddress(^0x[a-fA-F0-9]{64}$)';
+const ZERO_ADDRESS = '0x' + '0'.repeat(64);
+const EVENTS_COLLECTION = 'events';
+const ARTIFACT_ID = process.env.CONTINUUM_NFT_ARTIFACT_ID ?? 'example-nft';
+const EVENT_TYPE = 'NFTTransfer';
 
 /**
  * @param {import('fastify').FastifyInstance} fastify
  */
 export default async function (fastify) {
+  fastify.get('/attestation', async (request, reply) => {
+    const { address, contract } = request.query;
+
+    if (!address) {
+      return reply.badRequest('address query param is required');
+    }
+
+    const attesterSecret = process.env.ATTESTER_SECRET;
+    if (!attesterSecret) {
+      return reply.internalServerError('ATTESTER_SECRET env var is not configured');
+    }
+
+    const contractAddress = contract ?? process.env.MIGRATION_CONTRACT_ADDRESS;
+    if (!contractAddress) {
+      return reply.internalServerError(
+        'contract query param or MIGRATION_CONTRACT_ADDRESS env var is required'
+      );
+    }
+
+    const normalizedAddress = address.toLowerCase();
+
+    const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+    const col = db.collection(EVENTS_COLLECTION);
+
+    const received = await col.countDocuments({
+      artifact_id: ARTIFACT_ID,
+      event_type: EVENT_TYPE,
+      'data.to': normalizedAddress
+    });
+
+    const sent = await col.countDocuments({
+      artifact_id: ARTIFACT_ID,
+      event_type: EVENT_TYPE,
+      $and: [
+        { 'data.from': normalizedAddress },
+        { 'data.from': { $ne: ZERO_ADDRESS } }
+      ]
+    });
+
+    const balance = received - sent;
+
+    if (balance <= 0) {
+      return reply.notFound(
+        `No migration data found for address ${address}. Received: ${received}, Sent: ${sent}`
+      );
+    }
+
+    const attestation = await createAttestation(
+      attesterSecret,
+      contractAddress,
+      normalizedAddress,
+      balance
+    );
+
+    return {
+      address: normalizedAddress,
+      contractAddress,
+      amount: balance,
+      signature: attestation.signature,
+      sigBytes: attestation.sigBytes,
+      hash: attestation.hash,
+      attestedAt: new Date().toISOString()
+    };
+  });
+
   // ─────────────────────────────────────────────────────────────
   // POST /migration/register
   // Body: { walletAddress: string, network?: string }
@@ -83,7 +154,7 @@ export default async function (fastify) {
   // Returns whether a key exists for the wallet (key is masked).
   // ─────────────────────────────────────────────────────────────
   fastify.get(
-    '/:walletAddress',
+    `/${AZTEC_ADDRESS_PARAM}`,
     { schema: schemas.getByWallet },
     async request => {
       const { walletAddress } = request.params;
