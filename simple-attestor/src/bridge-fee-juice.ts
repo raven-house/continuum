@@ -22,7 +22,7 @@ import { FeeAssetHandlerAbi } from "@aztec/l1-artifacts/FeeAssetHandlerAbi";
 import { getNonNullifiedL1ToL2MessageWitness } from "@aztec/stdlib/messaging";
 import { getContract } from "viem";
 
-const L1_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+const L1_RPC_URL = process.env.L1_RPC_URL ?? "https://ethereum-sepolia-rpc.publicnode.com";
 const L1_CHAIN_ID = 11155111; // Sepolia
 const MAX_POLL_ATTEMPTS = 40; // 40 × 30 s = 20 min max
 
