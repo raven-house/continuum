@@ -1,0 +1,23 @@
+{
+  "$schema": "./artifacts.schema.json",
+  "version": "1.0.0",
+  "description": "Continuum Artifact Registry - Configure your Aztec contract artifacts here",
+  "artifacts": [
+    {
+      "id": "example-nft",
+      "name": "Example NFT Contract",
+      "description": "Example NFT contract with Transfer and MetadataUpdate events",
+      "artifact_path": "./artifacts/NFT.ts",
+      "enabled": true,
+      "event_types": [
+        "NFTTransfer",
+        "MetadataUpdate"
+      ],
+      "start_block": {
+        "devnet": 54707,
+        "testnet": 54707,
+        "sandbox": 54707
+      }
+    }
+  ]
+}
