@@ -2,7 +2,7 @@
 //!
 //! A trusted off-chain attester (Continuum) indexes public events from the old
 //! rollup, then signs a claim: "address X may claim N units on the new rollup."
-//! This contract verifies that Schnorr signature and records the claim exactly
+//! This contract verifies the Schnorr signature and records the claim exactly
 //! once per address.
 //!
 //! Flow:
