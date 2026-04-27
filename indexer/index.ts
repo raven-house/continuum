@@ -48,10 +48,10 @@ async function runHandler(mode: string) {
 
 // Index every 25 seconds
 cron.schedule('*/25 * * * * *', () => {
-  runHandler('DEVNET');
+  runHandler('testnet');
 });
 
-logger.info('Cron scheduled: DEVNET every 25 seconds');
+logger.info('Cron scheduled: TESTNET every 25 seconds');
 
 async function initializeApp() {
   try {

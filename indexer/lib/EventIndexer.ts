@@ -33,6 +33,7 @@ export class EventIndexer {
 
   async run(): Promise<void> {
     const nodeUrl = NODE_URL_MAP[this.network]
+    console.log(`Starting indexer for network "${this.network}" with node URL: ${nodeUrl}`)
     if (!nodeUrl) {
       logger.warn(`No Aztec node URL for network "${this.network}", skipping`)
       return
@@ -83,6 +84,7 @@ export class EventIndexer {
 
     // Fetch all public logs for the block range in one call
     const logs = await logPublicEventsFromNode({ aztecNode, fromBlock, toBlock })
+    console.log("logs", logs)
 
     // Decode every configured event type
     const allDecodedEvents: Array<{
@@ -94,7 +96,8 @@ export class EventIndexer {
     }> = []
 
     for (const [eventName, eventDef] of Object.entries(artifact.events)) {
-      const decoded = decodeEvents(logs, eventDef)
+      const decoded = await decodeEvents(logs, eventDef)
+      console.log(`Decoded ${decoded.length} "${eventName}" events for artifact "${artifact.id}"`)
       for (const event of decoded) {
         allDecodedEvents.push({
           artifact_id: artifact.id,

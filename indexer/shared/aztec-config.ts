@@ -37,20 +37,25 @@ export const SANDBOX = {
 }
 
 export const TESTNET = {
-  name: 'sandbox',
-  environment: 'local',
+  name: 'testnet',
+  environment: 'testnet' as const,
   network: {
-    nodeUrl: 'http://localhost:8080',
-    l1RpcUrl: 'http://localhost:8545',
-    l1ChainId: 31337,
+    nodeUrl: 'https://rpc.testnet.aztec-labs.com',
+    l1RpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+    l1ChainId: 11155111,
+    l2ChainId: 1674512022,
   },
   settings: {
-    skipSandbox: false,
-    version: '4.0.0-devnet.2-patch.1',
+    skipSandbox: true,
+    version: '4.2.0-aztecnr-rc.2',
   },
   timeouts: {
-    deployTimeout: 120000,
-    txTimeout: 60000,
-    waitTimeout: 30000,
+    deployTimeout: 1800000,
+    txTimeout: 300000,
+    waitTimeout: 120000,
+  },
+  blockexplorer: {
+    aztecscan: 'https://aztecscan.xyz/',
+    aztecExplorer: 'https://aztecexplorer.xyz/',
   },
 }

@@ -1,6 +1,7 @@
 import { type AztecNode } from '@aztec/aztec.js/node'
-import { decodeFromAbi, EventSelector } from '@aztec/stdlib/abi'
-import { parseBlockNumberFromLog } from './utils'
+import { decodeFromAbi } from '@aztec/stdlib/abi'
+import { computeLogTag } from '@aztec/stdlib/hash'
+import { DomainSeparator } from '@aztec/constants'
 import type { ExtendedPublicLog } from '@aztec/stdlib/logs'
 
 export const logPublicEventsFromNode = async ({
@@ -17,29 +18,24 @@ export const logPublicEventsFromNode = async ({
     toBlock,
   })
   return logs
-
 }
 
-export const decodeEvents = (logs: ExtendedPublicLog[], eventMetadataDef: any) => {
+export const decodeEvents = async <T>(logs: ExtendedPublicLog[], eventMetadataDef: any): Promise<T[]> => {
+  const expectedTag = await computeLogTag(eventMetadataDef.eventSelector.toField(), DomainSeparator.EVENT_LOG_TAG)
+
   const decodedEvents = logs
     .map((log) => {
-      const blockNumber = parseBlockNumberFromLog(log.toHumanReadable())
-      const logFields = log.log.getEmittedFields()
+      const blockNumber = log.id.blockNumber
       const contractAddress = log.log.contractAddress
       try {
-        if (
-          !EventSelector.fromField(logFields[logFields.length - 1]).equals(
-            eventMetadataDef.eventSelector
-          )
-        ) {
+        if (!log.log.fields[0].equals(expectedTag)) {
           return undefined
         }
 
-
-        const result = decodeFromAbi([eventMetadataDef.abiType], log.log.fields) as T
+        const eventFields = log.log.getEmittedFieldsWithoutTag()
+        const result = decodeFromAbi([eventMetadataDef.abiType], eventFields) as T
         return ({ blockNumber, ...result, contractAddress })
       }
-
       catch (error) {
         console.error(`Decode events error in block Number ${blockNumber} for contract address ${contractAddress.toString()}`, error);
         return undefined

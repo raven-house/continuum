@@ -15,7 +15,9 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts",
-    "deploy-example": "bun run src/deploy-example.ts"
+    "deploy-example": "bun run src/deploy-example.ts",
+    "deploy-migration": "bun run src/deploy-migration.ts",
+    "claim-migration": "bun run src/claim-migration.ts"
   },
   "dependencies": {
     "@aztec/aztec.js": "4.2.0-aztecnr-rc.2",

@@ -3,7 +3,7 @@
 
 /* eslint-disable */
 import { AztecAddress, CompleteAddress } from '@aztec/aztec.js/addresses';
-import { type AbiType, type AztecAddressLike, type ContractArtifact, EventSelector, decodeFromAbi, type EthAddressLike, type FieldLike, type FunctionSelectorLike, loadContractArtifact, loadContractArtifactForPublic, type NoirCompiledContract, type U128Like, type WrappedFieldLike } from '@aztec/aztec.js/abi';
+import { type AbiType, type AztecAddressLike, type ContractArtifact, EventSelector, decodeFromAbi, type EthAddressLike, type FieldLike, type FunctionSelectorLike, loadContractArtifact, loadContractArtifactForPublic, type NoirCompiledContract, type OptionLike, type U128Like, type WrappedFieldLike } from '@aztec/aztec.js/abi';
 import { Contract, ContractBase, ContractFunctionInteraction, type ContractMethod, type ContractStorageLayout, DeployMethod } from '@aztec/aztec.js/contracts';
 import { EthAddress } from '@aztec/aztec.js/addresses';
 import { Fr, Point } from '@aztec/aztec.js/fields';
@@ -237,11 +237,11 @@ upgrade_authority: {
     /** mint_private(to: struct, token_uri_parts: array, nonce: field, token_id: field) */
     mint_private: ((to: AztecAddressLike, token_uri_parts: string[], nonce: FieldLike, token_id: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
+    /** offchain_receive(messages: struct) */
+    offchain_receive: ((messages: { ciphertext: FieldLike[], recipient: AztecAddressLike, tx_hash: OptionLike<FieldLike>, anchor_block_timestamp: (bigint | number) }[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+
     /** owner_of(token_id: field) */
     owner_of: ((token_id: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
-
-    /** process_message(message_ciphertext: struct, message_context: struct) */
-    process_message: ((message_ciphertext: FieldLike[], message_context: { tx_hash: FieldLike, unique_note_hashes_in_tx: FieldLike[], first_nullifier_in_tx: FieldLike, recipient: AztecAddressLike }) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** public_dispatch(selector: field) */
     public_dispatch: ((selector: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
@@ -276,8 +276,8 @@ upgrade_authority: {
     /** set_whitelist_start_time_and_duration(start_time: integer, duration_secs: integer) */
     set_whitelist_start_time_and_duration: ((start_time: (bigint | number), duration_secs: (bigint | number)) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** sync_state() */
-    sync_state: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** sync_state(scope: struct) */
+    sync_state: ((scope: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** transfer_private_to_private(from: struct, to: struct, token_id: field, _nonce: field) */
     transfer_private_to_private: ((from: AztecAddressLike, to: AztecAddressLike, token_id: FieldLike, _nonce: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;

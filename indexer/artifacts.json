@@ -9,11 +9,14 @@
       "description": "Example NFT contract with Transfer and MetadataUpdate events",
       "artifact_path": "./artifacts/NFT.ts",
       "enabled": true,
-      "event_types": ["NFTTransfer", "MetadataUpdate"],
+      "event_types": [
+        "NFTTransfer",
+        "MetadataUpdate"
+      ],
       "start_block": {
-        "devnet": 0,
-        "testnet": 0,
-        "sandbox": 0
+        "devnet": 54707,
+        "testnet": 54707,
+        "sandbox": 54707
       }
     }
   ]

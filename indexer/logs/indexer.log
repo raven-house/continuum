@@ -234,3 +234,209 @@
 2026-01-06 17:27:00 [INFO]: Scheduled task triggered for DEVNET
 2026-01-06 17:27:00 [INFO]: Starting indexer for mode: DEVNET
 2026-01-06 17:27:00 [INFO]: Shutting down gracefully...
+2026-04-24 14:30:59 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:30:59 [INFO]: MongoDB connected
+2026-04-24 14:31:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:31:00 [ERROR]: Indexer failed. Mode: testnet, Error: SyntaxError: JSON Parse error: Unexpected EOF
+2026-04-24 14:31:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:31:25 [ERROR]: Indexer failed. Mode: testnet, Error: SyntaxError: JSON Parse error: Unexpected EOF
+2026-04-24 14:31:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:31:50 [ERROR]: Indexer failed. Mode: testnet, Error: SyntaxError: JSON Parse error: Unexpected EOF
+2026-04-24 14:31:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:32:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:32:00 [ERROR]: Indexer failed. Mode: testnet, Error: SyntaxError: JSON Parse error: Unexpected EOF
+2026-04-24 14:32:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:32:25 [ERROR]: Indexer failed. Mode: testnet, Error: SyntaxError: JSON Parse error: Unexpected EOF
+2026-04-24 14:32:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:32:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:32:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:33:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:33:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:33:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:33:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:33:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:33:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:33:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:34:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:34:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:34:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:34:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:34:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:34:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:34:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:35:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:35:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:35:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:35:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:35:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:35:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:35:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:36:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:36:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:36:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:36:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:36:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:36:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:36:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:37:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:37:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:37:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:37:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:37:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:37:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:37:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:38:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:38:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:38:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:38:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:38:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:38:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:38:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:39:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:39:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:39:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:39:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: undefined is not an object (evaluating 'artifactConfigs')
+2026-04-24 14:39:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:39:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:39:59 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:40:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:40:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:40:12 [INFO]: Shutting down...
+2026-04-24 14:41:50 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:41:50 [INFO]: MongoDB connected
+2026-04-24 14:42:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:42:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:42:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:42:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:42:46 [INFO]: Shutting down...
+2026-04-24 14:42:48 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:42:48 [INFO]: MongoDB connected
+2026-04-24 14:42:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:42:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:43:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:43:01 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:43:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:43:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:43:48 [INFO]: MongoDB connections — current: 7, available: 8185
+2026-04-24 14:43:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:43:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:44:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:44:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:44:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:44:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:44:30 [INFO]: Shutting down...
+2026-04-24 14:44:31 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:44:31 [INFO]: MongoDB connected
+2026-04-24 14:44:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:44:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:45:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:45:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:45:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:45:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:45:31 [INFO]: MongoDB connections — current: 16, available: 8176
+2026-04-24 14:45:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:45:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:46:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:46:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:46:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:46:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:46:31 [INFO]: MongoDB connections — current: 16, available: 8176
+2026-04-24 14:46:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:46:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:47:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:47:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:47:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:47:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:47:31 [INFO]: MongoDB connections — current: 16, available: 8176
+2026-04-24 14:47:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:47:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:48:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:48:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:48:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:48:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:48:31 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:48:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:48:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:49:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:49:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:49:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:49:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:49:31 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:49:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:49:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:50:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:50:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:50:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:50:25 [INFO]: Shutting down...
+2026-04-24 14:51:53 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:51:53 [INFO]: MongoDB connected
+2026-04-24 14:52:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:52:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:52:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:52:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:52:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:52:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:52:53 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:53:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:53:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:53:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:53:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:53:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:53:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:53:53 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:54:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:54:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:54:11 [INFO]: Shutting down...
+2026-04-24 14:54:25 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:54:25 [INFO]: MongoDB connected
+2026-04-24 14:54:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:54:51 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:55:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:55:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:55:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:55:25 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:55:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:55:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:55:50 [INFO]: Shutting down...
+2026-04-24 14:56:01 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:56:01 [INFO]: MongoDB connected
+2026-04-24 14:56:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:56:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:56:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:56:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:57:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:57:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:57:01 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:57:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:57:25 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:57:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:57:50 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:58:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:58:00 [ERROR]: Indexer failed. Mode: testnet, Error: TypeError: {} is not iterable
+2026-04-24 14:58:01 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:58:03 [INFO]: Shutting down...
+2026-04-24 14:58:04 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:58:04 [INFO]: MongoDB connected
+2026-04-24 14:58:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:58:25 [INFO]: Shutting down...
+2026-04-24 14:58:26 [INFO]: Cron scheduled: TESTNET every 25 seconds
+2026-04-24 14:58:26 [INFO]: MongoDB connected
+2026-04-24 14:58:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:58:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:59:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:59:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:59:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:59:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 14:59:26 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 14:59:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 14:59:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 15:00:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 15:00:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 15:00:25 [INFO]: Starting indexer for mode: testnet
+2026-04-24 15:00:25 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 15:00:26 [INFO]: MongoDB connections — current: 18, available: 8174
+2026-04-24 15:00:50 [INFO]: Starting indexer for mode: testnet
+2026-04-24 15:00:50 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 15:01:00 [INFO]: Starting indexer for mode: testnet
+2026-04-24 15:01:00 [INFO]: Indexer finished. Mode: testnet
+2026-04-24 15:01:19 [INFO]: Shutting down...
