@@ -26,15 +26,12 @@ COPY --from=builder /app/index.ts ./
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/types.d.ts ./
-COPY --from=builder /app/artifacts ./artifacts
-COPY --from=builder /app/artifacts.json ./artifacts.json
 
 # Create logs directory
 RUN mkdir -p /app/logs
 
 # Environment
 ENV NODE_ENV=production
-ENV CONTINUUM_ARTIFACTS_CONFIG_PATH=/app/artifacts.json
 
 # Run the indexer
 CMD ["bun", "run", "start"]

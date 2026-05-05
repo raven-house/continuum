@@ -1,4 +1,3 @@
-import path from 'path'
 import { ArtifactRegistry, type LoadedArtifact } from './ArtifactRegistry'
 import { logPublicEventsFromNode, decodeEvents } from '../shared/getPublicEvents'
 import { getAztecNode } from '../shared/aztecNode'
@@ -27,13 +26,7 @@ export class EventIndexer {
 
   constructor(network: string) {
     this.network = network.toLowerCase()
-
-    // artifacts.json lives at the root of the project; in Docker it's mounted at /app/artifacts.json
-    const configPath =
-      process.env.CONTINUUM_ARTIFACTS_CONFIG_PATH ??
-      path.resolve(process.cwd(), 'artifacts.json')
-
-    this.registry = new ArtifactRegistry(configPath)
+    this.registry = new ArtifactRegistry(this.network)
   }
 
   async run(): Promise<void> {
@@ -48,7 +41,7 @@ export class EventIndexer {
     const latestBlock = await aztecNode.getBlockNumber()
     logger.info(`Network "${this.network}" — latest block: ${latestBlock}`)
 
-    const artifacts = await this.registry.getEnabledArtifacts(this.network)
+    const artifacts = await this.registry.getEnabledArtifacts()
     if (artifacts.length === 0) {
       logger.info(`No enabled artifacts for network "${this.network}"`)
       return

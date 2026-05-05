@@ -25,12 +25,19 @@ try {
  * @param {import('fastify').FastifyPluginAsync} fastify
  */
 export default async function (fastify) {
-  // POST /contracts/upload - Upload ABI and extract events
+  // POST /contracts/upload - Upload ABI, extract events, register for indexing
   fastify.post(
     '/upload',
     { schema: schemas.uploadContract },
     async function (request, reply) {
-      const { abi, name } = request.body;
+      const {
+        artifact_id,
+        abi,
+        name,
+        enabled = true,
+        start_block = {},
+        event_types = []
+      } = request.body;
 
       // Validate ABI structure
       const validation = validateAbi(abi);
@@ -39,22 +46,44 @@ export default async function (fastify) {
         return;
       }
 
+      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const contractsCollection = db.collection('contracts');
+
+      // Enforce unique artifact_id
+      const existing = await contractsCollection.findOne({ artifact_id });
+      if (existing) {
+        reply.conflict(
+          `Artifact with id "${artifact_id}" already exists (id: ${existing._id})`
+        );
+        return;
+      }
+
       try {
         // Process the ABI to extract events
         const processedContract = await processContractAbi(abi);
 
-        // Override contract name if provided
         if (name) {
           processedContract.contractName = name;
         }
 
-        // Get MongoDB collection
-        const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-        const contractsCollection = db.collection('contracts');
+        // Validate event_types against what the ABI actually contains
+        if (event_types.length > 0) {
+          const knownNames = processedContract.events.map(e => e.name);
+          const unknown = event_types.filter(t => !knownNames.includes(t));
+          if (unknown.length > 0) {
+            reply.badRequest(
+              `Unknown event_types: [${unknown.join(', ')}]. Available: [${knownNames.join(', ')}]`
+            );
+            return;
+          }
+        }
 
-        // Store in MongoDB
         const docToInsert = {
+          artifact_id,
           contractName: processedContract.contractName,
+          enabled,
+          start_block,
+          event_types,
           eventCount: processedContract.eventCount,
           events: processedContract.events,
           rawAbi: processedContract.rawAbi,
@@ -64,11 +93,14 @@ export default async function (fastify) {
 
         const result = await contractsCollection.insertOne(docToInsert);
 
-        // Return success response
         return {
           success: true,
           contractId: result.insertedId.toString(),
+          artifact_id,
           contractName: processedContract.contractName,
+          enabled,
+          start_block,
+          event_types,
           eventCount: processedContract.eventCount,
           events: processedContract.events
         };
@@ -205,6 +237,55 @@ export default async function (fastify) {
       };
     }
   );
+
+  // PATCH /contracts/:id - Update indexing config (enabled, start_block, event_types)
+  fastify.patch('/:id', async function (request, reply) {
+    const { id } = request.params;
+    const { enabled, start_block, event_types } = request.body ?? {};
+
+    const updates = {};
+    if (enabled !== undefined) updates.enabled = enabled;
+    if (start_block !== undefined) updates.start_block = start_block;
+    if (event_types !== undefined) updates.event_types = event_types;
+
+    if (Object.keys(updates).length === 0) {
+      reply.badRequest(
+        'No updatable fields provided (enabled, start_block, event_types)'
+      );
+      return;
+    }
+
+    try {
+      const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const contractsCollection = db.collection('contracts');
+
+      const result = await contractsCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: updates },
+        { returnDocument: 'after' }
+      );
+
+      if (!result) {
+        reply.notFound('Contract not found');
+        return;
+      }
+
+      return {
+        success: true,
+        contractId: result._id.toString(),
+        artifact_id: result.artifact_id,
+        enabled: result.enabled,
+        start_block: result.start_block,
+        event_types: result.event_types
+      };
+    } catch (error) {
+      if (error.message.includes('ObjectId')) {
+        reply.badRequest('Invalid contract ID format');
+        return;
+      }
+      throw error;
+    }
+  });
 
   // DELETE /contracts/:id - Delete a contract (optional admin endpoint)
   fastify.delete('/:id', async function (request, reply) {

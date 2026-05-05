@@ -5,10 +5,15 @@ const schemas = Object.freeze({
     $id: 'upload-contract',
     tags,
     description:
-      'Upload a contract ABI JSON and extract events with their selectors',
+      'Upload a contract ABI JSON, extract events, and register it for indexing',
     body: {
       type: 'object',
       properties: {
+        artifact_id: {
+          type: 'string',
+          description:
+            'Unique identifier for this artifact (used by the indexer)'
+        },
         name: {
           type: 'string',
           description: 'Optional contract name override'
@@ -16,9 +21,31 @@ const schemas = Object.freeze({
         abi: {
           type: 'object',
           description: 'The contract ABI JSON (Noir format)'
+        },
+        enabled: {
+          type: 'boolean',
+          description:
+            'Whether the indexer should index this artifact (default: true)',
+          default: true
+        },
+        start_block: {
+          type: 'object',
+          description: 'Per-network block number to start indexing from',
+          properties: {
+            devnet: { type: 'number' },
+            testnet: { type: 'number' },
+            sandbox: { type: 'number' }
+          },
+          additionalProperties: false
+        },
+        event_types: {
+          type: 'array',
+          description:
+            'Event names to index (omit or leave empty to index all events)',
+          items: { type: 'string' }
         }
       },
-      required: ['abi']
+      required: ['artifact_id', 'abi']
     },
     response: {
       200: {
