@@ -1,6 +1,6 @@
 /**
  * ABI Processor Service
- * 
+ *
  * Processes contract ABI JSON to extract events and compute their selectors.
  * Uses Poseidon2 hashing for event selector computation (matching Noir's approach).
  */
@@ -14,10 +14,11 @@ import { Barretenberg } from '@aztec/bb.js';
  */
 export function loadContractArtifact(abiJson) {
   // The events are typically in outputs.structs.events in Noir ABI
-  const events = abiJson.outputs?.structs?.events || 
-                 abiJson.abi?.outputs?.structs?.events ||
-                 [];
-  
+  const events =
+    abiJson.outputs?.structs?.events ||
+    abiJson.abi?.outputs?.structs?.events ||
+    [];
+
   return {
     ...abiJson,
     outputs: {
@@ -43,31 +44,31 @@ function abiTypeToSignatureType(type) {
   switch (type.kind) {
     case 'field':
       return 'Field';
-    
+
     case 'boolean':
       return 'bool';
-    
+
     case 'integer':
       return type.sign === 'signed' ? `i${type.width}` : `u${type.width}`;
-    
+
     case 'string':
       return `str<${type.length}>`;
-    
+
     case 'array':
       return `[${abiTypeToSignatureType(type.type)};${type.length}]`;
-    
+
     case 'struct':
       if (!type.fields || !Array.isArray(type.fields)) {
         return '()';
       }
       return `(${type.fields.map(f => abiTypeToSignatureType(f.type)).join(',')})`;
-    
+
     case 'tuple':
       if (!type.fields || !Array.isArray(type.fields)) {
         return '()';
       }
       return `(${type.fields.map(abiTypeToSignatureType).join(',')})`;
-    
+
     default:
       return 'Field';
   }
@@ -83,7 +84,7 @@ function generateEventSignature(name, fields) {
   if (!fields || !Array.isArray(fields)) {
     return `${name}()`;
   }
-  
+
   const paramTypes = fields.map(f => abiTypeToSignatureType(f.type));
   return `${name}(${paramTypes.join(',')})`;
 }
@@ -102,10 +103,10 @@ async function poseidon2HashBytes(bb, data) {
     const hex = '0x' + chunk.toString('hex').padStart(64, '0');
     fields.push(BigInt(hex));
   }
-  
+
   // Compute Poseidon2 hash
   const hash = await bb.poseidon2Hash(fields);
-  
+
   // Convert hash to buffer (32 bytes)
   const hashHex = hash.toString(16).padStart(64, '0');
   return Buffer.from(hashHex, 'hex');
@@ -120,10 +121,10 @@ async function poseidon2HashBytes(bb, data) {
 async function computeEventSelector(bb, signature) {
   // Remove whitespace from signature
   const cleanSignature = signature.replace(/\s/g, '');
-  
+
   // Hash the signature using Poseidon2
   const hash = await poseidon2HashBytes(bb, Buffer.from(cleanSignature));
-  
+
   // Take last 4 bytes for selector
   const selectorBytes = hash.slice(-4);
   return '0x' + selectorBytes.toString('hex');
@@ -143,22 +144,22 @@ async function processEvents(events) {
   let bb;
   try {
     bb = await Barretenberg.new();
-    
+
     const processedEvents = await Promise.all(
-      events.map(async (event) => {
+      events.map(async event => {
         // Extract event name from path (e.g., "contract::MyEvent" -> "MyEvent")
         const eventPath = event.path || '';
         const eventName = eventPath.split('::').pop() || 'UnknownEvent';
-        
+
         // Generate event signature
         const eventSignature = generateEventSignature(eventName, event.fields);
-        
+
         // Compute event selector
         const eventSelector = await computeEventSelector(bb, eventSignature);
-        
+
         // Extract field names
         const fieldNames = (event.fields || []).map(f => f.name);
-        
+
         return {
           name: eventName,
           path: eventPath,
@@ -170,7 +171,7 @@ async function processEvents(events) {
         };
       })
     );
-    
+
     return processedEvents;
   } finally {
     if (bb) {
@@ -192,19 +193,20 @@ export async function processContractAbi(abiJson) {
 
   // Load artifact
   const artifact = loadContractArtifact(abiJson);
-  
+
   // Extract contract name from various possible locations
-  const contractName = abiJson.name || 
-                       abiJson.contract_name || 
-                       (artifact.outputs?.structs?.events?.[0]?.path?.split('::')[0]) ||
-                       'UnknownContract';
-  
+  const contractName =
+    abiJson.name ||
+    abiJson.contract_name ||
+    artifact.outputs?.structs?.events?.[0]?.path?.split('::')[0] ||
+    'UnknownContract';
+
   // Get events from artifact
   const rawEvents = artifact.outputs?.structs?.events || [];
-  
+
   // Process events to compute selectors
   const processedEvents = await processEvents(rawEvents);
-  
+
   return {
     contractName,
     eventCount: processedEvents.length,
@@ -221,16 +223,18 @@ export async function processContractAbi(abiJson) {
  */
 export function validateAbi(abiJson) {
   const errors = [];
-  
+
   if (!abiJson || typeof abiJson !== 'object') {
     return { valid: false, errors: ['ABI must be a valid JSON object'] };
   }
-  
+
   // Check for required fields (Noir ABI is flexible, so we just do basic checks)
   if (!abiJson.abi && !abiJson.outputs && !abiJson.file_map) {
-    errors.push('ABI appears to be missing standard Noir ABI structure (no abi, outputs, or file_map fields)');
+    errors.push(
+      'ABI appears to be missing standard Noir ABI structure (no abi, outputs, or file_map fields)'
+    );
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,

@@ -4,7 +4,8 @@ const schemas = Object.freeze({
   uploadContract: {
     $id: 'upload-contract',
     tags,
-    description: 'Upload a contract ABI JSON and extract events with their selectors',
+    description:
+      'Upload a contract ABI JSON and extract events with their selectors',
     body: {
       type: 'object',
       properties: {
@@ -59,7 +60,8 @@ const schemas = Object.freeze({
                 },
                 eventSelector: {
                   type: 'string',
-                  description: 'Event selector as hex string (e.g., "0x12345678")'
+                  description:
+                    'Event selector as hex string (e.g., "0x12345678")'
                 },
                 fieldNames: {
                   type: 'array',

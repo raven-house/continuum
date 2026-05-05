@@ -52,11 +52,13 @@ async function confirmDeletion(collections, isSingleTarget) {
     console.log(`Name: ${target.name}`);
     console.log(`Collection ID: ${target.collection_id}`);
     console.log('\nThis action CANNOT be undone!');
-    
+
     // For single deletion, we ask them to type the collection_id to confirm
-    console.log(`\nTo proceed, type the Collection ID exactly: ${target.collection_id}`);
+    console.log(
+      `\nTo proceed, type the Collection ID exactly: ${target.collection_id}`
+    );
     const answer = await askQuestion('> ');
-    
+
     // Loose comparison (==) allows string input to match number ID if needed
     // But strict string comparison is safer if we convert both to strings
     if (String(answer).trim() !== String(target.collection_id)) {
@@ -64,7 +66,6 @@ async function confirmDeletion(collections, isSingleTarget) {
       return false;
     }
     return true;
-
   } else {
     // Original Bulk Logic
     console.log(
@@ -72,7 +73,7 @@ async function confirmDeletion(collections, isSingleTarget) {
     );
     console.log('This action CANNOT be undone!\n');
     console.log('To proceed, type exactly: ' + BULK_CONFIRMATION_PHRASE);
-    
+
     const answer = await askQuestion('> ');
 
     if (answer !== BULK_CONFIRMATION_PHRASE) {
@@ -110,7 +111,9 @@ async function getMongoClient() {
   const { CONTINUUM_DB_CONNECTION_STRING } = process.env;
 
   if (!CONTINUUM_DB_CONNECTION_STRING) {
-    throw new Error('CONTINUUM_DB_CONNECTION_STRING must be set in environment');
+    throw new Error(
+      'CONTINUUM_DB_CONNECTION_STRING must be set in environment'
+    );
   }
 
   const client = new MongoClient(CONTINUUM_DB_CONNECTION_STRING);
@@ -131,18 +134,18 @@ async function getCollectionsToDelete(supabase, targetId = null) {
     console.log('\n========================================');
     console.log(`Fetching specific collection_id: ${targetId}...`);
     console.log('========================================\n');
-    
+
     query = query.eq('collection_id', targetId);
   } else {
     console.log('\n========================================');
     console.log('Fetching old collections to delete (BULK MODE)...');
     console.log(`Cutoff date: ${CUTOFF_DATE}`);
-    console.log('Excluding: featured collections AND collections created ON OR AFTER cutoff date');
+    console.log(
+      'Excluding: featured collections AND collections created ON OR AFTER cutoff date'
+    );
     console.log('========================================\n');
 
-    query = query
-      .eq('is_featured', false)
-      .lt('created_at', CUTOFF_DATE);
+    query = query.eq('is_featured', false).lt('created_at', CUTOFF_DATE);
   }
 
   const { data, error } = await query;
@@ -159,7 +162,9 @@ async function getCollectionsToDelete(supabase, targetId = null) {
 }
 
 async function deleteFromSupabase(supabase, collectionId) {
-  console.log(`\n  [Supabase] Deleting data for collection_id: ${collectionId}`);
+  console.log(
+    `\n  [Supabase] Deleting data for collection_id: ${collectionId}`
+  );
 
   // Delete in order to respect foreign key constraints
   const tables = [

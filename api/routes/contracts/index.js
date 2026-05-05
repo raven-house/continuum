@@ -1,11 +1,14 @@
 /**
  * Contract ABI Upload and Event Management Routes
- * 
+ *
  * Endpoints for uploading contract ABIs, extracting events,
  * and querying stored contract events.
  */
 
-import { processContractAbi, validateAbi } from '../../services/abiProcessor.js';
+import {
+  processContractAbi,
+  validateAbi
+} from '../../services/abiProcessor.js';
 import schemas from './schemas.js';
 
 // Get ObjectId from the mongodb package
@@ -39,7 +42,7 @@ export default async function (fastify) {
       try {
         // Process the ABI to extract events
         const processedContract = await processContractAbi(abi);
-        
+
         // Override contract name if provided
         if (name) {
           processedContract.contractName = name;
@@ -69,61 +72,58 @@ export default async function (fastify) {
           eventCount: processedContract.eventCount,
           events: processedContract.events
         };
-
       } catch (error) {
         fastify.log.error(error, 'Failed to process contract ABI');
-        reply.internalServerError('Failed to process contract ABI: ' + error.message);
+        reply.internalServerError(
+          'Failed to process contract ABI: ' + error.message
+        );
         return;
       }
     }
   );
 
   // GET /contracts - Get all contracts with pagination
-  fastify.get(
-    '/',
-    { schema: schemas.getContracts },
-    async function (request) {
-      const { page = 1, limit = 20 } = request.query;
+  fastify.get('/', { schema: schemas.getContracts }, async function (request) {
+    const { page = 1, limit = 20 } = request.query;
 
-      const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-      const contractsCollection = db.collection('contracts');
+    const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+    const contractsCollection = db.collection('contracts');
 
-      // Get total count
-      const total = await contractsCollection.countDocuments();
+    // Get total count
+    const total = await contractsCollection.countDocuments();
 
-      // Get paginated results
-      const contracts = await contractsCollection
-        .find({})
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .project({
-          _id: 1,
-          contractName: 1,
-          eventCount: 1,
-          'events.name': 1,
-          'events.eventSelector': 1,
-          'events.fieldCount': 1,
-          processedAt: 1,
-          createdAt: 1
-        })
-        .toArray();
+    // Get paginated results
+    const contracts = await contractsCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .project({
+        _id: 1,
+        contractName: 1,
+        eventCount: 1,
+        'events.name': 1,
+        'events.eventSelector': 1,
+        'events.fieldCount': 1,
+        processedAt: 1,
+        createdAt: 1
+      })
+      .toArray();
 
-      // Transform _id to string
-      const formattedContracts = contracts.map(c => ({
-        ...c,
-        _id: c._id.toString()
-      }));
+    // Transform _id to string
+    const formattedContracts = contracts.map(c => ({
+      ...c,
+      _id: c._id.toString()
+    }));
 
-      return {
-        contracts: formattedContracts,
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit)
-      };
-    }
-  );
+    return {
+      contracts: formattedContracts,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    };
+  });
 
   // GET /contracts/:id - Get contract by ID
   fastify.get(
@@ -149,7 +149,6 @@ export default async function (fastify) {
           ...contract,
           _id: contract._id.toString()
         };
-
       } catch (error) {
         if (error.message.includes('ObjectId')) {
           reply.badRequest('Invalid contract ID format');
@@ -208,36 +207,32 @@ export default async function (fastify) {
   );
 
   // DELETE /contracts/:id - Delete a contract (optional admin endpoint)
-  fastify.delete(
-    '/:id',
-    async function (request, reply) {
-      const { id } = request.params;
+  fastify.delete('/:id', async function (request, reply) {
+    const { id } = request.params;
 
-      try {
-        const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-        const contractsCollection = db.collection('contracts');
+    try {
+      const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const contractsCollection = db.collection('contracts');
 
-        const result = await contractsCollection.deleteOne({
-          _id: new ObjectId(id)
-        });
+      const result = await contractsCollection.deleteOne({
+        _id: new ObjectId(id)
+      });
 
-        if (result.deletedCount === 0) {
-          reply.notFound('Contract not found');
-          return;
-        }
-
-        return {
-          success: true,
-          message: 'Contract deleted successfully'
-        };
-
-      } catch (error) {
-        if (error.message.includes('ObjectId')) {
-          reply.badRequest('Invalid contract ID format');
-          return;
-        }
-        throw error;
+      if (result.deletedCount === 0) {
+        reply.notFound('Contract not found');
+        return;
       }
+
+      return {
+        success: true,
+        message: 'Contract deleted successfully'
+      };
+    } catch (error) {
+      if (error.message.includes('ObjectId')) {
+        reply.badRequest('Invalid contract ID format');
+        return;
+      }
+      throw error;
     }
-  );
+  });
 }
