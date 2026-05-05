@@ -33,18 +33,17 @@ COPY --from=builder /app/index.js ./
 COPY --from=builder /app/plugins ./plugins
 COPY --from=builder /app/routes ./routes
 COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/services ./services
 
 # Environment
 ENV NODE_ENV=production
 
 # Expose API port
-EXPOSE 3000
+EXPOSE 3004
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:3004/health || exit 1
 
 # Run the API server
 CMD ["npm", "run", "start"]

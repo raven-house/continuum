@@ -1,5 +1,4 @@
 
 ### Get token events for testnet
-GET http://localhost:3000/health HTTP/1.1
-
+GET http://localhost:3004/health HTTP/1.1
 

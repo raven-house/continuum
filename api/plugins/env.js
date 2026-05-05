@@ -7,15 +7,22 @@ export default fp(
       dotenv: true,
       schema: {
         type: 'object',
-        required: ['RD_PORT'],
         properties: {
           RD_HOST: {
             type: 'string',
-            default: '127.0.0.1'
+            default: '0.0.0.0'
           },
           RD_PORT: {
             type: 'string',
-            default: '80'
+            default: '3004'
+          },
+          CONTINUUM_API_HOST: {
+            type: 'string',
+            default: '0.0.0.0'
+          },
+          CONTINUUM_API_PORT: {
+            type: 'string',
+            default: '3004'
           },
           RD_ADMIN_TOKEN: {
             type: 'string'

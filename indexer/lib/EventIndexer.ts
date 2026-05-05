@@ -9,11 +9,16 @@ import { DEVNET, SANDBOX, TESTNET } from '../shared/aztec-config'
 
 const BLOCK_RANGE = Number(process.env.CONTINUUM_INDEXER_BLOCK_RANGE ?? 14)
 
-// Map network name to the env var that holds its Aztec node URL
-const NODE_URL_MAP: Record<string, string | undefined> = {
+const DEFAULT_NODE_URL_MAP: Record<string, string | undefined> = {
   devnet: DEVNET.network.nodeUrl,
   testnet: TESTNET.network.nodeUrl,
   sandbox: SANDBOX.network.nodeUrl,
+}
+
+const ENV_NODE_URL_MAP: Record<string, string | undefined> = {
+  devnet: process.env.CONTINUUM_AZTEC_NODE_URL_DEVNET,
+  testnet: process.env.CONTINUUM_AZTEC_NODE_URL_TESTNET,
+  sandbox: process.env.CONTINUUM_AZTEC_NODE_URL_SANDBOX,
 }
 
 export class EventIndexer {
@@ -32,7 +37,7 @@ export class EventIndexer {
   }
 
   async run(): Promise<void> {
-    const nodeUrl = NODE_URL_MAP[this.network]
+    const nodeUrl = ENV_NODE_URL_MAP[this.network] || DEFAULT_NODE_URL_MAP[this.network]
     console.log(`Starting indexer for network "${this.network}" with node URL: ${nodeUrl}`)
     if (!nodeUrl) {
       logger.warn(`No Aztec node URL for network "${this.network}", skipping`)

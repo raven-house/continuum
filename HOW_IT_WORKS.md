@@ -185,7 +185,7 @@ continuum/
 │       ├── deploy-migration.ts    # Deploy MigrationClaims
 │       └── claim-migration.ts     # Create attestation + call claim()
 │
-├── functions/                # Event indexer (cron job, reads old rollup)
+├── indexer/                  # Event indexer (scheduler, reads old rollup)
 ├── api/                      # Fastify REST API
 └── database/                 # MongoDB init scripts
 ```

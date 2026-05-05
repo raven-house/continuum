@@ -1,4 +1,3 @@
-import cron from 'node-cron';
 import fs from 'fs';
 import path from 'path';
 import winston from 'winston';
@@ -24,6 +23,12 @@ const logger = winston.createLogger({
   ],
 });
 
+const intervalMs = Number(process.env.CONTINUUM_INDEXER_INTERVAL ?? 25000);
+const networks = (process.env.CONTINUUM_INDEXER_NETWORKS ?? 'testnet')
+  .split(',')
+  .map(network => network.trim().toLowerCase())
+  .filter(Boolean);
+
 // Prevent the same network from running two indexer cycles concurrently
 const runningInstances = new Set<string>();
 
@@ -46,17 +51,21 @@ async function runHandler(mode: string) {
   }
 }
 
-// Index every 25 seconds
-cron.schedule('*/25 * * * * *', () => {
-  runHandler('testnet');
-});
-
-logger.info('Cron scheduled: TESTNET every 25 seconds');
+async function runAllNetworks() {
+  await Promise.all(networks.map(network => runHandler(network)));
+}
 
 async function initializeApp() {
   try {
     await mongodbConnection.connect();
     logger.info('MongoDB connected');
+    logger.info(
+      `Indexer scheduled for networks [${networks.join(', ')}] every ${intervalMs}ms`
+    );
+    await runAllNetworks();
+    setInterval(() => {
+      void runAllNetworks();
+    }, intervalMs);
   } catch (error) {
     logger.error('Failed to connect to MongoDB:', error);
     process.exit(1);

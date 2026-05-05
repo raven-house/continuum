@@ -1,0 +1,9 @@
+2026-05-05 08:22:57 [INFO]: MongoDB connected
+2026-05-05 08:22:57 [INFO]: Indexer scheduled for networks [testnet] every 30000ms
+2026-05-05 08:22:57 [INFO]: Starting indexer for mode: testnet
+2026-05-05 08:22:59 [INFO]: Indexer finished. Mode: testnet
+2026-05-05 08:23:28 [INFO]: Starting indexer for mode: testnet
+2026-05-05 08:23:29 [INFO]: Indexer finished. Mode: testnet
+2026-05-05 08:23:57 [INFO]: MongoDB connections — current: 22, available: 100278
+2026-05-05 08:23:59 [INFO]: Starting indexer for mode: testnet
+2026-05-05 08:23:59 [INFO]: Indexer finished. Mode: testnet

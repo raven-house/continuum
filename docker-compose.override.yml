@@ -7,8 +7,10 @@
 services:
   indexer:
     volumes:
-      - ./functions:/app
+      - ./indexer:/app
       - /app/node_modules
+    environment:
+      CONTINUUM_ARTIFACTS_CONFIG_PATH: /app/artifacts.json
 
   api:
     volumes:

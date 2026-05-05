@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongodb:
@@ -23,11 +21,56 @@ services:
       timeout: 5s
       retries: 5
 
+  indexer:
+    build:
+      context: .
+      dockerfile: indexer/Dockerfile
+    container_name: continuum-indexer
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      CONTINUUM_DB_CONNECTION_STRING: ${CONTINUUM_DB_CONNECTION_STRING:-mongodb://root:password@mongodb:27017}
+      CONTINUUM_DB_NAME: ${CONTINUUM_DB_NAME:-continuum}
+      CONTINUUM_INDEXER_INTERVAL: ${CONTINUUM_INDEXER_INTERVAL:-30000}
+      CONTINUUM_INDEXER_BLOCK_RANGE: ${CONTINUUM_INDEXER_BLOCK_RANGE:-14}
+      CONTINUUM_INDEXER_MAX_RETRIES: ${CONTINUUM_INDEXER_MAX_RETRIES:-3}
+      CONTINUUM_INDEXER_NETWORKS: ${CONTINUUM_INDEXER_NETWORKS:-testnet}
+      CONTINUUM_AZTEC_NODE_URL_DEVNET: ${CONTINUUM_AZTEC_NODE_URL_DEVNET:-}
+      CONTINUUM_AZTEC_NODE_URL_TESTNET: ${CONTINUUM_AZTEC_NODE_URL_TESTNET:-}
+      CONTINUUM_AZTEC_NODE_URL_SANDBOX: ${CONTINUUM_AZTEC_NODE_URL_SANDBOX:-http://host.docker.internal:8080}
+      CONTINUUM_ARTIFACTS_CONFIG_PATH: /app/artifacts.json
+      NODE_ENV: ${NODE_ENV:-production}
+    networks:
+      - continuum-network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: continuum-api
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      RD_HOST: ${RD_HOST:-0.0.0.0}
+      RD_PORT: ${RD_PORT:-3004}
+      CONTINUUM_API_HOST: ${CONTINUUM_API_HOST:-0.0.0.0}
+      CONTINUUM_API_PORT: ${CONTINUUM_API_PORT:-3004}
+      CONTINUUM_DB_CONNECTION_STRING: ${CONTINUUM_DB_CONNECTION_STRING:-mongodb://root:password@mongodb:27017}
+      CONTINUUM_DB_NAME: ${CONTINUUM_DB_NAME:-continuum}
+      CONTINUUM_CORS_ORIGIN: ${CONTINUUM_CORS_ORIGIN:-*}
+      NODE_ENV: ${NODE_ENV:-production}
+    networks:
+      - continuum-network
+
 volumes:
   mongodb_data:
     name: continuum_mongodb_data
-  indexer_logs:
-    name: continuum_indexer_logs
 
 networks:
   continuum-network:

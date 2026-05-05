@@ -43,7 +43,7 @@ dev:
 	docker-compose -f docker-compose.local.yml up -d
 	@echo "Development services starting..."
 	@sleep 3
-	@echo "API available at: http://localhost:3000"
+	@echo "API available at: http://localhost:3004"
 	@echo "MongoDB available at: localhost:27017"
 
 # Stop development services
@@ -87,13 +87,13 @@ clean:
 # Check health of all services
 health:
 	@echo "Checking service health..."
-	@curl -s http://localhost:3000/health && echo " ✓ API is healthy" || echo " ✗ API is not responding"
+	@curl -s http://localhost:3004/health && echo " ✓ API is healthy" || echo " ✗ API is not responding"
 	@docker-compose ps | grep -q "Up" && echo " ✓ Services are running" || echo " ✗ Some services are down"
 
 # Check sync status via API
 status:
 	@echo "Checking sync status..."
-	@curl -s http://localhost:3000/sync | head -20
+	@curl -s http://localhost:3004/health | head -20
 
 # View indexer logs in real-time with grep
 watch-indexer:

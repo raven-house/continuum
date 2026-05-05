@@ -104,7 +104,10 @@ collection = await db.createCollection('collection_stats_history');
 await collection.createIndex({ contract_address: 1, timestamp: -1 });
 await collection.createIndex({ timestamp: -1 });
 // TTL index to automatically delete records older than 30 days
-await collection.createIndex({ timestamp: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+await collection.createIndex(
+  { timestamp: 1 },
+  { expireAfterSeconds: 30 * 24 * 60 * 60 }
+);
 console.log('Done');
 
 console.log('Done');
@@ -191,7 +194,10 @@ console.log(`Creating 'collection_stats_history_testnet' collection`);
 collection = await db.createCollection('collection_stats_history_testnet');
 await collection.createIndex({ contract_address: 1, timestamp: -1 });
 await collection.createIndex({ timestamp: -1 });
-await collection.createIndex({ timestamp: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+await collection.createIndex(
+  { timestamp: 1 },
+  { expireAfterSeconds: 30 * 24 * 60 * 60 }
+);
 console.log('Done');
 
 console.log('################ CREATE COLLECTIONS TESTNET END ##############');
@@ -276,7 +282,10 @@ console.log(`Creating 'collection_stats_history_devnet' collection`);
 collection = await db.createCollection('collection_stats_history_devnet');
 await collection.createIndex({ contract_address: 1, timestamp: -1 });
 await collection.createIndex({ timestamp: -1 });
-await collection.createIndex({ timestamp: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+await collection.createIndex(
+  { timestamp: 1 },
+  { expireAfterSeconds: 30 * 24 * 60 * 60 }
+);
 console.log('Done');
 
 console.log('################ CREATE COLLECTIONS DEVNET END ##############');

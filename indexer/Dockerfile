@@ -4,13 +4,13 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 
 # Copy package files
-COPY functions/package.json functions/bun.lockb ./
+COPY indexer/package.json indexer/bun.lockb ./
 
 # Install dependencies
 RUN bun install --frozen-lockfile
 
 # Copy source code
-COPY functions/ ./
+COPY indexer/ ./
 
 # Production stage
 FROM oven/bun:1
@@ -26,18 +26,15 @@ COPY --from=builder /app/index.ts ./
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/types.d.ts ./
+COPY --from=builder /app/artifacts ./artifacts
+COPY --from=builder /app/artifacts.json ./artifacts.json
 
 # Create logs directory
 RUN mkdir -p /app/logs
 
 # Environment
 ENV NODE_ENV=production
-
-# Expose no ports (internal service)
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9999/health || exit 1
+ENV CONTINUUM_ARTIFACTS_CONFIG_PATH=/app/artifacts.json
 
 # Run the indexer
-CMD ["bun", "run", "index.ts"]
+CMD ["bun", "run", "start"]

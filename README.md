@@ -42,7 +42,7 @@ An app state migration service that allows projects to migrate public and privat
 
 3. **Configure artifacts**
 
-   Edit `artifacts.json` to add your Aztec contract artifacts:
+   Edit `indexer/artifacts.json` to add your Aztec contract artifacts:
    ```json
    {
      "artifacts": [
@@ -214,14 +214,14 @@ continuum/
 ├── docker-compose.override.yml  # Dev overrides (auto-merged locally, ignored in prod)
 ├── docker-compose.local.yml     # Alternative local-only setup
 ├── .env.example                 # Environment variables template
-├── artifacts.json               # Contract artifacts configuration
+├── indexer/artifacts.json       # Contract artifacts configuration used by the indexer
 │
 ├── database/                    # MongoDB initialization
 │   └── init.js                  # Collections, indexes, sample data
 │
-├── functions/                   # Event indexer
+├── indexer/                     # Event indexer
 │   ├── Dockerfile               # Indexer container
-│   ├── index.ts                 # Cron scheduler entry point
+│   ├── index.ts                 # Scheduler entry point
 │   ├── lib/                     # Indexer logic (EventIndexer, ArtifactRegistry)
 │   └── shared/                  # Shared utilities (aztecNode, mongodb, utils)
 │
