@@ -1,4 +1,85 @@
+# Continuum API — E2E Migration Test Requests
+# Run the API first: bun run dev (port 3004)
+# Variables — fill in your actual addresses before running
 
-### Get token events for testnet
-GET http://localhost:3004/health HTTP/1.1
+@BASE = http://localhost:3004
+@OLD_WALLET  = 0xaabbccdd11223344556677889900aabbccddee00112233445566778899aabbcc
+@NEW_WALLET  = 0x1122334455667788990011223344556677889900aabbccddeeff001122334455
+@OLD_COL     = 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef
+@NEW_COL     = 0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
 
+###
+# STEP 0 — Health check
+GET {{BASE}}/health HTTP/1.1
+
+###
+# STEP 1 — Get attester public key
+# Copy x and y into your NFT contract constructor call
+GET {{BASE}}/attester HTTP/1.1
+
+###
+# STEP 2 — Register migration key (Alice on OLD rollup, before rollup reset)
+# Save the secretKey from the response — Alice needs it on the new rollup
+POST {{BASE}}/migration/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "walletAddress": "{{OLD_WALLET}}",
+  "network": "devnet"
+}
+
+###
+# STEP 3 — Register collection mapping (collection owner, after deploying on new rollup)
+POST {{BASE}}/collections/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "old_collection_address": "{{OLD_COL}}",
+  "old_network": "devnet",
+  "new_collection_address": "{{NEW_COL}}",
+  "new_network": "devnet2",
+  "collection_name": "My NFT Collection"
+}
+
+###
+# STEP 4 — Request signed migration data (Alice on NEW rollup)
+# Paste the secretKey from Step 2 into migration_key
+POST {{BASE}}/request_data HTTP/1.1
+Content-Type: application/json
+
+{
+  "collection_address": "{{NEW_COL}}",
+  "migration_key": "PASTE_SECRET_KEY_FROM_STEP_2_HERE",
+  "new_wallet_address": "{{NEW_WALLET}}",
+  "event_name": "MetadataUpdate"
+}
+
+###
+# STEP 5 — Verify a migration key (debug/admin use)
+POST {{BASE}}/migration/verify HTTP/1.1
+Content-Type: application/json
+
+{
+  "secretKey": "PASTE_SECRET_KEY_HERE"
+}
+
+###
+# STEP 6 — Check if wallet has a migration key
+GET {{BASE}}/migration/{{OLD_WALLET}} HTTP/1.1
+
+###
+# STEP 7 — Recover: list all events for a wallet via secret key
+POST {{BASE}}/migration/recover HTTP/1.1
+Content-Type: application/json
+
+{
+  "secretKey": "PASTE_SECRET_KEY_HERE"
+}
+
+###
+# STEP 8 — List registered collections
+GET {{BASE}}/collections HTTP/1.1
+
+###
+# STEP 9 — Lookup a specific collection by new address
+GET {{BASE}}/collections/{{NEW_COL}} HTTP/1.1

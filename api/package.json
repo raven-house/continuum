@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@aztec/bb.js": "1.1.2",
+    "@aztec/foundation": "4.2.0",
+    "@aztec/stdlib": "4.2.0",
     "@clerk/fastify": "^1.0.35",
     "@fastify/autoload": "^5.9.0",
     "@fastify/cors": "^9.0.1",
