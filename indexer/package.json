@@ -8,8 +8,8 @@
     "start": "bun run index.ts"
   },
   "dependencies": {
-    "@aztec/aztec.js": "4.2.0-aztecnr-rc.2",
-    "@aztec/stdlib": "4.2.0-aztecnr-rc.2",
+    "@aztec/aztec.js": "4.3.0",
+    "@aztec/stdlib": "4.3.0",
     "@ravenhouse/omni-sdk": "^0.1.44",
     "bignumber.js": "^9.1.2",
     "mongodb": "^6.8.0",

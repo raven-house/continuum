@@ -196,7 +196,7 @@ continuum/
 
 ### Prerequisites
 
-- `aztec-nargo` installed (for compiling Noir contracts)
+- `aztec` CLI installed (for compiling Noir contracts via `aztec compile`)
 - `bun` installed
 - A Sepolia-funded Ethereum private key (for testnet fee juice bridging)
 - Access to the Aztec testnet: `https://rpc.testnet.aztec-labs.com`
@@ -205,7 +205,7 @@ continuum/
 
 ```bash
 cd attestor-contracts/migration_contract
-aztec-nargo compile
+aztec compile
 # Output: target/migration_contract-MigrationClaims.json
 ```
 

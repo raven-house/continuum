@@ -73,7 +73,6 @@ pub contract AttestorExample {
         let attester_pubkey = EmbeddedCurvePoint {
             x: config.attester_pubkey_x,
             y: config.attester_pubkey_y,
-            is_infinite: false,
         };
 
         // Build the expected attestation fields
@@ -104,7 +103,6 @@ pub contract AttestorExample {
         let attester_pubkey = EmbeddedCurvePoint {
             x: config.attester_pubkey_x,
             y: config.attester_pubkey_y,
-            is_infinite: false,
         };
 
         let caller = self.msg_sender();

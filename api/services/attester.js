@@ -5,22 +5,23 @@
  * The signature can be verified on-chain by the NFT contract's migrate_and_claim().
  *
  * Requires in package.json:
- *   "@aztec/bb.js":      "1.1.2"   (top-level, WASM-only — no native binary needed)
- *   "@aztec/foundation": "4.2.0"
- *   "@aztec/stdlib":     "4.2.0"
+ *   "@aztec/foundation": "4.3.0"
+ *   "@aztec/stdlib":     "4.3.0"
  *
  * Env vars:
  *   ATTESTER_SECRET  — 32-byte hex Schnorr secret key
  */
 
-import { Barretenberg } from '@aztec/bb.js';
 import { Fr } from '@aztec/foundation/curves/bn254';
 import { Schnorr } from '@aztec/foundation/crypto/schnorr';
 import { deriveSigningKey } from '@aztec/stdlib/keys';
-
-// DOM_SEP__AUTHWIT_INNER from aztec-packages/v4.2.0 constants.nr line ~180
-// Equivalent to computeInnerAuthWitHash(fields) = Poseidon2([DOM_SEP, ...fields])
-const DOM_SEP_AUTHWIT_INNER = 221354163n;
+// Use the SYNC poseidon (WASM via BarretenbergSync). The async variant in
+// @aztec/stdlib/auth-witness routes through a native `bb` process that isn't
+// present in the container (the bb.js postinstall is blocked in Docker), so it
+// throws "spawn .../bb ENOENT". The sync hash is identical to
+// computeInnerAuthWitHash(fields) = poseidon2HashWithSeparator(fields, AUTHWIT_INNER).
+import { poseidon2HashWithSeparator } from '@aztec/foundation/crypto/sync';
+import { DomainSeparator } from '@aztec/constants';
 
 // "NFTM" — must match MIGRATE_DOMAIN in nft_contract/src/main.nr
 const MIGRATE_DOMAIN = Fr.fromString('0x4e46544d');
@@ -79,23 +80,15 @@ export async function signMigrationClaim(
     new Fr(BigInt(tokenId))
   ];
 
-  // Compute Poseidon2([DOM_SEP_AUTHWIT_INNER, ...fields]) using the top-level
-  // @aztec/bb.js@1.1.2 (WASM-only). This avoids the nested @aztec/foundation
-  // bb.js@4.2.0 which tries to spawn a native binary not present on the server.
-  const bb = await Barretenberg.new();
-  let hashBuffer;
-  try {
-    const hashBigInt = await bb.poseidon2Hash([
-      DOM_SEP_AUTHWIT_INNER,
-      ...fields.map(f => f.toBigInt())
-    ]);
-    const hashHex = hashBigInt.toString(16).padStart(64, '0');
-    hashBuffer = Buffer.from(hashHex, 'hex');
-  } finally {
-    await bb.destroy();
-  }
+  // Poseidon2 with the AUTHWIT_INNER domain separator — matches the Noir
+  // attestation_lib's compute_inner_authwit_hash and the simple-attestor library.
+  // Synchronous WASM hash (no native bb binary needed).
+  const hash = poseidon2HashWithSeparator(
+    fields,
+    DomainSeparator.AUTHWIT_INNER
+  );
 
-  const sig = await schnorr.constructSignature(hashBuffer, signingKey);
+  const sig = await schnorr.constructSignature(hash.toBuffer(), signingKey);
   const sigBuffer = Buffer.from(sig.toBuffer());
   const sigHex = `0x${sigBuffer.toString('hex')}`;
 

@@ -131,7 +131,8 @@ async function main() {
     artifact,
     [attester.publicKey.x, attester.publicKey.y],
     "constructor",
-  ).send({ from: deployer, contractAddressSalt: contractSalt, wait: { timeout: 1800000 } });
+    { salt: contractSalt },
+  ).send({ from: deployer, wait: { timeout: 1800000 } });
 
   console.log(`   ✓ Contract deployed at: ${contract.address.toString()}`);
 

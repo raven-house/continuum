@@ -20,12 +20,12 @@
     "claim-migration": "bun run src/claim-migration.ts"
   },
   "dependencies": {
-    "@aztec/aztec.js": "4.2.0-aztecnr-rc.2",
-    "@aztec/ethereum": "4.2.0-aztecnr-rc.2",
-    "@aztec/foundation": "4.2.0-aztecnr-rc.2",
-    "@aztec/l1-artifacts": "4.2.0-aztecnr-rc.2",
-    "@aztec/stdlib": "4.2.0-aztecnr-rc.2",
-    "@aztec/wallets": "4.2.0-aztecnr-rc.2",
+    "@aztec/aztec.js": "4.3.0",
+    "@aztec/ethereum": "4.3.0",
+    "@aztec/foundation": "4.3.0",
+    "@aztec/l1-artifacts": "4.3.0",
+    "@aztec/stdlib": "4.3.0",
+    "@aztec/wallets": "4.3.0",
     "viem": "npm:@aztec/viem@2.38.2"
   },
   "devDependencies": {
