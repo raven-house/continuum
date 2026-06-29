@@ -76,6 +76,13 @@ pub contract NFT {
         migration_commitment: Field,
     }
 
+    #[event]
+    struct NFTMigrationRegistered {
+        owner: AztecAddress,
+        token_id: Field,
+        migration_commitment: Field,
+    }
+
     /// @dev Initializes the token with a minter
     /// @param name The name of the NFT
     /// @param symbol The symbol of the NFT
@@ -220,6 +227,19 @@ pub contract NFT {
         commitment.commitment
     }
 
+    /// @notice Registers a privately-owned NFT for Continuum migration indexing.
+    /// @dev Proves private note ownership without nullifying or transferring the NFT.
+    /// @param token_id The private token id to register.
+    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
+    #[external("private")]
+    fn register_private_nft_migration(token_id: Field, migration_commitment: Field) {
+        assert(migration_commitment != 0, "zero migration commitment not supported");
+
+        let owner = self.msg_sender();
+        self.internal._validate_private_token_owner(owner, token_id);
+        self.enqueue_self.register_nft_migration_internal(owner, token_id, migration_commitment);
+    }
+
     /** ==========================================================
      * ========================= PUBLIC ==========================
      * ======================================================== */
@@ -237,6 +257,18 @@ pub contract NFT {
                 migration_commitment,
             },
         );
+    }
+
+    /// @notice Registers a publicly-owned NFT for Continuum migration indexing.
+    /// @param token_id The public token id to register.
+    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
+    #[external("public")]
+    fn register_public_nft_migration(token_id: Field, migration_commitment: Field) {
+        assert(migration_commitment != 0, "zero migration commitment not supported");
+
+        let owner = self.msg_sender();
+        self.internal._validate_public_token_owner(owner, token_id);
+        self.internal._emit_nft_migration_registered(owner, token_id, migration_commitment);
     }
 
     /// @notice Transfers a token from one public owner to another public owner
@@ -322,6 +354,20 @@ pub contract NFT {
     fn update_public_token_owner_from_zero_internal(to: AztecAddress, token_id: Field) {
         self.internal._update_public_token_owner(to, token_id);
         self.emit(Transfer { from: PRIVATE_ADDRESS_MAGIC_VALUE, to, token_id });
+    }
+
+    /// @notice Emits an indexable token-level migration registration from a private ownership proof.
+    /// @param owner The owner that proved ownership in private context.
+    /// @param token_id The token id registered for migration.
+    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
+    #[external("public")]
+    #[only_self]
+    fn register_nft_migration_internal(
+        owner: AztecAddress,
+        token_id: Field,
+        migration_commitment: Field,
+    ) {
+        self.internal._emit_nft_migration_registered(owner, token_id, migration_commitment);
     }
 
     /// @notice Finalizes a mint to private by registering the token and emitting a Transfer event
@@ -524,6 +570,17 @@ pub contract NFT {
         assert(notes.len() == 1, "nft not found");
     }
 
+    /// @notice Validates that a private owner has a current note for a token without nullifying it.
+    /// @param owner The private note owner.
+    /// @param token_id The id of the token to validate.
+    #[internal("private")]
+    fn _validate_private_token_owner(owner: AztecAddress, token_id: Field) {
+        let notes = self.storage.private_nfts.at(owner).get_notes(NoteGetterOptions::new()
+            .select(NFTNote::properties().token_id, Comparator.EQ, token_id)
+            .set_limit(1));
+        assert(notes.len() == 1, "nft not found");
+    }
+
     /// @notice Updates the public token owner
     /// @param to The address of the recipient
     /// @param token_id The id of the token to update
@@ -559,6 +616,19 @@ pub contract NFT {
     fn _validate_public_token_owner(from: AztecAddress, token_id: Field) {
         let owner = self.storage.public_owners.at(token_id).read();
         assert(owner.eq(from), "caller is not owner");
+    }
+
+    /// @notice Emits the token-level migration registration event.
+    /// @param owner The owner registering this token for migration.
+    /// @param token_id The token id being registered.
+    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
+    #[internal("public")]
+    fn _emit_nft_migration_registered(
+        owner: AztecAddress,
+        token_id: Field,
+        migration_commitment: Field,
+    ) {
+        self.emit(NFTMigrationRegistered { owner, token_id, migration_commitment });
     }
 
     /// @notice Validates that the caller is an authorized minter
@@ -619,4 +689,3 @@ pub contract NFT {
         (config.attester_pubkey_x, config.attester_pubkey_y)
     }
 }
-
