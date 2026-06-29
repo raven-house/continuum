@@ -18,7 +18,7 @@
     "deploy-example": "bun run src/deploy-example.ts",
     "deploy-migration": "bun run src/deploy-migration.ts",
     "claim-migration": "bun run src/claim-migration.ts",
-    "migrate-nft": "bun run src/migrate-nft-public.ts"
+    "migrate-nft": "bun run src/migrate-nft/index.ts"
   },
   "dependencies": {
     "@aztec/accounts": "5.0.0-rc.1",

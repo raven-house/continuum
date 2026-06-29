@@ -8,6 +8,40 @@ cd continuum/e2e-tests
 bun install
 ```
 
+## Pick the cheapest loop that covers your change
+
+Don't run the slow testnet flow to iterate — fee-juice bridging, remote proving,
+and slow block times test none of the logic you're changing. Three tiers:
+
+| Tier | What it covers | Cost | Command |
+|---|---|---|---|
+| **1. API logic** | `/request_data` ownership resolution + signing, the attester, the migration helpers — everything off-chain | seconds, no chain, no indexer | `cd ../api && bun run test:request-data` |
+| **2. Sandbox** | + on-chain `migrate_and_claim` + indexer decoding | ~1 min | `AZTEC_NODE_URL=http://localhost:8080 CONTINUUM_NETWORK=sandbox bun run migrate-nft` |
+| **3. Testnet** | full production path | slow (minutes) | `L1_PRIVATE_KEY=0x... bun run migrate-nft` |
+
+Keep Mongo + API running between runs (the API uses `fastify start -w`, so it
+hot-reloads on save). Most iteration happens in **Tier 1**.
+
+### Tier 1 — `api/scripts/test-request-data.mjs`
+
+Seeds fake `MigrationRegistered` + `Transfer` docs straight into Mongo (the shape
+the indexer produces) and calls the live `/request_data`, asserting the right
+tokens are selected and signed — including a transferred-away token and a
+third-party token that must be excluded. No contracts, no fee juice, no waiting.
+
+```bash
+# needs Mongo + API running
+cd continuum/api && bun run test:request-data
+```
+
+### Tier 2 — sandbox tips
+
+- Start once: `aztec start --local-network` (→ `http://localhost:8080`), and point
+  the indexer at it (`CONTINUUM_AZTEC_NODE_URL_SANDBOX=http://localhost:8080`,
+  run with `CONTINUUM_NETWORK=sandbox`).
+- Reuse funded accounts across runs with `OLD_SECRET/OLD_SALT`, `NEW_SECRET/NEW_SALT`
+  so you skip account setup.
+
 ## `migrate-nft` — NFT public-state migration (full stack)
 
 Drives the **entire** public-NFT migration end to end: deploys an "old" and a
