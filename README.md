@@ -2,6 +2,38 @@
 
 An app state migration service that allows projects to migrate public and private state from an old rollup to a new rollup. Continuum indexes events from Aztec contracts and exposes them via a REST API for migration attestation.
 
+
+# Milestones
+
+
+Milestone 1: Centralized Migration Infrastructure (Dockerized)
+Deliverable: A Dockerized backend service comprising an Indexer, Database, and Attestation Server.
+Functionality:
+Ingests encrypted event logs from "Rollup A" (old chain) based on start block and end block
+Stores encrypted user state mapped to a Migration Secret Key.
+Provides an API to generate signed attestations for state migration to Rollup B. Attestation structure is TBD.
+Milestone 2: Contract Standards & Developer Abstractions
+Deliverable: Standardized smart contract interfaces and a lightweight Client SDK.
+Components:
+Rollup A Standards: Defined patterns for emitting encrypted logs for private variables.
+Rollup B Standards: Interfaces for contracts to verify attestations and re-mint private state.
+Client SDK: Abstracted functions for developers to easily implement the "Export -> Attest -> Re-mint" flow in their front ends
+
+
+
+Milestone 3: Comprehensive Testing
+Unit and Integration Testing for Core logic(JavaScript) and Contracts(Aztec.nr)
+Milestone 4: End-to-End Demo (Raven House) & Documentation
+Deliverable: Live migration demo and "Plug-and-Play" developer guides.
+
+Scope:
+Full migration of Raven House (Public & Private NFTs) using the Milestone 1 infrastructure.
+Documentation: A guide for other ecosystem apps on how to add the logging standard to their contracts and run the migration Docker container.
+
+
+
+
+
 ## Architecture
 
 ```
@@ -30,7 +62,7 @@ An app state migration service that allows projects to migrate public and privat
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone git@github.com:raven-house/continuum.git
    cd continuum
    ```
 

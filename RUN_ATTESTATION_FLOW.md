@@ -1,4 +1,4 @@
-# Running the Attestation Flow (Aztec 4.3.0)
+# Running the Attestation Flow (Aztec 5.0.0-rc.1)
 
 Step-by-step guide to compile the Noir contract and run the **off-chain attestation → on-chain claim** demo end to end, so you can confirm the Schnorr attestation flow works.
 
