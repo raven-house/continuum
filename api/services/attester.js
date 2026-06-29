@@ -129,7 +129,7 @@ export async function signMigrationClaim(
     DomainSeparator.AUTHWIT_INNER
   );
 
-  const sig = await schnorr.constructSignature(hash.toBuffer(), signingKey);
+  const sig = await schnorr.constructSignature(hash, signingKey);
   const sigBuffer = Buffer.from(sig.toBuffer());
   const sigHex = `0x${sigBuffer.toString('hex')}`;
 

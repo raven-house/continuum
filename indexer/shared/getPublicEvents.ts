@@ -1,46 +1,53 @@
 import { type AztecNode } from '@aztec/aztec.js/node'
+import { AztecAddress } from '@aztec/aztec.js/addresses'
 import { decodeFromAbi } from '@aztec/stdlib/abi'
 import { computeLogTag } from '@aztec/stdlib/hash'
 import { DomainSeparator } from '@aztec/constants'
-import type { ExtendedPublicLog } from '@aztec/stdlib/logs'
+import { Tag } from '@aztec/stdlib/logs'
 
-export const logPublicEventsFromNode = async ({
+export type EventDef = {
+  eventSelector: { toField: () => any }
+  abiType: any
+  fieldNames: string[]
+}
+
+export type DecodedEvent = {
+  blockNumber: number | null
+  contractAddress: string
+  data: Record<string, any>
+}
+
+export const getPublicEventsForContract = async ({
   aztecNode,
+  eventDef,
+  contractAddress,
   fromBlock,
   toBlock,
 }: {
   aztecNode: AztecNode
+  eventDef: EventDef
+  contractAddress: string
   fromBlock: number
   toBlock: number
-}) => {
-  const { logs } = await aztecNode.getPublicLogs({
+}): Promise<DecodedEvent[]> => {
+  const logTag = new Tag(
+    await computeLogTag(eventDef.eventSelector.toField(), DomainSeparator.EVENT_LOG_TAG),
+  )
+
+  // BlockNumber is a branded number at compile time; plain numbers are fine at runtime.
+  const [logs] = await aztecNode.getPublicLogsByTags({
+    contractAddress: AztecAddress.fromString(contractAddress),
+    tags: [logTag],
     fromBlock,
     toBlock,
-  })
-  return logs
-}
+  } as any)
 
-export const decodeEvents = async <T>(logs: ExtendedPublicLog[], eventMetadataDef: any): Promise<T[]> => {
-  const expectedTag = await computeLogTag(eventMetadataDef.eventSelector.toField(), DomainSeparator.EVENT_LOG_TAG)
+  const normalizedAddress = contractAddress.toLowerCase()
 
-  const decodedEvents = logs
-    .map((log) => {
-      const blockNumber = log.id.blockNumber
-      const contractAddress = log.log.contractAddress
-      try {
-        if (!log.log.fields[0].equals(expectedTag)) {
-          return undefined
-        }
-
-        const eventFields = log.log.getEmittedFieldsWithoutTag()
-        const result = decodeFromAbi([eventMetadataDef.abiType], eventFields) as T
-        return ({ blockNumber, ...result, contractAddress })
-      }
-      catch (error) {
-        console.error(`Decode events error in block Number ${blockNumber} for contract address ${contractAddress.toString()}`, error);
-        return undefined
-      }
-    })
-    .filter((log) => log !== undefined) as T[]
-  return decodedEvents
+  return (logs ?? []).map((log: any) => ({
+    blockNumber: log.blockNumber ?? null,
+    contractAddress: normalizedAddress,
+    // logData[0] is the tag; the event fields follow it.
+    data: decodeFromAbi([eventDef.abiType], log.logData.slice(1)) as Record<string, any>,
+  }))
 }

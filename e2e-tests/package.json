@@ -21,6 +21,7 @@
     "migrate-nft": "bun run src/migrate-nft-public.ts"
   },
   "dependencies": {
+    "@aztec/accounts": "5.0.0-rc.1",
     "@aztec/aztec.js": "5.0.0-rc.1",
     "@aztec/ethereum": "5.0.0-rc.1",
     "@aztec/foundation": "5.0.0-rc.1",

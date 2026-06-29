@@ -59,6 +59,10 @@ import { ProtocolContractAddress } from "@aztec/aztec.js/protocol";
 import { createLogger } from "@aztec/aztec.js/log";
 import { EmbeddedWallet } from "@aztec/wallets/embedded";
 import { deriveStorageSlotInMap } from "@aztec/stdlib/hash";
+import {
+  getInitialTestAccountsData,
+  INITIAL_TEST_SIGNING_KEYS,
+} from "@aztec/accounts/testing";
 
 import { bridgeL1FeeJuice } from "./bridge-fee-juice.js";
 
@@ -107,45 +111,68 @@ function sleep(ms: number): Promise<void> {
 // ───────────────────────── account / fee-juice setup ────────────────────────
 
 /**
- * Reconstruct (and, if needed, deploy + fund) a Schnorr account in the wallet.
- * Mirrors deploy-migration.ts: on testnet, bridges fee juice from L1 the first
- * time; on sandbox, deploys fee-less.
+ * TESTNET: reconstruct a fresh Schnorr account and, if it isn't funded yet,
+ * bridge fee juice from L1 and deploy it. Once funded, later txs default to
+ * paying fees from the account's own fee-juice balance.
  */
-async function setupAccount(
+async function setupTestnetAccount(
   wallet: EmbeddedWallet,
   node: ReturnType<typeof createAztecNodeClient>,
   label: string,
   secret: Fr,
   salt: Fr,
 ): Promise<AztecAddress> {
-  console.log(`\n[${label}] setting up account...`);
+  console.log(`\n[${label}] setting up account (testnet)...`);
   const account = await wallet.createSchnorrAccount(secret, salt);
   const address = account.address;
   console.log(`  address: ${address.toString()}`);
 
-  let feeOpts: { fee?: { paymentMethod: FeeJuicePaymentMethodWithClaim } } = {};
+  const balanceSlot = await deriveStorageSlotInMap(new Fr(1), address);
+  const balance = (
+    await node.getPublicStorageAt("latest", ProtocolContractAddress.FeeJuice, balanceSlot)
+  ).toBigInt();
 
-  if (isRemote) {
-    const balanceSlot = await deriveStorageSlotInMap(new Fr(1), address);
-    const balance = (
-      await node.getPublicStorageAt("latest", ProtocolContractAddress.FeeJuice, balanceSlot)
-    ).toBigInt();
-
-    if (balance > 0n) {
-      console.log(`  ✓ already deployed (${balance} fee juice)`);
-      return address;
-    }
-
-    console.log("  bridging fee juice from L1 Sepolia (can take a few minutes)...");
-    const claim = await bridgeL1FeeJuice(node, address, FEE_JUICE_AMOUNT, logger);
-    feeOpts = { fee: { paymentMethod: new FeeJuicePaymentMethodWithClaim(address, claim) } };
-  } else {
-    console.log("  (sandbox — skipping fee juice bridge)");
+  if (balance > 0n) {
+    console.log(`  ✓ already deployed (${balance} fee juice)`);
+    return address;
   }
+
+  console.log("  bridging fee juice from L1 Sepolia (can take a few minutes)...");
+  const claim = await bridgeL1FeeJuice(node, address, FEE_JUICE_AMOUNT, logger);
+  const feeOpts = { fee: { paymentMethod: new FeeJuicePaymentMethodWithClaim(address, claim) } };
 
   const deployMethod = await account.getDeployMethod();
   await deployMethod.send({ from: NO_FROM, ...feeOpts });
   console.log(`  ✓ account deployed`);
+  return address;
+}
+
+async function setupSandboxAccount(
+  wallet: EmbeddedWallet,
+  node: ReturnType<typeof createAztecNodeClient>,
+  label: string,
+  data: { secret: Fr; salt: Fr },
+  signingKey: (typeof INITIAL_TEST_SIGNING_KEYS)[number],
+): Promise<AztecAddress> {
+  console.log(`\n[${label}] using pre-funded sandbox test account...`);
+  const account = await wallet.createSchnorrInitializerlessAccount(
+    data.secret,
+    data.salt,
+    signingKey,
+  );
+  const address = account.address;
+
+  const balanceSlot = await deriveStorageSlotInMap(new Fr(1), address);
+  const balance = (
+    await node.getPublicStorageAt("latest", ProtocolContractAddress.FeeJuice, balanceSlot)
+  ).toBigInt();
+  if (balance === 0n) {
+    throw new Error(
+      `Sandbox test account ${address.toString()} has no fee juice. ` +
+        "Start the sandbox with `aztec start --local-network` so the initial accounts are funded.",
+    );
+  }
+  console.log(`  ✓ ${address.toString()} (${balance} fee juice)`);
   return address;
 }
 
@@ -177,20 +204,47 @@ async function main() {
 
   // Two accounts: Alice's OLD wallet (owner + minter on old collection) and her
   // NEW wallet (the claimer on the new collection).
-  const oldAddr = await setupAccount(
-    wallet,
-    node,
-    "ALICE-OLD",
-    process.env.OLD_SECRET ? Fr.fromString(process.env.OLD_SECRET) : Fr.random(),
-    process.env.OLD_SALT ? Fr.fromString(process.env.OLD_SALT) : Fr.random(),
-  );
-  const newAddr = await setupAccount(
-    wallet,
-    node,
-    "ALICE-NEW",
-    process.env.NEW_SECRET ? Fr.fromString(process.env.NEW_SECRET) : Fr.random(),
-    process.env.NEW_SALT ? Fr.fromString(process.env.NEW_SALT) : Fr.random(),
-  );
+  let oldAddr: AztecAddress;
+  let newAddr: AztecAddress;
+
+  if (isSandbox) {
+    // Reuse the pre-funded genesis test accounts — no bridging, no proving wait.
+    const testAccounts = await getInitialTestAccountsData();
+    if (testAccounts.length < 2) {
+      throw new Error(
+        "Sandbox has fewer than 2 initial test accounts. Start it with `aztec start --local-network`.",
+      );
+    }
+    oldAddr = await setupSandboxAccount(
+      wallet,
+      node,
+      "ALICE-OLD",
+      testAccounts[0],
+      INITIAL_TEST_SIGNING_KEYS[0],
+    );
+    newAddr = await setupSandboxAccount(
+      wallet,
+      node,
+      "ALICE-NEW",
+      testAccounts[1],
+      INITIAL_TEST_SIGNING_KEYS[1],
+    );
+  } else {
+    oldAddr = await setupTestnetAccount(
+      wallet,
+      node,
+      "ALICE-OLD",
+      process.env.OLD_SECRET ? Fr.fromString(process.env.OLD_SECRET) : Fr.random(),
+      process.env.OLD_SALT ? Fr.fromString(process.env.OLD_SALT) : Fr.random(),
+    );
+    newAddr = await setupTestnetAccount(
+      wallet,
+      node,
+      "ALICE-NEW",
+      process.env.NEW_SECRET ? Fr.fromString(process.env.NEW_SECRET) : Fr.random(),
+      process.env.NEW_SALT ? Fr.fromString(process.env.NEW_SALT) : Fr.random(),
+    );
+  }
 
   // ════════════════════════════ OLD ROLLUP ═════════════════════════════════
 

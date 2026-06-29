@@ -68,11 +68,15 @@ export default async function (fastify) {
     // MigrationRegistered events emitted on the OLD collection. The matching
     // event's `owner` is the authenticated msg_sender that registered it.
     const commitment = computeMigrationCommitment(migration_secret);
+    // The indexer stores Field values (Poseidon output) as their DECIMAL string,
+    // while computeMigrationCommitment returns the 0x-hex form. Match either so the
+    // lookup is robust to how the commitment was serialized.
+    const commitmentDecimal = BigInt(commitment).toString();
 
     const registration = await db.collection(EVENTS_COLLECTION).findOne({
       contract_address: oldCollectionAddress,
       event_type: REGISTRATION_EVENT,
-      'data.migration_commitment': commitment
+      'data.migration_commitment': { $in: [commitment, commitmentDecimal] }
     });
 
     if (!registration) {

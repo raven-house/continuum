@@ -6,6 +6,7 @@
  */
 
 import { EventSelector, decodeFunctionSignature } from '@aztec/stdlib/abi';
+import { poseidon2HashBytes } from '@aztec/foundation/crypto/sync';
 
 /**
  * Load contract artifact and extract events from outputs.structs.events
@@ -59,8 +60,12 @@ async function processEvents(events) {
         eventName,
         event.fields || []
       );
-      const eventSelector = (
-        await EventSelector.fromSignature(eventSignature)
+      // Selector = last 4 bytes of Poseidon2(signature bytes). This mirrors
+      // EventSelector.fromSignature exactly, but with the WASM hash so it works
+      // in the bb-less Docker image.
+      const hash = poseidon2HashBytes(Buffer.from(eventSignature));
+      const eventSelector = EventSelector.fromBuffer(
+        hash.toBuffer().subarray(-EventSelector.SIZE)
       ).toString();
 
       const fieldNames = (event.fields || []).map(f => f.name);
