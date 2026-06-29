@@ -4,6 +4,7 @@ mod mint_to_private;
 mod burn_public;
 mod burn_private;
 mod initialize_transfer_commitment;
+mod migration_register;
 mod transfer_private_to_commitment;
 mod transfer_private_to_private;
 mod transfer_private_to_public_with_commitment;

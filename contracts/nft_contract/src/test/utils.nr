@@ -37,6 +37,8 @@ pub unconstrained fn deploy_nft_with_minter(
         "TestNFT000000000000000000000000",
         "TNFT000000000000000000000000000",
         minter,
+        0,
+        0,
     );
     let nft_contract_address =
         env.deploy("@nft_contract/NFT").with_public_initializer(owner, initializer_call_interface);

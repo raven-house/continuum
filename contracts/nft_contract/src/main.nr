@@ -6,6 +6,8 @@ use aztec::macros::aztec;
 #[aztec]
 pub contract NFT {
     // aztec library
+    global MIGRATE_DOMAIN: Field = 0x4e46544d;
+    use attestation_lib::{assert_pubkey_on_curve, assert_valid_attestation};
     use aztec::{
         macros::{
             events::event,
@@ -17,7 +19,10 @@ pub contract NFT {
             constants::MAX_NOTES_PER_PAGE, note_getter_options::NoteGetterOptions,
             note_interface::NoteProperties, note_viewer_options::NoteViewerOptions,
         },
-        protocol::{address::AztecAddress, traits::{FromField, ToField}},
+        protocol::{
+            address::AztecAddress,
+            traits::{Deserialize, FromField, Packable, Serialize, ToField},
+        },
         state_vars::{Map, Owned, PrivateSet, PublicImmutable, PublicMutable, StateVariable},
         utils::comparison::Comparator,
     };
@@ -25,6 +30,15 @@ pub contract NFT {
     use compressed_string::FieldCompressedString;
     // nft note structs
     use crate::types::nft_note::{NFTNote, PartialNFTNote};
+    use std::embedded_curve_ops::EmbeddedCurvePoint;
+
+    // Stores the Continuum attester's Grumpkin public key for migration verification.
+    // Set once at deployment; x == 0 means migration is disabled for this collection.
+    #[derive(Deserialize, Eq, Packable, Serialize)]
+    pub struct MigrationConfig {
+        attester_pubkey_x: Field,
+        attester_pubkey_y: Field,
+    }
 
     /// @param symbol The symbol of the NFT
     /// @param name The name of the NFT
@@ -40,6 +54,8 @@ pub contract NFT {
         nft_exists: Map<Field, PublicMutable<bool, Context>, Context>,
         public_owners: Map<Field, PublicMutable<AztecAddress, Context>, Context>,
         minter: PublicImmutable<AztecAddress, Context>,
+        // x == 0 means migration is disabled for this collection.
+        migration_attester: PublicImmutable<MigrationConfig, Context>,
     }
 
     // Sentinel address used in Transfer events to represent the private side of a balance change.
@@ -54,16 +70,40 @@ pub contract NFT {
         token_id: Field,
     }
 
+    #[event]
+    struct MigrationRegistered {
+        owner: AztecAddress,
+        migration_commitment: Field,
+    }
+
     /// @dev Initializes the token with a minter
     /// @param name The name of the NFT
     /// @param symbol The symbol of the NFT
     /// @param minter The address of the minter
     #[external("public")]
     #[initializer]
-    fn constructor_with_minter(name: str<31>, symbol: str<31>, minter: AztecAddress) {
+    fn constructor_with_minter(
+        name: str<31>,
+        symbol: str<31>,
+        minter: AztecAddress,
+        // Pass Continuum's attester public key to enable migration from the old rollup.
+        // Pass 0 for both to deploy without migration support.
+        migration_attester_pubkey_x: Field,
+        migration_attester_pubkey_y: Field,
+    ) {
         self.storage.name.initialize(FieldCompressedString::from_string(name));
         self.storage.symbol.initialize(FieldCompressedString::from_string(symbol));
         self.storage.minter.initialize(minter);
+
+        if migration_attester_pubkey_x != 0 {
+            assert_pubkey_on_curve(migration_attester_pubkey_x, migration_attester_pubkey_y);
+        }
+        self.storage.migration_attester.initialize(
+            MigrationConfig {
+                attester_pubkey_x: migration_attester_pubkey_x,
+                attester_pubkey_y: migration_attester_pubkey_y,
+            },
+        );
     }
 
     /** ==========================================================
@@ -183,6 +223,21 @@ pub contract NFT {
     /** ==========================================================
      * ========================= PUBLIC ==========================
      * ======================================================== */
+
+    /// @notice Registers a user-owned migration commitment for Continuum to index before a rollup reset.
+    /// @dev The event owner is authenticated by msg_sender on the old rollup. The migration secret is never revealed.
+    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
+    #[external("public")]
+    fn register_migration(migration_commitment: Field) {
+        assert(migration_commitment != 0, "zero migration commitment not supported");
+
+        self.emit(
+            MigrationRegistered {
+                owner: self.msg_sender(),
+                migration_commitment,
+            },
+        );
+    }
 
     /// @notice Transfers a token from one public owner to another public owner
     /// @dev Public call that asserts that the caller is the token owner, and updates the public owner
@@ -513,4 +568,55 @@ pub contract NFT {
     fn _validate_minter(sender: AztecAddress, minter: AztecAddress) {
         assert(minter.eq(sender), "caller is not minter");
     }
+
+    #[external("private")]
+    fn migrate_and_claim(token_id: Field, signature: [u8; 64]) {
+        assert(token_id != 0, "zero token ID not supported");
+
+        let config = self.storage.migration_attester.read();
+        assert(config.attester_pubkey_x != 0, "migration not enabled for this collection");
+
+        let attester_pubkey =
+            EmbeddedCurvePoint { x: config.attester_pubkey_x, y: config.attester_pubkey_y };
+
+        let claimer = self.msg_sender();
+
+        // Fields must match exactly what Continuum signs in POST /request_data
+        let fields =
+            [MIGRATE_DOMAIN, self.context.this_address().to_field(), claimer.to_field(), token_id];
+
+        assert_valid_attestation(attester_pubkey, signature, fields);
+
+        // Mint the NFT as a private note for the claimer
+        self.storage.private_nfts.at(claimer).insert(NFTNote { token_id }).deliver(
+            MessageDelivery::onchain_constrained(),
+        );
+
+        // Enqueue the public state update
+        self.enqueue_self._finalize_migration_claim(token_id);
+    }
+
+    /// Internal: record the migrated NFT in public state. Only callable from within this contract.
+    /// Prevents double-claiming via the nft_exists guard.
+    #[external("public")]
+    #[only_self]
+    fn _finalize_migration_claim(token_id: Field) {
+        self.internal._set_nft_exists(token_id, true);
+        // public_owners is zero for private NFTs (owner is in the private note)
+        self.storage.public_owners.at(token_id).write(AztecAddress::zero());
+
+        self.emit(
+            Transfer { from: AztecAddress::zero(), to: PRIVATE_ADDRESS_MAGIC_VALUE, token_id },
+        );
+    }
+
+    /// Returns the migration attester's public key coordinates.
+    /// Returns (0, 0) if migration is disabled for this collection.
+    #[external("public")]
+    #[view]
+    fn get_migration_attester() -> (Field, Field) {
+        let config = self.storage.migration_attester.read();
+        (config.attester_pubkey_x, config.attester_pubkey_y)
+    }
 }
+
