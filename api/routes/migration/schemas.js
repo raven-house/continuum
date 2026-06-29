@@ -1,127 +1,47 @@
 const tags = ['MIGRATION'];
 
 const schemas = Object.freeze({
-  register: {
-    $id: 'migration-register',
+  newSecret: {
+    $id: 'migration-new-secret',
     tags,
     description:
-      'Register a migration key for a wallet address. Idempotent — returns existing key if already registered.',
-    body: {
-      type: 'object',
-      required: ['walletAddress'],
-      properties: {
-        walletAddress: {
-          type: 'string',
-          description: 'Aztec wallet address'
-        },
-        network: {
-          type: 'string',
-          enum: ['devnet', 'testnet', 'sandbox', 'mainnet'],
-          default: 'devnet',
-          description: 'Network the wallet is on'
-        }
-      }
-    },
+      'Generate a fresh random migration secret and its commitment. Stateless — ' +
+      'Continuum stores nothing. Register the commitment on the old rollup via ' +
+      'register_migration(commitment) and save the secret to claim later.',
     response: {
       200: {
         type: 'object',
         properties: {
-          success: { type: 'boolean' },
-          secretKey: { type: 'string' },
-          walletAddress: { type: 'string' },
-          network: { type: 'string' },
-          createdAt: { type: 'string' },
-          isNew: {
-            type: 'boolean',
-            description: 'true if key was just created'
-          }
-        }
-      }
-    }
-  },
-
-  getByWallet: {
-    $id: 'migration-get-by-wallet',
-    tags,
-    description: 'Check if a wallet has a migration key registered.',
-    params: {
-      type: 'object',
-      required: ['walletAddress'],
-      properties: {
-        walletAddress: { type: 'string', description: 'Aztec wallet address' }
-      }
-    },
-    response: {
-      200: {
-        type: 'object',
-        properties: {
-          hasKey: { type: 'boolean' },
-          walletAddress: { type: 'string' },
-          maskedKey: {
+          secret: {
             type: 'string',
-            description: 'First 8 chars + ... (safe to display publicly)'
+            description:
+              'Random 0x-prefixed hex Field. Save this — it is the only thing needed ' +
+              'to claim migrated NFTs on the new rollup. Never share it.'
           },
-          network: { type: 'string' },
-          createdAt: { type: 'string' }
-        }
-      }
-    }
-  },
-
-  recover: {
-    $id: 'migration-recover',
-    tags,
-    description:
-      'Given a migration secret key, return all indexed events associated with that wallet address.',
-    body: {
-      type: 'object',
-      required: ['secretKey'],
-      properties: {
-        secretKey: {
-          type: 'string',
-          description: 'The 64-char hex migration key'
-        }
-      }
-    },
-    response: {
-      200: {
-        type: 'object',
-        properties: {
-          valid: { type: 'boolean' },
-          walletAddress: { type: 'string' },
-          network: { type: 'string' },
-          events: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                _id: { type: 'string' },
-                artifact_id: { type: 'string' },
-                event_type: { type: 'string' },
-                block_number: { type: 'number' },
-                contract_address: { type: 'string' },
-                timestamp: { type: 'number' },
-                data: { type: 'object' }
-              }
-            }
+          commitment: {
+            type: 'string',
+            description:
+              'Poseidon2([MIGRATE_REGISTER_DOMAIN, secret]). Pass this to ' +
+              'register_migration() on the old rollup.'
           }
         }
       }
     }
   },
 
-  verify: {
-    $id: 'migration-verify',
+  commitment: {
+    $id: 'migration-commitment',
     tags,
     description:
-      'Verify a migration secret key and return the associated wallet address. Used during new-rollup migration.',
+      'Compute the migration commitment for a given secret. Stateless — useful to ' +
+      'verify a saved secret matches an on-chain registration.',
     body: {
       type: 'object',
-      required: ['secretKey'],
+      required: ['secret'],
       properties: {
-        secretKey: {
+        secret: {
           type: 'string',
-          description: 'The 64-char hex migration key'
+          description: 'The migration secret (0x-prefixed hex Field)'
         }
       }
     },
@@ -129,10 +49,7 @@ const schemas = Object.freeze({
       200: {
         type: 'object',
         properties: {
-          valid: { type: 'boolean' },
-          walletAddress: { type: 'string' },
-          network: { type: 'string' },
-          createdAt: { type: 'string' }
+          commitment: { type: 'string' }
         }
       }
     }

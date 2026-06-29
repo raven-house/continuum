@@ -199,7 +199,7 @@ continuum/
 - `aztec` CLI installed (for compiling Noir contracts via `aztec compile`)
 - `bun` installed
 - A Sepolia-funded Ethereum private key (for testnet fee juice bridging)
-- Access to the Aztec testnet: `https://rpc.testnet.aztec-labs.com`
+- Access to the Aztec testnet: `https://v5.testnet.rpc.aztec-labs.com`
 
 ### Step 1 — Compile the Migration Contract
 

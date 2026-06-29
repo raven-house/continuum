@@ -40,7 +40,7 @@ export const TESTNET = {
   name: 'testnet',
   environment: 'testnet' as const,
   network: {
-    nodeUrl: 'https://rpc.testnet.aztec-labs.com',
+    nodeUrl: 'https://v5.testnet.rpc.aztec-labs.com',
     l1RpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
     l1ChainId: 11155111,
     l2ChainId: 1674512022,

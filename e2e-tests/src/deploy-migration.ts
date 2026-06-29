@@ -11,7 +11,7 @@
  *   L1_PRIVATE_KEY     - Sepolia-funded private key (0x-prefixed)
  *
  * Optional env vars:
- *   AZTEC_NODE_URL     - Aztec node URL (default: https://rpc.testnet.aztec-labs.com)
+ *   AZTEC_NODE_URL     - Aztec node URL (default: https://v5.testnet.rpc.aztec-labs.com)
  *   ATTESTER_SECRET    - Hex secret key for the attester (default: random)
  *   DEPLOYER_SECRET    - Reuse an existing deployer wallet secret (skips fee bridge if funded)
  *   DEPLOYER_SALT      - Salt matching the deployer wallet (required with DEPLOYER_SECRET)
@@ -44,7 +44,7 @@ import { bridgeL1FeeJuice } from "./bridge-fee-juice.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const TESTNET_URL = "https://rpc.testnet.aztec-labs.com";
+const TESTNET_URL = "https://v5.testnet.rpc.aztec-labs.com";
 const FEE_JUICE_AMOUNT = 10n ** 21n;
 
 const NODE_URL = process.env.AZTEC_NODE_URL ?? TESTNET_URL;
@@ -117,7 +117,7 @@ async function main() {
 
   const artifactPath = join(
     __dirname,
-    "../../attestor-contracts/migration_contract/target/migration_contract-MigrationClaims.json",
+    "../../contracts/migration_contract/target/migration_contract-MigrationClaims.json",
   );
   const artifactJson = JSON.parse(readFileSync(artifactPath, "utf8"));
   const artifact = loadContractArtifact(artifactJson as NoirCompiledContract);

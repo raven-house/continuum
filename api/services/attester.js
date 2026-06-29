@@ -20,11 +20,52 @@ import { deriveSigningKey } from '@aztec/stdlib/keys';
 // present in the container (the bb.js postinstall is blocked in Docker), so it
 // throws "spawn .../bb ENOENT". The sync hash is identical to
 // computeInnerAuthWitHash(fields) = poseidon2HashWithSeparator(fields, AUTHWIT_INNER).
-import { poseidon2HashWithSeparator } from '@aztec/foundation/crypto/sync';
+import {
+  poseidon2Hash,
+  poseidon2HashWithSeparator
+} from '@aztec/foundation/crypto/sync';
 import { DomainSeparator } from '@aztec/constants';
 
 // "NFTM" — must match MIGRATE_DOMAIN in nft_contract/src/main.nr
 const MIGRATE_DOMAIN = Fr.fromString('0x4e46544d');
+
+// "NFTMR" — domain separator for the migration-registration commitment.
+// This value is NOT verified on-chain (register_migration just stores the
+// commitment); it only needs to be agreed between whoever computes the
+// commitment before calling register_migration on the old rollup and this
+// service, which recomputes it from the revealed secret in /request_data.
+const MIGRATE_REGISTER_DOMAIN = Fr.fromString('0x4e46544d52');
+
+/**
+ * Compute the migration-registration commitment from a user's secret.
+ *
+ *   commitment = Poseidon2([ MIGRATE_REGISTER_DOMAIN, secret ])
+ *
+ * The user computes this off-chain and passes it to `register_migration` on the
+ * old rollup, where the contract emits `MigrationRegistered { owner: msg_sender,
+ * migration_commitment }`. Because `owner` is the authenticated `msg_sender`,
+ * the on-chain event is an unforgeable binding between the real old-rollup owner
+ * and this commitment. Later, in /request_data, the user reveals the secret and
+ * Continuum recomputes the same commitment to resolve their verified owner.
+ *
+ * @param {string} secretHex  - The user's migration secret (0x-prefixed hex Field)
+ * @returns {string} commitment as a canonical 0x-prefixed Field string
+ */
+export function computeMigrationCommitment(secretHex) {
+  const secret = Fr.fromHexString(secretHex);
+  return poseidon2Hash([MIGRATE_REGISTER_DOMAIN, secret]).toString();
+}
+
+/**
+ * Generate a fresh random migration secret and its commitment.
+ * Stateless helper for the registration UI — Continuum stores nothing.
+ *
+ * @returns {{ secret: string, commitment: string }}
+ */
+export function generateMigrationSecret() {
+  const secret = Fr.random().toString();
+  return { secret, commitment: computeMigrationCommitment(secret) };
+}
 
 let _cached = null;
 

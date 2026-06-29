@@ -1,197 +1,55 @@
 /**
- * Migration Key Routes
+ * Migration Secret Routes (stateless)
  *
- * Allows users to register a secret migration key tied to their wallet address.
- * When Aztec rolls out a new rollup, users can prove ownership of their old wallet
- * (and its NFTs) using this key, enabling state migration to the new rollup.
+ * Migration identity is established ON-CHAIN via the NFT contract's
+ * register_migration(commitment) — the event records owner = msg_sender, which
+ * cannot be spoofed. Continuum therefore stores NO wallet ↔ key mapping.
+ *
+ * This route only offers a convenience helper that mints a fresh secret and its
+ * commitment for the registration UI. The user:
+ *   1. GET /migration/new-secret           → { secret, commitment }
+ *   2. calls register_migration(commitment) on the old rollup (authenticated)
+ *   3. saves `secret` — it is the only thing needed to later claim on the new rollup
  *
  * Endpoints:
- *   POST /migration/register   - Create (or retrieve) a migration key for a wallet
- *   GET  /migration/:wallet    - Check if a wallet has a migration key (key masked)
- *   POST /migration/verify     - Resolve a secret key → wallet address (for new rollup claim)
+ *   GET  /migration/new-secret             - Generate a random { secret, commitment }
+ *   POST /migration/commitment             - Compute the commitment for a given secret
  */
 
-import { randomBytes } from 'crypto';
+import {
+  computeMigrationCommitment,
+  generateMigrationSecret
+} from '../../services/attester.js';
 import schemas from './schemas.js';
-
-const COLLECTION = 'migration_keys';
 
 /**
  * @param {import('fastify').FastifyInstance} fastify
  */
 export default async function (fastify) {
   // ─────────────────────────────────────────────────────────────
-  // POST /migration/register
-  // Body: { walletAddress: string, network?: string }
-  // Creates a migration key if one doesn't exist yet; otherwise
-  // returns the existing key so the call is idempotent.
+  // GET /migration/new-secret
+  // Stateless: generates a random secret and its commitment. Stores nothing.
   // ─────────────────────────────────────────────────────────────
-  fastify.post(
-    '/register',
-    { schema: schemas.register },
-    async (request, reply) => {
-      const { walletAddress, network = 'devnet' } = request.body;
-
-      if (!walletAddress || walletAddress.trim() === '') {
-        reply.badRequest('walletAddress is required');
-        return;
-      }
-
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-      const col = db.collection(COLLECTION);
-
-      // Idempotent: return existing key if already registered
-      const existing = await col.findOne({
-        walletAddress: walletAddress.toLowerCase()
-      });
-      if (existing) {
-        return {
-          success: true,
-          secretKey: existing.secretKey,
-          walletAddress: existing.walletAddress,
-          network: existing.network,
-          createdAt: existing.createdAt,
-          isNew: false
-        };
-      }
-
-      // Generate a cryptographically random 32-byte secret key (hex)
-      const secretKey = randomBytes(32).toString('hex');
-      const now = new Date().toISOString();
-
-      await col.insertOne({
-        walletAddress: walletAddress.toLowerCase(),
-        secretKey,
-        network,
-        createdAt: now,
-        updatedAt: now
-      });
-
-      return {
-        success: true,
-        secretKey,
-        walletAddress: walletAddress.toLowerCase(),
-        network,
-        createdAt: now,
-        isNew: true
-      };
-    }
-  );
-
-  // ─────────────────────────────────────────────────────────────
-  // GET /migration/:walletAddress
-  // Returns whether a key exists for the wallet (key is masked).
-  // ─────────────────────────────────────────────────────────────
-  fastify.get(
-    '/:walletAddress',
-    { schema: schemas.getByWallet },
-    async request => {
-      const { walletAddress } = request.params;
-
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-      const col = db.collection(COLLECTION);
-
-      const doc = await col.findOne(
-        { walletAddress: walletAddress.toLowerCase() },
-        {
-          projection: {
-            secretKey: 1,
-            network: 1,
-            createdAt: 1,
-            walletAddress: 1
-          }
-        }
-      );
-
-      if (!doc) {
-        return { hasKey: false, walletAddress: walletAddress.toLowerCase() };
-      }
-
-      return {
-        hasKey: true,
-        walletAddress: doc.walletAddress,
-        maskedKey: `${doc.secretKey.slice(0, 8)}...`,
-        network: doc.network,
-        createdAt: doc.createdAt
-      };
-    }
-  );
-
-  fastify.post(
-    '/recover',
-    { schema: schemas.recover },
-    async (request, reply) => {
-      const { secretKey } = request.body;
-
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-
-      const migrationKey = await db
-        .collection(COLLECTION)
-        .findOne(
-          { secretKey },
-          { projection: { walletAddress: 1, network: 1 } }
-        );
-
-      if (!migrationKey) {
-        reply.notFound('No migration key found for the provided secret key');
-        return;
-      }
-
-      const { walletAddress, network } = migrationKey;
-
-      const events = await db
-        .collection('events')
-        .find({
-          $or: [
-            { 'data.owner': walletAddress },
-            { 'data.to': walletAddress },
-            { 'data.from': walletAddress },
-            { 'data.seller': walletAddress },
-            { 'data.buyer': walletAddress },
-            { 'data.claimer': walletAddress }
-          ]
-        })
-        .sort({ block_number: -1 })
-        .toArray();
-
-      return {
-        valid: true,
-        walletAddress,
-        network,
-        events: events.map(e => ({
-          ...e,
-          _id: e._id.toString()
-        }))
-      };
-    }
-  );
-
-  // ─────────────────────────────────────────────────────────────
-  // POST /migration/verify
-  // Body: { secretKey: string }
-  // Used by the new rollup / admin flow to resolve a key → wallet.
-  // Returns the full wallet address so migration can be processed.
-  // ─────────────────────────────────────────────────────────────
-  fastify.post('/verify', { schema: schemas.verify }, async request => {
-    const { secretKey } = request.body;
-
-    const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-    const col = db.collection(COLLECTION);
-
-    const doc = await col.findOne(
-      { secretKey },
-      { projection: { walletAddress: 1, network: 1, createdAt: 1 } }
-    );
-
-    if (!doc) {
-      return { valid: false };
-    }
-
-    return {
-      valid: true,
-      walletAddress: doc.walletAddress,
-      network: doc.network,
-      createdAt: doc.createdAt
-    };
+  fastify.get('/new-secret', { schema: schemas.newSecret }, async () => {
+    const { secret, commitment } = generateMigrationSecret();
+    return { secret, commitment };
   });
+
+  // ─────────────────────────────────────────────────────────────
+  // POST /migration/commitment
+  // Stateless: compute the commitment for a user-supplied secret (e.g. to verify
+  // a saved secret matches an on-chain registration). Stores nothing.
+  // ─────────────────────────────────────────────────────────────
+  fastify.post(
+    '/commitment',
+    { schema: schemas.commitment },
+    async (request, reply) => {
+      const { secret } = request.body;
+      try {
+        return { commitment: computeMigrationCommitment(secret) };
+      } catch (err) {
+        reply.badRequest('Invalid secret: ' + err.message);
+      }
+    }
+  );
 }

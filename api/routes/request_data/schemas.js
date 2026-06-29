@@ -6,11 +6,13 @@ const schemas = Object.freeze({
     tags,
     description: `Request attested migration data for an NFT collection.
 
-Given a migration key (from POST /migration/register on the old rollup) and the
-new-rollup collection address, Continuum:
-  1. Resolves migration_key → old-rollup wallet address
-  2. Resolves collection_address → old-rollup collection address (via collection_registry)
-  3. Queries MetadataUpdate events owned by that wallet on the old-rollup collection
+Given a migration secret (the preimage of a commitment registered on-chain via
+register_migration on the old rollup) and the new-rollup collection address, Continuum:
+  1. Resolves collection_address → old-rollup collection address (via collection_registry)
+  2. Recomputes commitment = Poseidon2([MIGRATE_REGISTER_DOMAIN, secret]) and resolves the
+     verified old-rollup owner from the matching MigrationRegistered event (owner = the
+     authenticated msg_sender that registered it — cannot be spoofed)
+  3. Finds tokens whose latest Transfer.to is that owner (current public ownership)
   4. Signs each token ID with a Schnorr attestation bound to new_wallet_address
   5. Returns the signatures ready to pass to migrate_and_claim() on the new rollup
 
@@ -18,26 +20,28 @@ The caller (new_wallet_address) must use these signatures from the same address 
 successfully call migrate_and_claim() on the contract.`,
     body: {
       type: 'object',
-      required: ['collection_address', 'migration_key', 'new_wallet_address'],
+      required: [
+        'collection_address',
+        'migration_secret',
+        'new_wallet_address'
+      ],
       properties: {
         collection_address: {
           type: 'string',
           description: 'NFT contract address on the NEW rollup'
         },
-        migration_key: {
+        migration_secret: {
           type: 'string',
-          description: 'The 64-char hex migration key obtained from the old rollup UI'
+          description:
+            'The migration secret (0x-prefixed hex Field) whose commitment was registered ' +
+            'on-chain via register_migration() on the old rollup. Obtained from ' +
+            'GET /migration/new-secret.'
         },
         new_wallet_address: {
           type: 'string',
           description:
             'The wallet address on the new rollup that will call migrate_and_claim(). ' +
             'Attestations are bound to this address — only it can use the returned signatures.'
-        },
-        event_name: {
-          type: 'string',
-          default: 'MetadataUpdate',
-          description: 'Event name to query for ownership data (default: MetadataUpdate)'
         }
       }
     },
@@ -47,7 +51,8 @@ successfully call migrate_and_claim() on the contract.`,
         properties: {
           old_wallet_address: {
             type: 'string',
-            description: 'Old-rollup wallet address resolved from migration_key'
+            description:
+              'Verified old-rollup wallet address resolved from the on-chain MigrationRegistered event'
           },
           new_wallet_address: { type: 'string' },
           collection_address: {

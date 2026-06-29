@@ -22,7 +22,7 @@
  *   DEPLOYER_SALT               - Deployer wallet salt (from deploy-migration output)
  *
  * Optional env vars:
- *   AZTEC_NODE_URL  - Aztec node URL (default: https://rpc.testnet.aztec-labs.com)
+ *   AZTEC_NODE_URL  - Aztec node URL (default: https://v5.testnet.rpc.aztec-labs.com)
  *   CLAIM_AMOUNT    - Amount to claim (default: 10)
  */
 
@@ -41,7 +41,7 @@ import { Attester, signatureToBytes } from "./index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const TESTNET_URL = "https://rpc.testnet.aztec-labs.com";
+const TESTNET_URL = "https://v5.testnet.rpc.aztec-labs.com";
 
 // Domain separator matching the Noir contract's CLAIM_DOMAIN = 0x434c4d ("CLM")
 const CLAIM_DOMAIN = new Fr(0x434c4d);
@@ -92,7 +92,7 @@ async function main() {
   console.log("\n3. Loading MigrationClaims artifact and registering with PXE...");
   const artifactPath = join(
     __dirname,
-    "../../attestor-contracts/migration_contract/target/migration_contract-MigrationClaims.json",
+    "../../contracts/migration_contract/target/migration_contract-MigrationClaims.json",
   );
   const artifactJson = JSON.parse(readFileSync(artifactPath, "utf8"));
   const artifact = loadContractArtifact(artifactJson as NoirCompiledContract);

@@ -8,7 +8,7 @@ db.createCollection('events');
 db.createCollection('sync_state');
 db.createCollection('artifacts');
 db.createCollection('contracts');
-db.createCollection('migration_keys');
+db.createCollection('collection_registry');
 
 // Create indexes for events collection
 db.events.createIndex({ artifact_id: 1, event_type: 1, block_number: -1 });
@@ -34,11 +34,13 @@ db.contracts.createIndex({ createdAt: -1 });
 db.contracts.createIndex({ 'events.eventSelector': 1 });
 db.contracts.createIndex({ 'events.name': 1 });
 
-// Create indexes for migration_keys collection
-db.migration_keys.createIndex({ walletAddress: 1 }, { unique: true });
-db.migration_keys.createIndex({ secretKey: 1 }, { unique: true });
-db.migration_keys.createIndex({ network: 1 });
-db.migration_keys.createIndex({ createdAt: -1 });
+// Create indexes for collection_registry (old → new collection address mapping)
+db.collection_registry.createIndex(
+  { new_collection_address: 1 },
+  { unique: true }
+);
+db.collection_registry.createIndex({ old_collection_address: 1 });
+db.collection_registry.createIndex({ new_network: 1 });
 
 // Insert sample artifact configuration (disabled by default)
 db.artifacts.insertOne({
@@ -63,6 +65,6 @@ db.artifacts.insertOne({
 
 print('Continuum database initialized successfully!');
 print(
-  'Created collections: events, sync_state, artifacts, contracts, migration_keys'
+  'Created collections: events, sync_state, artifacts, contracts, collection_registry'
 );
 print('Created indexes for optimal query performance');

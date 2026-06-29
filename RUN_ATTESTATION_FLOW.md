@@ -24,7 +24,7 @@ The runnable contract is `attestor-contracts/migration_contract` (`MigrationClai
 | A Sepolia-funded ETH private key | — | needed only for **testnet** (fee-juice bridging) |
 
 You also need access to an Aztec node:
-- **Testnet** (default): `https://rpc.testnet.aztec-labs.com`
+- **Testnet** (default): `https://v5.testnet.rpc.aztec-labs.com`
 - **Sandbox** (local, no L1 key): `aztec start --local-network` → `http://localhost:8080`
 
 > The CLI/toolchain must be `4.3.0`. If not: `aztec-up 4.3.0`.
@@ -66,7 +66,7 @@ Create / edit `simple-attestor/.env`:
 
 ### Testnet
 ```bash
-AZTEC_NODE_URL=https://rpc.testnet.aztec-labs.com
+AZTEC_NODE_URL=https://v5.testnet.rpc.aztec-labs.com
 L1_PRIVATE_KEY=0x<your-sepolia-funded-private-key>
 # Optional — if omitted, deploy generates random ones and prints them:
 # ATTESTER_SECRET=0x...

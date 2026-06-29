@@ -13,7 +13,7 @@
  *   L1_PRIVATE_KEY     - Sepolia-funded private key (0x-prefixed) for fee juice bridging
  *
  * Optional env vars:
- *   AZTEC_NODE_URL     - Aztec node URL (default: https://rpc.testnet.aztec-labs.com)
+ *   AZTEC_NODE_URL     - Aztec node URL (default: https://v5.testnet.rpc.aztec-labs.com)
  *   ATTESTER_SECRET    - Hex secret key for the attester (default: random, printed at end)
  *
  * Sandbox example:
@@ -40,7 +40,7 @@ import { bridgeL1FeeJuice } from "./bridge-fee-juice.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const TESTNET_URL = "https://rpc.testnet.aztec-labs.com";
+const TESTNET_URL = "https://v5.testnet.rpc.aztec-labs.com";
 const FEE_JUICE_AMOUNT = 10n ** 21n;
 
 const NODE_URL = process.env.AZTEC_NODE_URL ?? TESTNET_URL;

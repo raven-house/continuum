@@ -17,15 +17,16 @@
     "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts",
     "deploy-example": "bun run src/deploy-example.ts",
     "deploy-migration": "bun run src/deploy-migration.ts",
-    "claim-migration": "bun run src/claim-migration.ts"
+    "claim-migration": "bun run src/claim-migration.ts",
+    "migrate-nft": "bun run src/migrate-nft-public.ts"
   },
   "dependencies": {
-    "@aztec/aztec.js": "4.3.0",
-    "@aztec/ethereum": "4.3.0",
-    "@aztec/foundation": "4.3.0",
-    "@aztec/l1-artifacts": "4.3.0",
-    "@aztec/stdlib": "4.3.0",
-    "@aztec/wallets": "4.3.0",
+    "@aztec/aztec.js": "5.0.0-rc.1",
+    "@aztec/ethereum": "5.0.0-rc.1",
+    "@aztec/foundation": "5.0.0-rc.1",
+    "@aztec/l1-artifacts": "5.0.0-rc.1",
+    "@aztec/stdlib": "5.0.0-rc.1",
+    "@aztec/wallets": "5.0.0-rc.1",
     "viem": "npm:@aztec/viem@2.38.2"
   },
   "devDependencies": {

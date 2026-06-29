@@ -5,7 +5,7 @@
  * Uses Poseidon2 hashing for event selector computation (matching Noir's approach).
  */
 
-import { Barretenberg } from '@aztec/bb.js';
+import { EventSelector, decodeFunctionSignature } from '@aztec/stdlib/abi';
 
 /**
  * Load contract artifact and extract events from outputs.structs.events
@@ -32,107 +32,15 @@ export function loadContractArtifact(abiJson) {
 }
 
 /**
- * Convert ABI type to signature string format
- * @param {Object} type - The ABI type object
- * @returns {string} - The signature type string
- */
-function abiTypeToSignatureType(type) {
-  if (!type || typeof type !== 'object') {
-    return 'Field';
-  }
-
-  switch (type.kind) {
-    case 'field':
-      return 'Field';
-
-    case 'boolean':
-      return 'bool';
-
-    case 'integer':
-      return type.sign === 'signed' ? `i${type.width}` : `u${type.width}`;
-
-    case 'string':
-      return `str<${type.length}>`;
-
-    case 'array':
-      return `[${abiTypeToSignatureType(type.type)};${type.length}]`;
-
-    case 'struct':
-      if (!type.fields || !Array.isArray(type.fields)) {
-        return '()';
-      }
-      return `(${type.fields.map(f => abiTypeToSignatureType(f.type)).join(',')})`;
-
-    case 'tuple':
-      if (!type.fields || !Array.isArray(type.fields)) {
-        return '()';
-      }
-      return `(${type.fields.map(abiTypeToSignatureType).join(',')})`;
-
-    default:
-      return 'Field';
-  }
-}
-
-/**
- * Generate event signature string
- * @param {string} name - Event name
- * @param {Array} fields - Event fields
- * @returns {string} - Event signature like "EventName(Field,u32)"
- */
-function generateEventSignature(name, fields) {
-  if (!fields || !Array.isArray(fields)) {
-    return `${name}()`;
-  }
-
-  const paramTypes = fields.map(f => abiTypeToSignatureType(f.type));
-  return `${name}(${paramTypes.join(',')})`;
-}
-
-/**
- * Compute Poseidon2 hash of bytes
- * @param {Barretenberg} bb - Barretenberg instance
- * @param {Buffer} data - Data to hash
- * @returns {Promise<Buffer>} - 32-byte hash
- */
-async function poseidon2HashBytes(bb, data) {
-  // Convert bytes to fields (each field can hold 31 bytes safely)
-  const fields = [];
-  for (let i = 0; i < data.length; i += 31) {
-    const chunk = data.slice(i, i + 31);
-    const hex = '0x' + chunk.toString('hex').padStart(64, '0');
-    fields.push(BigInt(hex));
-  }
-
-  // Compute Poseidon2 hash
-  const hash = await bb.poseidon2Hash(fields);
-
-  // Convert hash to buffer (32 bytes)
-  const hashHex = hash.toString(16).padStart(64, '0');
-  return Buffer.from(hashHex, 'hex');
-}
-
-/**
- * Compute event selector from signature
- * @param {Barretenberg} bb - Barretenberg instance
- * @param {string} signature - Event signature
- * @returns {Promise<string>} - Event selector as hex string (e.g., "0x12345678")
- */
-async function computeEventSelector(bb, signature) {
-  // Remove whitespace from signature
-  const cleanSignature = signature.replace(/\s/g, '');
-
-  // Hash the signature using Poseidon2
-  const hash = await poseidon2HashBytes(bb, Buffer.from(cleanSignature));
-
-  // Take last 4 bytes for selector
-  const selectorBytes = hash.slice(-4);
-  return '0x' + selectorBytes.toString('hex');
-}
-
-/**
- * Process events from contract artifact
- * @param {Array} events - Events array from artifact
+ * Process events from contract artifact.
+ *
+ * The event signature and selector are derived with the SAME aztec primitives the
+ * indexer uses (decodeFunctionSignature + EventSelector.fromSignature), so the
+ * stored selector matches both the on-chain event tag and what the indexer
+ * recomputes from `signature` at load time. EventSelector.fromSignature hashes
+ * with the pure-WASM Poseidon2 (no native `bb` binary required).
+ *
+ * @param {Array} events - Events array from artifact (each is a struct ABI type)
  * @returns {Promise<Array>} - Processed events with selectors
  */
 async function processEvents(events) {
@@ -140,44 +48,34 @@ async function processEvents(events) {
     return [];
   }
 
-  // Initialize Barretenberg for hashing
-  let bb;
-  try {
-    bb = await Barretenberg.new();
+  return Promise.all(
+    events.map(async event => {
+      // Extract event name from path (e.g., "NFT::Transfer" -> "Transfer")
+      const eventPath = event.path || '';
+      const eventName = eventPath.split('::').pop() || 'UnknownEvent';
 
-    const processedEvents = await Promise.all(
-      events.map(async event => {
-        // Extract event name from path (e.g., "contract::MyEvent" -> "MyEvent")
-        const eventPath = event.path || '';
-        const eventName = eventPath.split('::').pop() || 'UnknownEvent';
+      // Canonical aztec signature, e.g. "Transfer((Field),(Field),Field)"
+      const eventSignature = decodeFunctionSignature(
+        eventName,
+        event.fields || []
+      );
+      const eventSelector = (
+        await EventSelector.fromSignature(eventSignature)
+      ).toString();
 
-        // Generate event signature
-        const eventSignature = generateEventSignature(eventName, event.fields);
+      const fieldNames = (event.fields || []).map(f => f.name);
 
-        // Compute event selector
-        const eventSelector = await computeEventSelector(bb, eventSignature);
-
-        // Extract field names
-        const fieldNames = (event.fields || []).map(f => f.name);
-
-        return {
-          name: eventName,
-          path: eventPath,
-          signature: eventSignature,
-          eventSelector: eventSelector.toString(),
-          abiType: event,
-          fieldNames: fieldNames,
-          fieldCount: fieldNames.length
-        };
-      })
-    );
-
-    return processedEvents;
-  } finally {
-    if (bb) {
-      await bb.destroy();
-    }
-  }
+      return {
+        name: eventName,
+        path: eventPath,
+        signature: eventSignature,
+        eventSelector,
+        abiType: event,
+        fieldNames,
+        fieldCount: fieldNames.length
+      };
+    })
+  );
 }
 
 /**
