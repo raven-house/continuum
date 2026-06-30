@@ -24,60 +24,68 @@ export default async function (fastify) {
   // ─────────────────────────────────────────────────────────────
   // POST /collections/register
   // ─────────────────────────────────────────────────────────────
-  fastify.post('/register', { schema: schemas.register }, async request => {
-    const {
-      old_collection_address,
-      old_network = 'devnet',
-      new_collection_address,
-      new_network = 'devnet',
-      collection_name = ''
-    } = request.body;
+  fastify.post(
+    '/register',
+    { schema: schemas.register },
+    async (request, reply) => {
+      const {
+        old_collection_address,
+        old_network = 'devnet',
+        new_collection_address,
+        new_network = 'devnet',
+        collection_name = '',
+        artifact_id
+      } = request.body;
 
-    if (!old_collection_address?.trim() || !new_collection_address?.trim()) {
-      reply.badRequest(
-        'old_collection_address and new_collection_address are required'
-      );
-      return;
-    }
+      if (!old_collection_address?.trim() || !new_collection_address?.trim()) {
+        reply.badRequest(
+          'old_collection_address and new_collection_address are required'
+        );
+        return;
+      }
 
-    const db = fastify.mongo.client.db(getDbName());
-    const col = db.collection(COLLECTION);
+      const db = fastify.mongo.client.db(getDbName());
+      const col = db.collection(COLLECTION);
 
-    const oldAddr = old_collection_address.toLowerCase();
-    const newAddr = new_collection_address.toLowerCase();
+      const oldAddr = old_collection_address.toLowerCase();
+      const newAddr = new_collection_address.toLowerCase();
 
-    // Idempotent — return existing if the pair already registered
-    const existing = await col.findOne({ new_collection_address: newAddr });
-    if (existing) {
+      // Idempotent — return existing if the pair already registered
+      const existing = await col.findOne({ new_collection_address: newAddr });
+      if (existing) {
+        return {
+          success: true,
+          id: existing._id.toString(),
+          old_collection_address: existing.old_collection_address,
+          new_collection_address: existing.new_collection_address,
+          collection_name: existing.collection_name,
+          artifact_id: existing.artifact_id,
+          isNew: false
+        };
+      }
+
+      const now = new Date().toISOString();
+      const result = await col.insertOne({
+        old_collection_address: oldAddr,
+        old_network,
+        new_collection_address: newAddr,
+        new_network,
+        collection_name,
+        artifact_id,
+        registered_at: now
+      });
+
       return {
         success: true,
-        id: existing._id.toString(),
-        old_collection_address: existing.old_collection_address,
-        new_collection_address: existing.new_collection_address,
-        collection_name: existing.collection_name,
-        isNew: false
+        id: result.insertedId.toString(),
+        old_collection_address: oldAddr,
+        new_collection_address: newAddr,
+        collection_name,
+        artifact_id,
+        isNew: true
       };
     }
-
-    const now = new Date().toISOString();
-    const result = await col.insertOne({
-      old_collection_address: oldAddr,
-      old_network,
-      new_collection_address: newAddr,
-      new_network,
-      collection_name,
-      registered_at: now
-    });
-
-    return {
-      success: true,
-      id: result.insertedId.toString(),
-      old_collection_address: oldAddr,
-      new_collection_address: newAddr,
-      collection_name,
-      isNew: true
-    };
-  });
+  );
 
   // ─────────────────────────────────────────────────────────────
   // GET /collections/:newAddress
@@ -85,7 +93,7 @@ export default async function (fastify) {
   fastify.get(
     '/:newAddress',
     { schema: schemas.getByNewAddress },
-    async (request, reply) => {
+    async request => {
       const { newAddress } = request.params;
 
       const db = fastify.mongo.client.db(getDbName());
@@ -106,6 +114,7 @@ export default async function (fastify) {
         old_network: doc.old_network,
         new_network: doc.new_network,
         collection_name: doc.collection_name,
+        artifact_id: doc.artifact_id,
         registered_at: doc.registered_at
       };
     }
@@ -137,6 +146,7 @@ export default async function (fastify) {
         new_collection_address: d.new_collection_address,
         new_network: d.new_network,
         collection_name: d.collection_name,
+        artifact_id: d.artifact_id,
         registered_at: d.registered_at
       })),
       total,

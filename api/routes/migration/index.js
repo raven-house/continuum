@@ -26,10 +26,7 @@ import schemas from './schemas.js';
  * @param {import('fastify').FastifyInstance} fastify
  */
 export default async function (fastify) {
-  // ─────────────────────────────────────────────────────────────
-  // GET /migration/new-secret
-  // Stateless: generates a random secret and its commitment. Stores nothing.
-  // ─────────────────────────────────────────────────────────────
+  /* Stateless: generates a random secret and its commitment. Stores nothing. */
   fastify.get('/new-secret', { schema: schemas.newSecret }, async () => {
     const { secret, commitment } = generateMigrationSecret();
     return { secret, commitment };

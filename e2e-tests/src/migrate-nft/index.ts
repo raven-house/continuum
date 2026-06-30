@@ -136,6 +136,7 @@ async function main() {
     newAddress: newNft.address.toString(),
     network: NETWORK,
     name: "Continuum E2E",
+    artifactId: "nft",
   });
   step("✓ mapping registered");
 

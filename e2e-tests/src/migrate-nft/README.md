@@ -53,7 +53,7 @@ No L1 key, no waiting. Start a local sandbox, then:
 aztec start --local-network            # → http://localhost:8080
 
 # make sure the indexer is on sandbox:
-#   CONTINUUM_INDEXER_NETWORKS=sandbox
+#   AZTEC_NETWORK=sandbox
 #   CONTINUUM_AZTEC_NODE_URL_SANDBOX=http://host.docker.internal:8080   (it runs in Docker)
 
 cd continuum/e2e-tests
@@ -69,7 +69,7 @@ a full run takes several minutes.
 
 ```bash
 # indexer on testnet:
-#   CONTINUUM_INDEXER_NETWORKS=testnet
+#   AZTEC_NETWORK=testnet
 #   CONTINUUM_AZTEC_NODE_URL_TESTNET=https://v5.testnet.rpc.aztec-labs.com
 
 cd continuum/e2e-tests

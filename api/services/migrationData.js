@@ -1,10 +1,28 @@
 import { computeMigrationCommitment, signMigrationClaim } from './attester.js';
 
 const COLLECTION_REGISTRY_COLLECTION = 'collection_registry';
+const CONTRACTS_COLLECTION = 'contracts';
 const EVENTS_COLLECTION = 'events';
 
-const REGISTRATION_EVENT = 'MigrationRegistered';
-const TRANSFER_EVENT = 'Transfer';
+const DEFAULT_MIGRATION_MANIFEST = Object.freeze({
+  type: 'nft',
+  ownership_model: 'latest_transfer_event',
+  events: {
+    transfer: {
+      name: 'Transfer',
+      token_id: 'token_id',
+      to: 'to'
+    },
+    registration: {
+      source: 'contract_event',
+      name: 'MigrationRegistered',
+      owner: 'owner',
+      token_id: 'token_id',
+      commitment: 'migration_commitment',
+      collection: 'collection'
+    }
+  }
+});
 
 export class MigrationDataError extends Error {
   constructor(statusCode, message) {
@@ -12,6 +30,124 @@ export class MigrationDataError extends Error {
     this.name = 'MigrationDataError';
     this.statusCode = statusCode;
   }
+}
+
+function mergeMigrationManifest(migration = {}) {
+  return {
+    ...DEFAULT_MIGRATION_MANIFEST,
+    ...migration,
+    events: {
+      transfer: {
+        ...DEFAULT_MIGRATION_MANIFEST.events.transfer,
+        ...(migration.events?.transfer ?? {})
+      },
+      registration: {
+        ...DEFAULT_MIGRATION_MANIFEST.events.registration,
+        ...(migration.events?.registration ?? {})
+      }
+    }
+  };
+}
+
+function dataField(fieldName) {
+  return `data.${fieldName}`;
+}
+
+function readEventData(event, fieldName) {
+  return event?.data?.[fieldName];
+}
+
+async function loadMigrationManifest(db, registryDoc, oldCollectionAddress) {
+  const contracts = db.collection(CONTRACTS_COLLECTION);
+
+  let contractDoc = null;
+  if (registryDoc.artifact_id) {
+    contractDoc = await contracts.findOne({ artifact_id: registryDoc.artifact_id });
+  }
+
+  if (!contractDoc) {
+    const oldNetwork = registryDoc.old_network;
+    const addressQuery = [
+      { 'migration.addresses': oldCollectionAddress },
+      { 'migration.addresses': oldCollectionAddress.toLowerCase() }
+    ];
+
+    if (oldNetwork) {
+      addressQuery.push({
+        [`networks.${oldNetwork}.addresses`]: oldCollectionAddress
+      });
+      addressQuery.push({
+        [`networks.${oldNetwork}.addresses`]: oldCollectionAddress.toLowerCase()
+      });
+    }
+
+    contractDoc = await contracts.findOne({
+      enabled: true,
+      migration: { $exists: true },
+      $or: addressQuery
+    });
+  }
+
+  return mergeMigrationManifest(contractDoc?.migration);
+}
+
+function buildRegistrationQuery({
+  manifest,
+  oldCollectionAddress,
+  commitment,
+  commitmentDecimal
+}) {
+  const registration = manifest.events.registration;
+  const query = {
+    event_type: registration.name,
+    [dataField(registration.commitment)]: { $in: [commitment, commitmentDecimal] }
+  };
+
+  if (registration.source === 'continuum_registry') {
+    if (registration.contract_address) {
+      query.contract_address = registration.contract_address.toLowerCase();
+    }
+    if (registration.collection) {
+      query[dataField(registration.collection)] = oldCollectionAddress;
+    }
+  } else {
+    query.contract_address = oldCollectionAddress;
+  }
+
+  return query;
+}
+
+async function getLatestTransferTokens(eventsCollection, manifest, oldCollectionAddress, owner) {
+  const transfer = manifest.events.transfer;
+  const events = await eventsCollection
+    .aggregate([
+      {
+        $match: {
+          contract_address: oldCollectionAddress,
+          event_type: transfer.name
+        }
+      },
+      { $sort: { block_number: -1 } },
+      {
+        $group: {
+          _id: `$${dataField(transfer.token_id)}`,
+          latest_owner: { $first: `$${dataField(transfer.to)}` },
+          block_number: { $first: '$block_number' }
+        }
+      },
+      {
+        $match: { latest_owner: owner }
+      }
+    ])
+    .toArray();
+
+  return events.map(e => e._id);
+}
+
+async function getExplicitRegistrationTokens(eventsCollection, manifest, registrationQuery) {
+  const registration = manifest.events.registration;
+  const registrations = await eventsCollection.find(registrationQuery).toArray();
+  return registrations.map(event => readEventData(event, registration.token_id));
 }
 
 /**
@@ -46,14 +182,18 @@ export async function buildMigrationData(
   }
 
   const oldCollectionAddress = registryDoc.old_collection_address;
+  const manifest = await loadMigrationManifest(db, registryDoc, oldCollectionAddress);
   const commitment = computeCommitment(migration_secret);
   const commitmentDecimal = BigInt(commitment).toString();
-
-  const registration = await db.collection(EVENTS_COLLECTION).findOne({
-    contract_address: oldCollectionAddress,
-    event_type: REGISTRATION_EVENT,
-    'data.migration_commitment': { $in: [commitment, commitmentDecimal] }
+  const eventsCollection = db.collection(EVENTS_COLLECTION);
+  const registrationQuery = buildRegistrationQuery({
+    manifest,
+    oldCollectionAddress,
+    commitment,
+    commitmentDecimal
   });
+
+  const registration = await eventsCollection.findOne(registrationQuery);
 
   if (!registration) {
     throw new MigrationDataError(
@@ -64,30 +204,18 @@ export async function buildMigrationData(
     );
   }
 
-  const oldWalletAddress = String(registration.data.owner).toLowerCase();
+  const ownerField = manifest.events.registration.owner;
+  const oldWalletAddress = String(readEventData(registration, ownerField)).toLowerCase();
 
-  const events = await db
-    .collection(EVENTS_COLLECTION)
-    .aggregate([
-      {
-        $match: {
-          contract_address: oldCollectionAddress,
-          event_type: TRANSFER_EVENT
-        }
-      },
-      { $sort: { block_number: -1 } },
-      {
-        $group: {
-          _id: '$data.token_id',
-          latest_owner: { $first: '$data.to' },
-          block_number: { $first: '$block_number' }
-        }
-      },
-      {
-        $match: { latest_owner: oldWalletAddress }
-      }
-    ])
-    .toArray();
+  const tokenIds =
+    manifest.ownership_model === 'explicit_token_registration_event'
+      ? await getExplicitRegistrationTokens(eventsCollection, manifest, registrationQuery)
+      : await getLatestTransferTokens(
+          eventsCollection,
+          manifest,
+          oldCollectionAddress,
+          oldWalletAddress
+        );
 
   const baseResponse = {
     old_wallet_address: oldWalletAddress,
@@ -96,13 +224,12 @@ export async function buildMigrationData(
     old_collection_address: oldCollectionAddress
   };
 
-  if (events.length === 0) {
+  if (tokenIds.length === 0) {
     return { ...baseResponse, tokens: [] };
   }
 
   const tokens = await Promise.all(
-    events.map(async e => {
-      const tokenId = e._id;
+    tokenIds.map(async tokenId => {
       const { signature, signatureBytes } = await signClaim(
         newCollectionAddr,
         new_wallet_address.toLowerCase(),

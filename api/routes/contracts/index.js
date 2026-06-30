@@ -1,18 +1,82 @@
-/**
- * Contract ABI Upload and Event Management Routes
- *
- * Endpoints for uploading contract ABIs, extracting events,
- * and querying stored contract events.
- */
-
 import {
   processContractAbi,
   validateAbi
 } from '../../services/abiProcessor.js';
-import schemas from './schemas.js';
 import { getDbName } from '../../shared/config.js';
+import schemas from './schemas.js';
 
-// Get ObjectId from the mongodb package
+const DEFAULT_MIGRATION_MANIFEST = Object.freeze({
+  type: 'nft',
+  ownership_model: 'latest_transfer_event',
+  addresses: [],
+  events: {
+    transfer: {
+      name: 'Transfer',
+      token_id: 'token_id',
+      from: 'from',
+      to: 'to'
+    },
+    registration: {
+      source: 'contract_event',
+      name: 'MigrationRegistered',
+      owner: 'owner',
+      commitment: 'migration_commitment'
+    }
+  },
+  claim: {
+    domain: '0x4e46544d',
+    attestation_fields: [
+      'domain',
+      'new_collection_address',
+      'new_wallet_address',
+      'token_id'
+    ]
+  }
+});
+
+/**
+ *
+ * @param migration
+ */
+function mergeMigrationManifest(migration = {}) {
+  return {
+    ...DEFAULT_MIGRATION_MANIFEST,
+    ...migration,
+    addresses: migration.addresses ?? DEFAULT_MIGRATION_MANIFEST.addresses,
+    events: {
+      transfer: {
+        ...DEFAULT_MIGRATION_MANIFEST.events.transfer,
+        ...(migration.events?.transfer ?? {})
+      },
+      registration: {
+        ...DEFAULT_MIGRATION_MANIFEST.events.registration,
+        ...(migration.events?.registration ?? {})
+      }
+    },
+    claim: {
+      ...DEFAULT_MIGRATION_MANIFEST.claim,
+      ...(migration.claim ?? {})
+    }
+  };
+}
+
+/**
+ *
+ * @param startBlock
+ * @param networks
+ */
+function deriveStartBlock(startBlock, networks) {
+  if (startBlock && Object.keys(startBlock).length > 0) {
+    return startBlock;
+  }
+
+  return Object.fromEntries(
+    Object.entries(networks ?? {})
+      .filter(([, config]) => config?.start_block !== undefined)
+      .map(([network, config]) => [network, config.start_block])
+  );
+}
+
 let ObjectId;
 try {
   const mongodb = await import('mongodb');
@@ -26,7 +90,6 @@ try {
  * @param {import('fastify').FastifyPluginAsync} fastify
  */
 export default async function (fastify) {
-  // POST /contracts/upload - Upload ABI, extract events, register for indexing
   fastify.post(
     '/upload',
     { schema: schemas.uploadContract },
@@ -37,6 +100,8 @@ export default async function (fastify) {
         name,
         enabled = true,
         start_block = {},
+        networks = {},
+        migration,
         event_types = []
       } = request.body;
 
@@ -79,11 +144,18 @@ export default async function (fastify) {
           }
         }
 
+        const resolvedStartBlock = deriveStartBlock(start_block, networks);
+        const migrationManifest = migration
+          ? mergeMigrationManifest(migration)
+          : undefined;
+
         const docToInsert = {
           artifact_id,
           contractName: processedContract.contractName,
           enabled,
-          start_block,
+          start_block: resolvedStartBlock,
+          networks,
+          migration: migrationManifest,
           event_types,
           eventCount: processedContract.eventCount,
           events: processedContract.events,
@@ -100,7 +172,9 @@ export default async function (fastify) {
           artifact_id,
           contractName: processedContract.contractName,
           enabled,
-          start_block,
+          start_block: resolvedStartBlock,
+          networks,
+          migration: migrationManifest,
           event_types,
           eventCount: processedContract.eventCount,
           events: processedContract.events

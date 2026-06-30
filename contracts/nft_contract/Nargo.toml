@@ -1,6 +1,6 @@
 [package]
 name = "nft_contract"
-authors = [""]
+authors = ["Raven House Team"]
 compiler_version = ">=1.0.0"
 type = "contract"
 

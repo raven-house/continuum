@@ -328,6 +328,69 @@ Contract indexing configuration is stored in MongoDB when an ABI is uploaded to
 - `enabled`: Whether the indexer should index this contract
 - `event_types`: Event names to index; omit or leave empty to index all events
 - `start_block`: Block to start indexing from per network
+- `networks`: Preferred per-network config for new integrations:
+  `{ "sandbox": { "start_block": 123, "addresses": ["0x..."] } }`
+- `migration`: Optional migration manifest that maps developer contract event
+  names/fields to Continuum ownership and claim semantics
+
+Example migration-aware upload:
+
+```json
+{
+  "artifact_id": "my-nft-v1",
+  "name": "MyNFT",
+  "abi": {},
+  "enabled": true,
+  "event_types": ["OwnerChanged", "ReadyToMigrate"],
+  "networks": {
+    "sandbox": {
+      "start_block": 123,
+      "addresses": ["0xoldcollection"]
+    }
+  },
+  "migration": {
+    "type": "nft",
+    "ownership_model": "latest_transfer_event",
+    "addresses": ["0xoldcollection"],
+    "events": {
+      "transfer": {
+        "name": "OwnerChanged",
+        "token_id": "id",
+        "to": "recipient"
+      },
+      "registration": {
+        "name": "ReadyToMigrate",
+        "owner": "account",
+        "commitment": "commitment"
+      }
+    },
+    "claim": {
+      "domain": "0x4e46544d",
+      "attestation_fields": [
+        "domain",
+        "new_collection_address",
+        "new_wallet_address",
+        "token_id"
+      ]
+    }
+  }
+}
+```
+
+If `migration` is omitted, Continuum uses the legacy NFT defaults:
+`Transfer.token_id`, `Transfer.to`, `MigrationRegistered.owner`, and
+`MigrationRegistered.migration_commitment`.
+
+Collections can optionally pass `artifact_id` to `POST /collections/register`.
+That links the old/new collection mapping to the exact uploaded migration
+manifest. Without it, Continuum attempts to find a manifest by old collection
+address and then falls back to the legacy defaults.
+
+The lowest-change public NFT migration pattern is to keep ownership events in
+the application contract and register migration commitments through a generic
+registry event with `{ collection, owner, migration_commitment }`. New-rollup
+contracts still need a small claim function that verifies Continuum's attestation
+before restoring/minting state.
 
 ## Database Collections
 

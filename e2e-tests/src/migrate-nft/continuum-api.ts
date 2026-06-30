@@ -50,6 +50,8 @@ export class ContinuumApi {
     abi: unknown;
     eventTypes: string[];
     startBlock: Record<string, number>;
+    networks?: Record<string, { start_block?: number; addresses?: string[] }>;
+    migration?: unknown;
   }): Promise<"registered" | "already-registered"> {
     const res = await this.post("/contracts/upload", {
       artifact_id: input.artifactId,
@@ -58,6 +60,8 @@ export class ContinuumApi {
       enabled: true,
       event_types: input.eventTypes,
       start_block: input.startBlock,
+      networks: input.networks,
+      migration: input.migration,
     });
     if (res.ok) return "registered";
     if (res.status === 409) return "already-registered";
@@ -70,6 +74,7 @@ export class ContinuumApi {
     newAddress: string;
     network: string;
     name: string;
+    artifactId?: string;
   }): Promise<void> {
     const res = await this.post("/collections/register", {
       old_collection_address: input.oldAddress,
@@ -77,6 +82,7 @@ export class ContinuumApi {
       new_collection_address: input.newAddress,
       new_network: input.network,
       collection_name: input.name,
+      artifact_id: input.artifactId,
     });
     if (!res.ok) throw new Error(`/collections/register → ${res.status} ${await res.text()}`);
   }

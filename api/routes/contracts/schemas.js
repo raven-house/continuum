@@ -38,11 +38,100 @@ const schemas = Object.freeze({
           },
           additionalProperties: false
         },
+        networks: {
+          type: 'object',
+          description:
+            'Per-network indexing metadata. Prefer this for new integrations; start_block is kept for backwards compatibility.',
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              start_block: { type: 'number' },
+              addresses: {
+                type: 'array',
+                description:
+                  'Contract addresses on this network that use this artifact',
+                items: { type: 'string' }
+              }
+            },
+            additionalProperties: false
+          }
+        },
         event_types: {
           type: 'array',
           description:
             'Event names to index (omit or leave empty to index all events)',
           items: { type: 'string' }
+        },
+        migration: {
+          type: 'object',
+          description:
+            'Optional migration manifest describing event names, field mappings, and claim attestation shape.',
+          properties: {
+            type: {
+              type: 'string',
+              enum: ['nft'],
+              default: 'nft'
+            },
+            ownership_model: {
+              type: 'string',
+              enum: [
+                'latest_transfer_event',
+                'explicit_token_registration_event'
+              ],
+              default: 'latest_transfer_event'
+            },
+            addresses: {
+              type: 'array',
+              description:
+                'Old-rollup contract addresses that should use this migration manifest',
+              items: { type: 'string' }
+            },
+            events: {
+              type: 'object',
+              properties: {
+                transfer: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    token_id: { type: 'string' },
+                    from: { type: 'string' },
+                    to: { type: 'string' },
+                    private_owner_sentinel: { type: 'string' }
+                  },
+                  additionalProperties: false
+                },
+                registration: {
+                  type: 'object',
+                  properties: {
+                    source: {
+                      type: 'string',
+                      enum: ['contract_event', 'continuum_registry']
+                    },
+                    name: { type: 'string' },
+                    owner: { type: 'string' },
+                    token_id: { type: 'string' },
+                    commitment: { type: 'string' },
+                    collection: { type: 'string' },
+                    contract_address: { type: 'string' }
+                  },
+                  additionalProperties: false
+                }
+              },
+              additionalProperties: false
+            },
+            claim: {
+              type: 'object',
+              properties: {
+                domain: { type: 'string' },
+                attestation_fields: {
+                  type: 'array',
+                  items: { type: 'string' }
+                }
+              },
+              additionalProperties: false
+            }
+          },
+          additionalProperties: false
         }
       },
       required: ['artifact_id', 'abi']

@@ -1,11 +1,3 @@
-/**
- * GET /attester/pubkey
- *
- * Returns the Continuum attester's Grumpkin public key coordinates.
- * Collection owners pass these values to the NFT contract constructor
- * as `migration_attester_pubkey_x` and `migration_attester_pubkey_y`.
- */
-
 import { getAttesterPublicKey } from '../../services/attester.js';
 
 /**

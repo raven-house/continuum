@@ -70,7 +70,7 @@ NEW ROLLUP (current)
 ```bash
 # 1. MongoDB running
 cd continuum
-docker compose -f docker-compose.local.yml up -d
+docker compose up -d
 
 # 2. Continuum API — set env vars then start
 cd continuum/api

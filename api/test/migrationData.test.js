@@ -9,13 +9,23 @@ import {
  *
  * @param root0
  * @param root0.registryDoc
+ * @param root0.contractDoc
  * @param root0.registrationDoc
+ * @param root0.registrationDocs
  * @param root0.ownedTokens
  */
-function createDb({ registryDoc, registrationDoc, ownedTokens = [] }) {
+function createDb({
+  registryDoc,
+  contractDoc = null,
+  registrationDoc,
+  registrationDocs = [],
+  ownedTokens = []
+}) {
   const calls = {
     registryFind: [],
+    contractFind: [],
     eventFind: [],
+    eventFindMany: [],
     aggregate: []
   };
 
@@ -31,11 +41,28 @@ function createDb({ registryDoc, registrationDoc, ownedTokens = [] }) {
         };
       }
 
+      if (name === 'contracts') {
+        return {
+          async findOne(query) {
+            calls.contractFind.push(query);
+            return contractDoc;
+          }
+        };
+      }
+
       if (name === 'events') {
         return {
           async findOne(query) {
             calls.eventFind.push(query);
             return registrationDoc;
+          },
+          find(query) {
+            calls.eventFindMany.push(query);
+            return {
+              async toArray() {
+                return registrationDocs;
+              }
+            };
           },
           aggregate(pipeline) {
             calls.aggregate.push(pipeline);
@@ -92,6 +119,7 @@ test('buildMigrationData returns signed token claims for the verified old owner'
   assert.deepEqual(db.calls.registryFind, [
     { new_collection_address: '0xnew' }
   ]);
+  assert.equal(db.calls.contractFind.length, 1);
   assert.deepEqual(db.calls.eventFind, [
     {
       contract_address: '0xold',
@@ -123,6 +151,137 @@ test('buildMigrationData returns signed token claims for the verified old owner'
       }
     ]
   });
+});
+
+test('buildMigrationData uses custom manifest event and field mappings', async () => {
+  const db = createDb({
+    registryDoc: {
+      old_collection_address: '0xold',
+      artifact_id: 'custom-nft'
+    },
+    contractDoc: {
+      migration: {
+        events: {
+          transfer: {
+            name: 'OwnerChanged',
+            token_id: 'id',
+            to: 'recipient'
+          },
+          registration: {
+            name: 'ReadyToMigrate',
+            owner: 'account',
+            commitment: 'commitment'
+          }
+        }
+      }
+    },
+    registrationDoc: {
+      data: {
+        account: '0xOWNER'
+      }
+    },
+    ownedTokens: [{ _id: '9' }]
+  });
+
+  const result = await buildMigrationData(
+    db,
+    {
+      collection_address: '0xNEW',
+      migration_secret: '0xsecret',
+      new_wallet_address: '0xWALLET'
+    },
+    {
+      computeMigrationCommitment: () => '0x0b',
+      signMigrationClaim: async () => ({
+        signature: '0xsig',
+        signatureBytes: [9]
+      })
+    }
+  );
+
+  assert.deepEqual(db.calls.contractFind, [{ artifact_id: 'custom-nft' }]);
+  assert.deepEqual(db.calls.eventFind, [
+    {
+      contract_address: '0xold',
+      event_type: 'ReadyToMigrate',
+      'data.commitment': { $in: ['0x0b', '11'] }
+    }
+  ]);
+  assert.equal(db.calls.aggregate[0][0].$match.event_type, 'OwnerChanged');
+  assert.equal(db.calls.aggregate[0][2].$group._id, '$data.id');
+  assert.equal(db.calls.aggregate[0][2].$group.latest_owner.$first, '$data.recipient');
+  assert.equal(result.tokens[0].token_id, '9');
+});
+
+test('buildMigrationData supports explicit token registration manifests', async () => {
+  const db = createDb({
+    registryDoc: {
+      old_collection_address: '0xold',
+      artifact_id: 'private-nft'
+    },
+    contractDoc: {
+      migration: {
+        ownership_model: 'explicit_token_registration_event',
+        events: {
+          registration: {
+            name: 'NFTMigrationRegistered',
+            owner: 'owner',
+            token_id: 'token_id',
+            commitment: 'migration_commitment'
+          }
+        }
+      }
+    },
+    registrationDoc: {
+      data: {
+        owner: '0xOWNER',
+        token_id: '7'
+      }
+    },
+    registrationDocs: [
+      {
+        data: {
+          owner: '0xOWNER',
+          token_id: '7'
+        }
+      },
+      {
+        data: {
+          owner: '0xOWNER',
+          token_id: '42'
+        }
+      }
+    ]
+  });
+
+  const result = await buildMigrationData(
+    db,
+    {
+      collection_address: '0xNEW',
+      migration_secret: '0xsecret',
+      new_wallet_address: '0xWALLET'
+    },
+    {
+      computeMigrationCommitment: () => '0x0c',
+      signMigrationClaim: async (_collection, _wallet, tokenId) => ({
+        signature: `0xsig${tokenId}`,
+        signatureBytes: [Number(tokenId)]
+      })
+    }
+  );
+
+  assert.deepEqual(db.calls.eventFindMany, [
+    {
+      contract_address: '0xold',
+      event_type: 'NFTMigrationRegistered',
+      'data.migration_commitment': { $in: ['0x0c', '12'] }
+    }
+  ]);
+  assert.deepEqual(db.calls.aggregate, []);
+  assert.deepEqual(
+    result.tokens.map(t => t.token_id),
+    ['7', '42']
+  );
 });
 
 test('buildMigrationData fails when collection is not registered', async () => {

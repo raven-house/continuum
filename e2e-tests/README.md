@@ -76,7 +76,7 @@ Start the Continuum services first (from `continuum/`):
 docker compose up -d
 cd database && bun run init && cd ..
 
-# API (needs ATTESTER_SECRET in api/.env) — http://localhost:3004
+# API (needs ATTESTER_SECRET in the top-level .env) — http://localhost:3004
 cd api && bun run dev
 
 # Indexer — must run for the SAME network as AZTEC_NODE_URL

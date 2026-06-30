@@ -33,6 +33,11 @@ const schemas = Object.freeze({
         collection_name: {
           type: 'string',
           description: 'Human-readable name (for UI display)'
+        },
+        artifact_id: {
+          type: 'string',
+          description:
+            'Optional uploaded contract artifact id whose migration manifest should be used for this collection'
         }
       }
     },
@@ -45,6 +50,7 @@ const schemas = Object.freeze({
           old_collection_address: { type: 'string' },
           new_collection_address: { type: 'string' },
           collection_name: { type: 'string' },
+          artifact_id: { type: 'string' },
           isNew: { type: 'boolean' }
         }
       }
@@ -76,6 +82,7 @@ const schemas = Object.freeze({
           old_network: { type: 'string' },
           new_network: { type: 'string' },
           collection_name: { type: 'string' },
+          artifact_id: { type: 'string' },
           registered_at: { type: 'string' }
         }
       }
