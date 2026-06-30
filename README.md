@@ -251,62 +251,9 @@ curl -X POST http://localhost:3004/request_data \
 curl http://localhost:3004/attester
 ```
 
-## Project Structure
-
-```
-continuum/
-├── docker-compose.yml           # Local development Docker Compose (default)
-├── docker-compose.prod.yml      # Production Docker Compose
-├── .env.example                 # Environment variables template
-│
-├── database/                    # MongoDB initialization
-│   └── init.js                  # Collections, indexes, sample data
-│
-├── indexer/                     # Event indexer
-│   ├── Dockerfile               # Indexer container
-│   ├── index.ts                 # Scheduler entry point
-│   ├── lib/                     # Indexer logic (EventIndexer, ArtifactRegistry)
-│   └── shared/                  # Shared utilities (aztecNode, mongodb, utils)
-│
-├── api/                         # REST API server (Fastify, port 3004)
-│   ├── Dockerfile               # API container
-│   ├── app.js                   # Fastify app entry
-│   ├── routes/                  # Route handlers
-│   │   ├── health/
-│   │   ├── contracts/
-│   │   ├── collections/         # Old/new collection registry
-│   │   ├── migration/           # Stateless secret/commitment helpers
-│   │   ├── request_data/        # Attested migration claim data
-│   │   └── attester/            # Attester public key
-│   └── plugins/                 # Fastify plugins (mongodb, cors, env)
-```
 
 ## Configuration
 
-### Environment Variables
-
-| Variable                                        | Description                                                   | Default                                   |
-| ----------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------- |
-| `MONGO_ROOT_USERNAME`                           | MongoDB root username                                         | `root`                                    |
-| `MONGO_ROOT_PASSWORD`                           | MongoDB root password                                         | `password`                                |
-| `CONTINUUM_DB_CONNECTION_STRING`                | MongoDB connection string                                     | `mongodb://root:password@localhost:27017` |
-| `CONTINUUM_DB_NAME`                             | Database name                                                 | `continuum`                               |
-| `AZTEC_NETWORK`                                 | Single Aztec network to index (`sandbox` or `testnet`)        | `sandbox`                                 |
-| `CONTINUUM_INDEXER_INTERVAL`                    | Indexer run interval (ms)                                     | `30000`                                   |
-| `CONTINUUM_INDEXER_BLOCK_RANGE`                 | Blocks per batch                                              | `14`                                      |
-| `CONTINUUM_AZTEC_NODE_URL_TESTNET`              | Aztec node URL for testnet                                    | -                                         |
-| `CONTINUUM_AZTEC_NODE_URL_SANDBOX`              | Aztec node URL for sandbox                                    | `http://localhost:8080`                   |
-| `CONTINUUM_API_PORT`                            | API server port                                               | `3004`                                    |
-| `CONTINUUM_API_HOST`                            | API bind host                                                 | `0.0.0.0`                                 |
-| `CONTINUUM_CORS_ORIGIN`                         | CORS origin or comma-separated allowlist                      | `*`                                       |
-| `ATTESTER_SECRET`                               | Private field used to derive the Schnorr attester signing key | local-only sample in `.env.example`       |
-| `CONTINUUM_MONGODB_MAX_POOL_SIZE`               | MongoDB max pool size for indexer                             | `10`                                      |
-| `CONTINUUM_MONGODB_MIN_POOL_SIZE`               | MongoDB min pool size for indexer                             | `0`                                       |
-| `CONTINUUM_MONGODB_MAX_CONNECTING`              | MongoDB max concurrent connects for indexer                   | `2`                                       |
-| `CONTINUUM_MONGODB_MAX_IDLE_TIME_MS`            | MongoDB max idle time for indexer                             | `30000`                                   |
-| `CONTINUUM_MONGODB_SOCKET_TIMEOUT_MS`           | MongoDB socket timeout for indexer                            | `45000`                                   |
-| `CONTINUUM_MONGODB_CONNECT_TIMEOUT_MS`          | MongoDB connect timeout for indexer                           | `30000`                                   |
-| `CONTINUUM_MONGODB_SERVER_SELECTION_TIMEOUT_MS` | MongoDB server selection timeout for indexer                  | `5000`                                    |
 
 ### Contract Indexing Configuration
 
@@ -394,20 +341,8 @@ before restoring/minting state.
 
 See `database/init.js` for the full schema and indexes. Collections and indexes are created automatically when MongoDB first initializes.
 
+
 ## Troubleshooting
-
-### MongoDB Connection Issues
-
-```bash
-# Check MongoDB is running
-docker compose ps mongodb
-
-# Check MongoDB logs
-docker compose logs mongodb
-
-# Connect to MongoDB shell
-docker compose exec mongodb mongosh -u root -p password
-```
 
 ### Indexer Not Processing Events
 
