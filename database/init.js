@@ -42,26 +42,6 @@ db.collection_registry.createIndex(
 db.collection_registry.createIndex({ old_collection_address: 1 });
 db.collection_registry.createIndex({ new_network: 1 });
 
-// Insert sample artifact configuration (disabled by default)
-db.artifacts.insertOne({
-  id: 'example-artifact',
-  name: 'Example Contract',
-  description: 'Example artifact configuration - replace with your own',
-  artifact_path: './artifacts/Example.json',
-  addresses: {
-    devnet: '',
-    testnet: '',
-    sandbox: ''
-  },
-  enabled: false,
-  event_types: [],
-  start_block: {
-    devnet: 0,
-    testnet: 0,
-    sandbox: 0
-  },
-  created_at: new Date()
-});
 
 console.log('Continuum database initialized successfully!');
 console.log(

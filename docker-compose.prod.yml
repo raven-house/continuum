@@ -1,0 +1,79 @@
+# Production Docker Compose
+# Run with: docker compose -f docker-compose.prod.yml up -d
+# Ensure all required environment variables are set before starting.
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: continuum-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${CONTINUUM_DB_NAME:-continuum}
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - continuum-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  indexer:
+    build:
+      context: .
+      dockerfile: indexer/Dockerfile
+    container_name: continuum-indexer
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      CONTINUUM_DB_CONNECTION_STRING: ${CONTINUUM_DB_CONNECTION_STRING}
+      CONTINUUM_DB_NAME: ${CONTINUUM_DB_NAME:-continuum}
+      CONTINUUM_INDEXER_INTERVAL: ${CONTINUUM_INDEXER_INTERVAL:-30000}
+      CONTINUUM_INDEXER_BLOCK_RANGE: ${CONTINUUM_INDEXER_BLOCK_RANGE:-14}
+      CONTINUUM_INDEXER_MAX_RETRIES: ${CONTINUUM_INDEXER_MAX_RETRIES:-3}
+      CONTINUUM_INDEXER_NETWORKS: ${CONTINUUM_INDEXER_NETWORKS:-testnet}
+      CONTINUUM_AZTEC_NODE_URL_DEVNET: ${CONTINUUM_AZTEC_NODE_URL_DEVNET:-}
+      CONTINUUM_AZTEC_NODE_URL_TESTNET: ${CONTINUUM_AZTEC_NODE_URL_TESTNET:-}
+      CONTINUUM_AZTEC_NODE_URL_SANDBOX: ${CONTINUUM_AZTEC_NODE_URL_SANDBOX:-http://host.docker.internal:8080}
+      CONTINUUM_ARTIFACTS_CONFIG_PATH: /app/artifacts.json
+      NODE_ENV: production
+    networks:
+      - continuum-network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: continuum-api
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      RD_HOST: ${RD_HOST:-0.0.0.0}
+      RD_PORT: ${RD_PORT:-3004}
+      CONTINUUM_API_HOST: ${CONTINUUM_API_HOST:-0.0.0.0}
+      CONTINUUM_API_PORT: ${CONTINUUM_API_PORT:-3004}
+      CONTINUUM_DB_CONNECTION_STRING: ${CONTINUUM_DB_CONNECTION_STRING}
+      CONTINUUM_DB_NAME: ${CONTINUUM_DB_NAME:-continuum}
+      CONTINUUM_CORS_ORIGIN: ${CONTINUUM_CORS_ORIGIN:-*}
+      NODE_ENV: production
+    networks:
+      - continuum-network
+
+volumes:
+  mongodb_data:
+    name: continuum_mongodb_data
+
+networks:
+  continuum-network:
+    name: continuum-network
+    driver: bridge

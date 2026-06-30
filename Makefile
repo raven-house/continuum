@@ -1,7 +1,7 @@
 # Continuum - Makefile
 # Quick commands for managing the development environment
 
-.PHONY: help build up down logs ps shell-db clean dev prod restart
+.PHONY: help build up down logs ps shell-db clean dev dev-down prod prod-down restart
 
 # Default target
 help:
@@ -9,9 +9,12 @@ help:
 	@echo ""
 	@echo "Available commands:"
 	@echo "  make build      - Build all Docker images"
-	@echo "  make up         - Start all services (production mode)"
-	@echo "  make down       - Stop all services"
+	@echo "  make up         - Start all services (local development)"
+	@echo "  make down       - Stop all services (local development)"
 	@echo "  make dev        - Start services in development mode (with hot reload)"
+	@echo "  make dev-down   - Stop development services"
+	@echo "  make prod       - Start all services in production mode"
+	@echo "  make prod-down  - Stop production services"
 	@echo "  make logs       - View logs from all services"
 	@echo "  make logs-api   - View API logs"
 	@echo "  make logs-indexer - View indexer logs"
@@ -27,20 +30,20 @@ help:
 build:
 	docker-compose build
 
-# Start all services in production mode
+# Start all services in local development mode
 up:
 	docker-compose up -d
 	@echo "Services starting..."
 	@sleep 3
 	@make health
 
-# Stop all services
+# Stop all services (local development)
 down:
 	docker-compose down
 
 # Start in development mode (with hot reload)
 dev:
-	docker-compose -f docker-compose.local.yml up -d
+	docker-compose up -d
 	@echo "Development services starting..."
 	@sleep 3
 	@echo "API available at: http://localhost:3004"
@@ -48,7 +51,16 @@ dev:
 
 # Stop development services
 dev-down:
-	docker-compose -f docker-compose.local.yml down
+	docker-compose down
+
+# Start all services in production mode
+prod:
+	docker-compose -f docker-compose.prod.yml up -d
+	@echo "Production services starting..."
+
+# Stop production services
+prod-down:
+	docker-compose -f docker-compose.prod.yml down
 
 # View all logs
 logs:
