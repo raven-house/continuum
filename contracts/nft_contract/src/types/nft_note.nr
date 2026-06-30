@@ -19,12 +19,6 @@ use aztec::{
     },
 };
 
-// NFTNote supports partial notes, i.e. the ability to create an incomplete note in private, hiding certain values (the
-// owner, storage slot and randomness), and then completing the note in public with the ones missing (the token id).
-// Partial notes are being actively developed and are not currently fully supported via macros, and so we rely on the
-// #[custom_note] macro to implement it manually, resulting in some boilerplate. This is expected to be unnecessary once
-// macro support is expanded.
-
 /// A private note representing a token id associated to an account.
 #[derive(Eq, Serialize, Packable)]
 #[custom_note]

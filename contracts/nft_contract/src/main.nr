@@ -38,13 +38,6 @@ pub contract NFT {
         attester_pubkey_x: Field,
         attester_pubkey_y: Field,
     }
-
-    /// @param symbol The symbol of the NFT
-    /// @param name The name of the NFT
-    /// @param private_nfts A map from address to a private set of NFTNotes owned by that address
-    /// @param nft_exists A map from token ID to a boolean indicating if the NFT exists
-    /// @param public_owners A map from token ID to the public owner of the NFT
-    /// @param minter The address that can mint
     #[storage]
     struct Storage<Context> {
         symbol: PublicImmutable<FieldCompressedString, Context>,
@@ -53,7 +46,6 @@ pub contract NFT {
         nft_exists: Map<Field, PublicMutable<bool, Context>, Context>,
         public_owners: Map<Field, PublicMutable<AztecAddress, Context>, Context>,
         minter: PublicImmutable<AztecAddress, Context>,
-        // x == 0 means migration is disabled for this collection.
         migration_attester: PublicImmutable<MigrationConfig, Context>,
     }
 
@@ -68,13 +60,6 @@ pub contract NFT {
         to: AztecAddress,
         token_id: Field,
     }
-
-    #[event]
-    struct MigrationRegistered {
-        owner: AztecAddress,
-        migration_commitment: Field,
-    }
-
     #[event]
     struct NFTMigrationRegistered {
         owner: AztecAddress,
@@ -238,26 +223,6 @@ pub contract NFT {
         self.internal._validate_private_token_owner(owner, token_id);
         self.enqueue_self.register_nft_migration_internal(owner, token_id, migration_commitment);
     }
-
-    /** ==========================================================
-     * ========================= PUBLIC ==========================
-     * ======================================================== */
-
-    /// @notice Registers a user-owned migration commitment for Continuum to index before a rollup reset.
-    /// @dev The event owner is authenticated by msg_sender on the old rollup. The migration secret is never revealed.
-    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
-    #[external("public")]
-    fn register_migration(migration_commitment: Field) {
-        assert(migration_commitment != 0, "zero migration commitment not supported");
-
-        self.emit(
-            MigrationRegistered {
-                owner: self.msg_sender(),
-                migration_commitment,
-            },
-        );
-    }
-
     /// @notice Registers a publicly-owned NFT for Continuum migration indexing.
     /// @param token_id The public token id to register.
     /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
