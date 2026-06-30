@@ -5,7 +5,6 @@ use aztec::macros::aztec;
 
 #[aztec]
 pub contract NFT {
-    // aztec library
     global MIGRATE_DOMAIN: Field = 0x4e46544d;
     use attestation_lib::{assert_pubkey_on_curve, assert_valid_attestation};
     use aztec::{

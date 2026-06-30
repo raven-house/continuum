@@ -1,7 +1,7 @@
 // MongoDB Initialization Script
 // This script runs when MongoDB container is first created
 
-db = db.getSiblingDB('continuum');
+const db = db.getSiblingDB('continuum');
 
 // Create collections
 db.createCollection('events');
@@ -63,8 +63,8 @@ db.artifacts.insertOne({
   created_at: new Date()
 });
 
-print('Continuum database initialized successfully!');
-print(
+console.log('Continuum database initialized successfully!');
+console.log(
   'Created collections: events, sync_state, artifacts, contracts, collection_registry'
 );
-print('Created indexes for optimal query performance');
+console.log('Created indexes for optimal query performance');
