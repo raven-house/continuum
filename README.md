@@ -34,7 +34,7 @@ Continuum provides a cryptographic bridge between old and new rollup state using
 ### Prerequisites
 
 - Docker and Docker Compose
-- (Optional) Bun or Node.js for local development
+- Bun or Node.js for local development
 
 ### Running with Docker Compose
 
@@ -50,19 +50,10 @@ Continuum provides a cryptographic bridge between old and new rollup state using
    ```bash
    cp .env.example .env
    ```
+   If trying on Aztec Sandbox, download Aztec CLI from https://docs.aztec.network/developers/getting_started_on_local_network and start sandbox using ```aztec start --local-network```
 
-   The indexer reads one Aztec network at a time from the top-level `.env`.
-   It defaults to `sandbox`. The API also needs `ATTESTER_SECRET`; the example
-   file includes a deterministic local-only value, but production deployments
-   must set a unique secret. To switch networks, edit `.env` or run:
-
-   ```bash
-   # Local sandbox
-   perl -0pi -e 's/^AZTEC_NETWORK=.*/AZTEC_NETWORK=sandbox/m' .env
-
-   # Or testnet
-   perl -0pi -e 's/^AZTEC_NETWORK=.*/AZTEC_NETWORK=testnet/m' .env
-   ```
+   Set ```AZTEC_NETWORK=sandbox``` in `.env` file
+   
 
 3. **Start all services**
 

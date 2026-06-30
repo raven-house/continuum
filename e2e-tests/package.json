@@ -1,26 +1,11 @@
 {
-  "name": "@aztec-fpc/attestation-lib",
+  "name": "e2e-tests",
   "version": "0.1.0",
-  "description": "Minimal Schnorr attestation library for Aztec",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
+  "description": "End-to-end tests for continuum service for aztec sandbox and testnet",
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts",
-    "generate-attester": "bun run src/generate-attester.ts",
-    "deploy-example": "bun run src/deploy-example.ts",
-    "deploy-migration": "bun run src/deploy-migration.ts",
-    "claim-migration": "bun run src/claim-migration.ts",
-    "migrate-nft:testnet": "bun run src/migrate-nft/testnet/index.ts",
-    "migrate-nft:sandbox": "bun run src/migrate-nft/sandbox/index.ts"
+    "generate-attester-secret": "bun run src/generate-attester-secret.ts",
+    "migrate-nft:testnet": "bun run src/testnet/index.ts",
+    "migrate-nft:sandbox": "bun run src/sandbox/index.ts"
   },
   "dependencies": {
     "@aztec/accounts": "5.0.0-rc.1",
@@ -39,6 +24,5 @@
   "files": [
     "dist",
     "src"
-  ],
-  "license": "Apache-2.0"
+  ]
 }

@@ -16,5 +16,5 @@ export const OTHER_TOKEN = 999n;
 
 export const ARTIFACT_PATH = join(
   __dirname,
-  "../../../../contracts/nft_contract/target/nft_contract-NFT.json",
+  "../../../contracts/nft_contract/target/nft_contract-NFT.json",
 );

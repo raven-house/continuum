@@ -8,7 +8,7 @@ import { deriveStorageSlotInMap } from "@aztec/stdlib/hash";
 import type { createAztecNodeClient } from "@aztec/aztec.js/node";
 import { EmbeddedWallet } from "@aztec/wallets/embedded";
 
-import { bridgeL1FeeJuice } from "../../bridge-fee-juice.js";
+import { bridgeL1FeeJuice } from "./bridge-fee-juice.js";
 import type { MigrationAccounts } from "../shared/config.js";
 
 type Node = ReturnType<typeof createAztecNodeClient>;
