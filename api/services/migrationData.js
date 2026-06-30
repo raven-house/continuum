@@ -18,8 +18,7 @@ const DEFAULT_MIGRATION_MANIFEST = Object.freeze({
       name: 'MigrationRegistered',
       owner: 'owner',
       token_id: 'token_id',
-      commitment: 'migration_commitment',
-      collection: 'collection'
+      commitment: 'migration_commitment'
     }
   }
 });

@@ -18,3 +18,8 @@ export const ARTIFACT_PATH = join(
   __dirname,
   "../../../contracts/nft_contract/target/nft_contract-NFT.json",
 );
+
+export const REGISTRY_ARTIFACT_PATH = join(
+  __dirname,
+  "../../../contracts/migration_registry/target/migration_registry-MigrationRegistry.json",
+);
