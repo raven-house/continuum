@@ -44,6 +44,10 @@ You need **MongoDB + the indexer + the API** running first (see
 `continuum/Makefile` / `docker-compose.yml`), and the indexer must be
 watching the **same network** you point the script at.
 
+There's one runnable folder per network — `sandbox/` and `testnet/` — each with
+its own `bun run` script. Pick the one matching the network your indexer is on;
+no env juggling required to switch.
+
 ### Sandbox (fast — recommended for iterating)
 
 No L1 key, no waiting. Start a local sandbox, then:
@@ -57,7 +61,7 @@ aztec start --local-network            # → http://localhost:8080
 #   CONTINUUM_AZTEC_NODE_URL_SANDBOX=http://host.docker.internal:8080   (it runs in Docker)
 
 cd continuum/e2e-tests
-AZTEC_NODE_URL=http://localhost:8080 CONTINUUM_NETWORK=sandbox bun run migrate-nft
+bun run migrate-nft:sandbox
 ```
 
 On sandbox the script reuses the two pre-funded genesis accounts, so it takes ~1 minute.
@@ -73,21 +77,23 @@ a full run takes several minutes.
 #   CONTINUUM_AZTEC_NODE_URL_TESTNET=https://v5.testnet.rpc.aztec-labs.com
 
 cd continuum/e2e-tests
-L1_PRIVATE_KEY=0x<sepolia-funded-key> bun run migrate-nft
+L1_PRIVATE_KEY=0x<sepolia-funded-key> bun run migrate-nft:testnet
 ```
 
-(Defaults are already testnet, so you only add the L1 key. Reuse
-`OLD_SECRET/OLD_SALT` + `NEW_SECRET/NEW_SALT` across runs to skip re-bridging.)
+(You only add the L1 key. Reuse `OLD_SECRET/OLD_SALT` + `NEW_SECRET/NEW_SALT`
+across runs to skip re-bridging.)
 
 ---
 
 ## Environment variables
 
+The network itself is no longer an env var — it's the folder you run. These env
+vars only fine-tune a run:
+
 | Var | Default | What it's for |
 |---|---|---|
-| `AZTEC_NODE_URL` | `https://v5.testnet.rpc.aztec-labs.com` | Which Aztec node to talk to |
-| `CONTINUUM_API_URL` | `http://localhost:3004` | Continuum API base URL |
-| `CONTINUUM_NETWORK` | `testnet` | Network label for the indexer/registry |
+| `AZTEC_NODE_URL` | sandbox: `http://localhost:8080`; testnet: `https://v5.testnet.rpc.aztec-labs.com` | Override which Aztec node to talk to |
+| `CONTINUUM_API_URL` | `http://localhost:3000` | Continuum API base URL |
 | `L1_PRIVATE_KEY` | — | Sepolia-funded key (testnet only, for fee-juice bridging) |
 | `FEE_JUICE_AMOUNT` | `10^22` | Fee juice bridged per account (testnet). Raise it if a run hits "Not enough balance" |
 | `OLD_SECRET` / `OLD_SALT` | random | Reuse a funded Alice-OLD account (testnet) |
@@ -97,16 +103,38 @@ L1_PRIVATE_KEY=0x<sepolia-funded-key> bun run migrate-nft
 
 ## The files
 
-Each file does one job; `index.ts` ties them together and is the place to read first.
+There are **two standalone scripts** — `sandbox/index.ts` and `testnet/index.ts`.
+Each one contains the whole OLD → NEW → CLAIM → VERIFY flow top-to-bottom, so you
+can read or tweak either in isolation without touching the other. They share only
+the small reusable **helper functions** in `shared/` (the NFT contract wrappers,
+the API client, the verify assertions, constants). Nothing orchestrates them from
+above — each `main()` is the script.
+
+```
+migrate-nft/
+  shared/            # reusable helper functions + constants (no orchestration)
+    config.ts        # shared constants (tokens, timeout, artifact path) + MigrationAccounts type
+    continuum-api.ts # typed Continuum API client
+    nft.ts           # NFT artifact loading + contract-call wrappers
+    verify.ts        # post-claim assertions
+  sandbox/
+    accounts.ts      # sandbox-only: the pre-funded genesis-account strategy
+    index.ts         # the full SANDBOX script (hardcoded, reads no env)
+  testnet/
+    accounts.ts      # testnet-only: bridged Schnorr accounts + the testnet env vars
+    index.ts         # the full TESTNET script (env-overridable)
+```
 
 | File | What's in it |
 |---|---|
-| `index.ts` | The orchestrator — the OLD → NEW → CLAIM → VERIFY story above |
-| `config.ts` | Env vars, constants (tokens, timeouts), artifact path |
-| `continuum-api.ts` | Typed client for the Continuum API (`/attester`, `/migration/new-secret`, `/contracts/upload`, `/collections/register`, `/request_data`) |
-| `accounts.ts` | Sets up the two wallets — genesis accounts on sandbox, bridged accounts on testnet |
-| `nft.ts` | Loads the NFT artifact and wraps the contract calls (deploy, mint, register, claim, reads) |
-| `verify.ts` | Checks the right tokens were attested and the claim landed correctly |
+| `sandbox/index.ts` | **The sandbox script** — the whole flow inline; hardcoded, reads no env |
+| `testnet/index.ts` | **The testnet script** — the whole flow inline; env-overridable URLs, proving on |
+| `sandbox/accounts.ts` | Sandbox-only account strategy (the two pre-funded genesis accounts) |
+| `testnet/accounts.ts` | Testnet-only account strategy (bridged Schnorr accounts; its own `feeJuiceBalance` read; reads `FEE_JUICE_AMOUNT`, `OLD_*`/`NEW_*`) |
+| `shared/config.ts` | Constants both scripts import (tokens, send timeout, artifact path) + the `MigrationAccounts` type |
+| `shared/continuum-api.ts` | Typed client for the Continuum API (`/attester`, `/migration/new-secret`, `/contracts/upload`, `/collections/register`, `/request_data`) |
+| `shared/nft.ts` | Loads the NFT artifact and wraps the contract calls (deploy, mint, register, claim, reads) |
+| `shared/verify.ts` | Checks the right tokens were attested and the claim landed correctly |
 
 ---
 
@@ -119,7 +147,7 @@ Each file does one job; `index.ts` ties them together and is the place to read f
   the top-level docs.
 - **`Not enough balance for fee payer to pay for transaction` (testnet).** The
   bridged fee juice ran out — testnet gas prices vary. Bridge more with
-  `FEE_JUICE_AMOUNT=50000000000000000000000 bun run migrate-nft`, or reuse already-funded
+  `FEE_JUICE_AMOUNT=50000000000000000000000 bun run migrate-nft:testnet`, or reuse already-funded
   accounts via `OLD_SECRET/OLD_SALT` + `NEW_SECRET/NEW_SALT` to avoid re-bridging.
 - **`Cannot satisfy constraint … signature[32 + i]`.** The deployed contract's
   signature scheme doesn't match the attester. Recompile `contracts/nft_contract`

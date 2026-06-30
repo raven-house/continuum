@@ -15,10 +15,12 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-specifier-resolution=node --loader ts-node/esm test-attestor.ts",
+    "generate-attester": "bun run src/generate-attester.ts",
     "deploy-example": "bun run src/deploy-example.ts",
     "deploy-migration": "bun run src/deploy-migration.ts",
     "claim-migration": "bun run src/claim-migration.ts",
-    "migrate-nft": "bun run src/migrate-nft/index.ts"
+    "migrate-nft:testnet": "bun run src/migrate-nft/testnet/index.ts",
+    "migrate-nft:sandbox": "bun run src/migrate-nft/sandbox/index.ts"
   },
   "dependencies": {
     "@aztec/accounts": "5.0.0-rc.1",

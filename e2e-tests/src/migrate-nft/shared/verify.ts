@@ -1,7 +1,3 @@
-/**
- * Assertions on the attested set and the post-claim on-chain state.
- */
-
 import { AztecAddress } from "@aztec/aztec.js/addresses";
 import { Contract } from "@aztec/aztec.js/contracts";
 
@@ -9,7 +5,6 @@ import { ALICE_TOKENS, OTHER_TOKEN } from "./config.js";
 import type { TokenAttestation } from "./continuum-api.js";
 import { getPrivateNftIds, migrateAndClaim, publicOwnerOf } from "./nft.js";
 
-/** The attested set must be exactly Alice's tokens — the third party's is excluded. */
 export function assertExpectedTokens(tokens: TokenAttestation[]): void {
   const ids = tokens.map((t) => BigInt(t.token_id));
   if (ids.includes(OTHER_TOKEN)) {
@@ -22,7 +17,6 @@ export function assertExpectedTokens(tokens: TokenAttestation[]): void {
   }
 }
 
-/** After claiming: tokens are private notes with zero public owner, and re-claiming reverts. */
 export async function verifyClaims(
   nft: Contract,
   owner: AztecAddress,

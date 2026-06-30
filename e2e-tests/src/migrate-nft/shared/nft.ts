@@ -13,9 +13,7 @@ import { ARTIFACT_PATH, SEND_TIMEOUT } from "./config.js";
 const sendOpts = (from: AztecAddress) => ({ from, wait: { timeout: SEND_TIMEOUT } });
 
 export type NftArtifact = {
-  /** Parsed artifact for aztec.js (deploy / Contract.at). */
   artifact: ContractArtifact;
-  /** Raw JSON — what POST /contracts/upload expects as `abi`. */
   raw: NoirCompiledContract;
 };
 
@@ -24,7 +22,6 @@ export function loadNftArtifact(): NftArtifact {
   return { artifact: loadContractArtifact(raw), raw };
 }
 
-/** Deploy an NFT collection. Migration is enabled iff a non-zero attester pubkey is given. */
 export async function deployCollection(
   wallet: EmbeddedWallet,
   artifact: ContractArtifact,
@@ -65,15 +62,12 @@ export function migrateAndClaim(
     .send(sendOpts(from));
 }
 
-/** Token ids held as private notes by `owner` (zeros filtered out). */
 export async function getPrivateNftIds(nft: Contract, owner: AztecAddress): Promise<bigint[]> {
   const { result } = await nft.methods.get_private_nfts(owner, 0).simulate({ from: owner });
   return (result[0] as Array<Fr | bigint>)
     .map((v) => BigInt(v.toString()))
     .filter((v) => v !== 0n);
 }
-
-/** Public owner of a token (zero for privately-owned / migrated tokens). */
 export async function publicOwnerOf(
   nft: Contract,
   tokenId: bigint,

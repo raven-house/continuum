@@ -1,21 +1,3 @@
-/**
- * Minimal Schnorr attestation library for Aztec.
- *
- * This library provides a generic way to:
- * 1. Sign any array of Field elements with Schnorr
- * 2. Verify the signature in an Aztec smart contract
- *
- * Usage:
- *   // Off-chain (TypeScript)
- *   const attester = await Attester.create(secretKey);
- *   const fields = [new Fr(1), new Fr(2), someAddress.toField()];
- *   const { hash, signature } = await attester.attest(fields);
- *
- *   // On-chain (Noir)
- *   use attestation_lib::assert_valid_attestation;
- *   assert_valid_attestation(pubkey, signature, [field1, field2, field3]);
- */
-
 import { Fr } from "@aztec/aztec.js/fields";
 import { Schnorr } from "@aztec/foundation/crypto/schnorr";
 import { GrumpkinScalar } from "@aztec/foundation/curves/grumpkin";
