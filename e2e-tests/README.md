@@ -73,7 +73,7 @@ Start the Continuum services first (from `continuum/`):
 
 ```bash
 # MongoDB
-docker compose -f docker-compose.local.yml up -d
+docker compose up -d
 cd database && bun run init && cd ..
 
 # API (needs ATTESTER_SECRET in api/.env) — http://localhost:3004

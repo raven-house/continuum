@@ -43,7 +43,6 @@ services:
       CONTINUUM_AZTEC_NODE_URL_DEVNET: ${CONTINUUM_AZTEC_NODE_URL_DEVNET:-}
       CONTINUUM_AZTEC_NODE_URL_TESTNET: ${CONTINUUM_AZTEC_NODE_URL_TESTNET:-}
       CONTINUUM_AZTEC_NODE_URL_SANDBOX: ${CONTINUUM_AZTEC_NODE_URL_SANDBOX:-http://host.docker.internal:8080}
-      CONTINUUM_ARTIFACTS_CONFIG_PATH: /app/artifacts.json
       NODE_ENV: development
     volumes:
       - ./indexer:/app
@@ -70,7 +69,7 @@ services:
       RD_HOST: 0.0.0.0
       CONTINUUM_API_PORT: 3004
       CONTINUUM_API_HOST: 0.0.0.0
-      CONTINUUM_CORS_ORIGIN: '*'
+      CONTINUUM_CORS_ORIGIN: "*"
       NODE_ENV: development
     volumes:
       - ./api:/app

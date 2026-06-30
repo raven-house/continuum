@@ -41,7 +41,6 @@ services:
       CONTINUUM_AZTEC_NODE_URL_DEVNET: ${CONTINUUM_AZTEC_NODE_URL_DEVNET:-}
       CONTINUUM_AZTEC_NODE_URL_TESTNET: ${CONTINUUM_AZTEC_NODE_URL_TESTNET:-}
       CONTINUUM_AZTEC_NODE_URL_SANDBOX: ${CONTINUUM_AZTEC_NODE_URL_SANDBOX:-http://host.docker.internal:8080}
-      CONTINUUM_ARTIFACTS_CONFIG_PATH: /app/artifacts.json
       NODE_ENV: production
     networks:
       - continuum-network

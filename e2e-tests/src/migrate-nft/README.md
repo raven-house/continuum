@@ -41,7 +41,7 @@ If it finishes with `=== E2E migration complete ✅ ===`, everything worked.
 ## How to run it
 
 You need **MongoDB + the indexer + the API** running first (see
-`continuum/Makefile` / `docker-compose.local.yml`), and the indexer must be
+`continuum/Makefile` / `docker-compose.yml`), and the indexer must be
 watching the **same network** you point the script at.
 
 ### Sandbox (fast — recommended for iterating)

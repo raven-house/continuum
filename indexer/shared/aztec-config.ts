@@ -47,7 +47,7 @@ export const TESTNET = {
   },
   settings: {
     skipSandbox: true,
-    version: '4.2.0-aztecnr-rc.2',
+    version: "5.0.0-rc.1"
   },
   timeouts: {
     deployTimeout: 1800000,
