@@ -61,3 +61,4 @@ raven-bridge/l1-contracts/lib
 dist
 cache
 l1-contracts/lib
+indexer/logs
