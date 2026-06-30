@@ -2,8 +2,6 @@
  * Typed client for the Continuum HTTP API used by the migration flow.
  */
 
-import { API_URL } from "./config.js";
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export type TokenAttestation = { token_id: string; signature_bytes: number[] };
@@ -17,7 +15,7 @@ export type MigrationData = {
 };
 
 export class ContinuumApi {
-  constructor(private readonly baseUrl: string = API_URL) {}
+  constructor(private readonly baseUrl: string) {}
 
   private async get(path: string): Promise<any> {
     const res = await fetch(`${this.baseUrl}${path}`);
@@ -33,17 +31,14 @@ export class ContinuumApi {
     });
   }
 
-  /** GET /attester → the Grumpkin pubkey the new collection embeds. */
   getAttester(): Promise<{ x: string; y: string }> {
     return this.get("/attester");
   }
 
-  /** GET /migration/new-secret → a fresh { secret, commitment } pair. */
   newMigrationSecret(): Promise<{ secret: string; commitment: string }> {
     return this.get("/migration/new-secret");
   }
 
-  /** POST /contracts/upload — register the NFT artifact for indexing (idempotent). */
   async uploadArtifact(input: {
     artifactId: string;
     name: string;
@@ -68,7 +63,6 @@ export class ContinuumApi {
     throw new Error(`/contracts/upload → ${res.status} ${await res.text()}`);
   }
 
-  /** POST /collections/register — map an old collection address → new one. */
   async registerCollection(input: {
     oldAddress: string;
     newAddress: string;
@@ -87,11 +81,6 @@ export class ContinuumApi {
     if (!res.ok) throw new Error(`/collections/register → ${res.status} ${await res.text()}`);
   }
 
-  /**
-   * POST /request_data — attested ownership for a migration secret.
-   * Returns null on 404 (registration/transfers not indexed yet); throws on any
-   * other non-2xx so genuine errors surface instead of being mistaken for "not ready".
-   */
   async requestData(input: {
     collectionAddress: string;
     migrationSecret: string;
@@ -107,10 +96,6 @@ export class ContinuumApi {
     return res.json();
   }
 
-  /**
-   * Poll /request_data until at least `expected` tokens are attested (the indexer
-   * needs a few cycles to ingest the registration + transfers), or time out.
-   */
   async pollRequestData(
     input: { collectionAddress: string; migrationSecret: string; newWalletAddress: string },
     opts: {
