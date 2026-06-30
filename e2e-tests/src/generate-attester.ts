@@ -20,8 +20,7 @@ async function main() {
   console.log("  • ATTESTER_SECRET → PRIVATE. Set in continuum/.env; the API derives everything from it.");
   console.log("    Restart the API after changing it. This is all the migrate-nft flow needs.");
   console.log("  • ATTESTER_PUBKEY_X/Y → PUBLIC, derived from the secret. The migrate-nft scripts fetch");
-  console.log("    these live from GET /attester, so you only need them for the standalone");
-  console.log("    deploy-migration / claim-migration scripts.");
+  console.log("    these live from GET /attester.");
 }
 
 main().catch((err) => {
