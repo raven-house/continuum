@@ -1,10 +1,18 @@
 import cors from '@fastify/cors';
 import fp from 'fastify-plugin';
+import { getCorsOrigins } from '../shared/config.js';
 
 export default fp(async fastify => {
+  const allowedOrigins = getCorsOrigins();
+
   fastify.register(cors, {
     credentials: true,
     origin: (origin, callback) => {
+      if (allowedOrigins === '*') {
+        callback(null, true);
+        return;
+      }
+
       if (!origin) {
         callback(null, true);
         return;
@@ -19,5 +27,3 @@ export default fp(async fastify => {
     }
   });
 });
-// We need to allow user to define these origins in .env file
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3004'];

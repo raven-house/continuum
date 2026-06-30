@@ -54,12 +54,16 @@ const schemas = Object.freeze({
   getByNewAddress: {
     $id: 'collection-get-by-new-address',
     tags,
-    description: 'Look up a collection registration by the new-rollup collection address.',
+    description:
+      'Look up a collection registration by the new-rollup collection address.',
     params: {
       type: 'object',
       required: ['newAddress'],
       properties: {
-        newAddress: { type: 'string', description: 'New rollup collection address' }
+        newAddress: {
+          type: 'string',
+          description: 'New rollup collection address'
+        }
       }
     },
     response: {

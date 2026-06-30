@@ -10,6 +10,7 @@ import {
   validateAbi
 } from '../../services/abiProcessor.js';
 import schemas from './schemas.js';
+import { getDbName } from '../../shared/config.js';
 
 // Get ObjectId from the mongodb package
 let ObjectId;
@@ -46,7 +47,7 @@ export default async function (fastify) {
         return;
       }
 
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const db = fastify.mongo.client.db(getDbName());
       const contractsCollection = db.collection('contracts');
 
       // Enforce unique artifact_id
@@ -118,7 +119,7 @@ export default async function (fastify) {
   fastify.get('/', { schema: schemas.getContracts }, async function (request) {
     const { page = 1, limit = 20 } = request.query;
 
-    const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+    const db = this.mongo.client.db(getDbName());
     const contractsCollection = db.collection('contracts');
 
     // Get total count
@@ -165,7 +166,7 @@ export default async function (fastify) {
       const { id } = request.params;
 
       try {
-        const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+        const db = this.mongo.client.db(getDbName());
         const contractsCollection = db.collection('contracts');
 
         const contract = await contractsCollection.findOne({
@@ -198,7 +199,7 @@ export default async function (fastify) {
     async function (request) {
       const { selector } = request.params;
 
-      const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const db = this.mongo.client.db(getDbName());
       const contractsCollection = db.collection('contracts');
 
       // Find contract containing event with this selector
@@ -256,7 +257,7 @@ export default async function (fastify) {
     }
 
     try {
-      const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const db = this.mongo.client.db(getDbName());
       const contractsCollection = db.collection('contracts');
 
       const result = await contractsCollection.findOneAndUpdate(
@@ -292,7 +293,7 @@ export default async function (fastify) {
     const { id } = request.params;
 
     try {
-      const db = this.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const db = this.mongo.client.db(getDbName());
       const contractsCollection = db.collection('contracts');
 
       const result = await contractsCollection.deleteOne({

@@ -3,6 +3,7 @@ import 'dotenv/config';
 import app from './app.js';
 import closeWithGrace from 'close-with-grace';
 import Fastify from 'fastify';
+import { getApiHost, getApiPort } from './shared/config.js';
 
 const fastify = Fastify({
   logger: true,
@@ -30,10 +31,8 @@ fastify.addHook('onClose', async (instance, done) => {
   done();
 });
 
-const host = process.env.RD_HOST || process.env.CONTINUUM_API_HOST || '0.0.0.0';
-const port = Number(
-  process.env.RD_PORT || process.env.CONTINUUM_API_PORT || 3004
-);
+const host = getApiHost();
+const port = getApiPort();
 
 fastify.listen({ host, port }, err => {
   if (err) {

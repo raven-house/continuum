@@ -3,9 +3,6 @@ FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies for native modules (canvas, etc.)
-RUN apk add --no-cache python3 make g++ cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev
-
 # Copy package files
 COPY api/package.json api/bun.lock ./
 
@@ -20,8 +17,8 @@ FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Install curl for healthcheck and runtime libraries for native modules
-RUN apk add --no-cache curl cairo pango jpeg giflib librsvg
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 # Copy dependencies from builder
 COPY --from=builder /app/node_modules ./node_modules

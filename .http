@@ -1,6 +1,10 @@
 ###
 # Health check
-GET http://localhost:3004/health
+GET http://localhost:3000/health
+
+
+### Get Attestor Keys
+GET http://localhost:3000/attester
 
 ###
 # Upload contract ABI

@@ -61,7 +61,8 @@ successfully call migrate_and_claim() on the contract.`,
           },
           old_collection_address: {
             type: 'string',
-            description: 'Old rollup collection address (resolved from collection_registry)'
+            description:
+              'Old rollup collection address (resolved from collection_registry)'
           },
           tokens: {
             type: 'array',
@@ -76,7 +77,8 @@ successfully call migrate_and_claim() on the contract.`,
                 },
                 signature_bytes: {
                   type: 'array',
-                  description: '64-byte array — pass directly to migrate_and_claim()',
+                  description:
+                    '64-byte array — pass directly to migrate_and_claim()',
                   items: { type: 'integer' }
                 }
               }

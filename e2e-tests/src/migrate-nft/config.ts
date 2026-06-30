@@ -13,7 +13,7 @@ export const FEE_JUICE_AMOUNT = process.env.FEE_JUICE_AMOUNT
 export const SEND_TIMEOUT = 1_800_000; // 30 min — testnet proving can be slow
 
 export const NODE_URL = process.env.AZTEC_NODE_URL ?? TESTNET_URL;
-export const API_URL = (process.env.CONTINUUM_API_URL ?? "http://localhost:3004").replace(/\/$/, "");
+export const API_URL = (process.env.CONTINUUM_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
 export const NETWORK = process.env.CONTINUUM_NETWORK ?? "testnet";
 
 export const isSandbox = NODE_URL.includes("localhost");

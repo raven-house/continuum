@@ -26,138 +26,34 @@
  */
 
 import {
-  computeMigrationCommitment,
-  signMigrationClaim
-} from '../../services/attester.js';
+  buildMigrationData,
+  MigrationDataError
+} from '../../services/migrationData.js';
 import schemas from './schemas.js';
-
-const COLLECTION_REGISTRY_COLLECTION = 'collection_registry';
-const EVENTS_COLLECTION = 'events';
-
-const REGISTRATION_EVENT = 'MigrationRegistered';
-const TRANSFER_EVENT = 'Transfer';
+import { getDbName } from '../../shared/config.js';
 
 /**
  * @param {import('fastify').FastifyInstance} fastify
  */
 export default async function (fastify) {
   fastify.post('/', { schema: schemas.requestData }, async (request, reply) => {
-    const { collection_address, migration_secret, new_wallet_address } =
-      request.body;
+    try {
+      const db = fastify.mongo.client.db(getDbName());
+      const response = await buildMigrationData(db, request.body);
 
-    const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-
-    // ── 1. Resolve new collection address → old collection address ────────────
-    const newCollectionAddr = collection_address.toLowerCase();
-    const registryDoc = await db
-      .collection(COLLECTION_REGISTRY_COLLECTION)
-      .findOne({ new_collection_address: newCollectionAddr });
-
-    if (!registryDoc) {
-      reply.notFound(
-        `Collection ${collection_address} is not registered for migration. ` +
-          'The collection owner must call POST /collections/register first.'
+      fastify.log.info(
+        `Migration data signed for ${response.old_wallet_address} ` +
+          `to ${response.new_wallet_address}: ${response.tokens.length} ` +
+          `token(s) on collection ${response.collection_address}`
       );
-      return;
+
+      return response;
+    } catch (err) {
+      if (err instanceof MigrationDataError && err.statusCode === 404) {
+        reply.notFound(err.message);
+        return;
+      }
+      throw err;
     }
-
-    const oldCollectionAddress = registryDoc.old_collection_address;
-
-    // ── 2. Resolve migration_secret → verified old-rollup owner ──────────────
-    // commitment = Poseidon2([MIGRATE_REGISTER_DOMAIN, secret]); look it up among
-    // MigrationRegistered events emitted on the OLD collection. The matching
-    // event's `owner` is the authenticated msg_sender that registered it.
-    const commitment = computeMigrationCommitment(migration_secret);
-    // The indexer stores Field values (Poseidon output) as their DECIMAL string,
-    // while computeMigrationCommitment returns the 0x-hex form. Match either so the
-    // lookup is robust to how the commitment was serialized.
-    const commitmentDecimal = BigInt(commitment).toString();
-
-    const registration = await db.collection(EVENTS_COLLECTION).findOne({
-      contract_address: oldCollectionAddress,
-      event_type: REGISTRATION_EVENT,
-      'data.migration_commitment': { $in: [commitment, commitmentDecimal] }
-    });
-
-    if (!registration) {
-      reply.notFound(
-        'No on-chain migration registration found for this secret on collection ' +
-          `${oldCollectionAddress}. The owner must call register_migration() on the ` +
-          'old rollup with the matching commitment before requesting migration data.'
-      );
-      return;
-    }
-
-    const oldWalletAddress = String(registration.data.owner).toLowerCase();
-
-    // ── 3. Find tokens publicly owned by this wallet on the old collection ────
-    // Current public owner of a token = the `to` of its most recent Transfer.
-    // We keep only tokens whose latest owner is this wallet.
-    const events = await db
-      .collection(EVENTS_COLLECTION)
-      .aggregate([
-        {
-          $match: {
-            contract_address: oldCollectionAddress,
-            event_type: TRANSFER_EVENT
-          }
-        },
-        // Sort newest first so $first picks the latest owner per token
-        { $sort: { block_number: -1 } },
-        {
-          $group: {
-            _id: '$data.token_id',
-            latest_owner: { $first: '$data.to' },
-            block_number: { $first: '$block_number' }
-          }
-        },
-        // Keep only tokens whose latest public owner is this wallet.
-        // (latest_owner == ZERO means burned; == PRIVATE magic means moved private —
-        //  neither can equal a real wallet, so this match excludes them.)
-        {
-          $match: { latest_owner: oldWalletAddress }
-        }
-      ])
-      .toArray();
-
-    const baseResponse = {
-      old_wallet_address: oldWalletAddress,
-      new_wallet_address,
-      collection_address: newCollectionAddr,
-      old_collection_address: oldCollectionAddress
-    };
-
-    if (events.length === 0) {
-      return { ...baseResponse, tokens: [] };
-    }
-
-    // ── 4. Sign each token ID with the Continuum attester ────────────────────
-    // The stage-3 $match (latest_owner == oldWalletAddress) already excludes
-    // burned (to == zero) and gone-private (to == PRIVATE magic) tokens, since
-    // neither sentinel can equal a real wallet address.
-    const tokens = await Promise.all(
-      events.map(async e => {
-        const tokenId = e._id; // token_id from the grouped event
-
-        const { signature, signatureBytes } = await signMigrationClaim(
-          newCollectionAddr,
-          new_wallet_address.toLowerCase(),
-          BigInt(tokenId)
-        );
-
-        return {
-          token_id: String(tokenId),
-          signature,
-          signature_bytes: signatureBytes
-        };
-      })
-    );
-
-    fastify.log.info(
-      `Migration data signed for ${oldWalletAddress} → ${new_wallet_address}: ` +
-        `${tokens.length} token(s) on collection ${newCollectionAddr}`
-    );
-
-    return { ...baseResponse, tokens };
   });
 }

@@ -13,6 +13,7 @@
  */
 
 import schemas from './schemas.js';
+import { getDbName } from '../../shared/config.js';
 
 const COLLECTION = 'collection_registry';
 
@@ -23,64 +24,60 @@ export default async function (fastify) {
   // ─────────────────────────────────────────────────────────────
   // POST /collections/register
   // ─────────────────────────────────────────────────────────────
-  fastify.post(
-    '/register',
-    { schema: schemas.register },
-    async (request, reply) => {
-      const {
-        old_collection_address,
-        old_network = 'devnet',
-        new_collection_address,
-        new_network = 'devnet',
-        collection_name = ''
-      } = request.body;
+  fastify.post('/register', { schema: schemas.register }, async request => {
+    const {
+      old_collection_address,
+      old_network = 'devnet',
+      new_collection_address,
+      new_network = 'devnet',
+      collection_name = ''
+    } = request.body;
 
-      if (!old_collection_address?.trim() || !new_collection_address?.trim()) {
-        reply.badRequest(
-          'old_collection_address and new_collection_address are required'
-        );
-        return;
-      }
+    if (!old_collection_address?.trim() || !new_collection_address?.trim()) {
+      reply.badRequest(
+        'old_collection_address and new_collection_address are required'
+      );
+      return;
+    }
 
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-      const col = db.collection(COLLECTION);
+    const db = fastify.mongo.client.db(getDbName());
+    const col = db.collection(COLLECTION);
 
-      const oldAddr = old_collection_address.toLowerCase();
-      const newAddr = new_collection_address.toLowerCase();
+    const oldAddr = old_collection_address.toLowerCase();
+    const newAddr = new_collection_address.toLowerCase();
 
-      // Idempotent — return existing if the pair already registered
-      const existing = await col.findOne({ new_collection_address: newAddr });
-      if (existing) {
-        return {
-          success: true,
-          id: existing._id.toString(),
-          old_collection_address: existing.old_collection_address,
-          new_collection_address: existing.new_collection_address,
-          collection_name: existing.collection_name,
-          isNew: false
-        };
-      }
-
-      const now = new Date().toISOString();
-      const result = await col.insertOne({
-        old_collection_address: oldAddr,
-        old_network,
-        new_collection_address: newAddr,
-        new_network,
-        collection_name,
-        registered_at: now
-      });
-
+    // Idempotent — return existing if the pair already registered
+    const existing = await col.findOne({ new_collection_address: newAddr });
+    if (existing) {
       return {
         success: true,
-        id: result.insertedId.toString(),
-        old_collection_address: oldAddr,
-        new_collection_address: newAddr,
-        collection_name,
-        isNew: true
+        id: existing._id.toString(),
+        old_collection_address: existing.old_collection_address,
+        new_collection_address: existing.new_collection_address,
+        collection_name: existing.collection_name,
+        isNew: false
       };
     }
-  );
+
+    const now = new Date().toISOString();
+    const result = await col.insertOne({
+      old_collection_address: oldAddr,
+      old_network,
+      new_collection_address: newAddr,
+      new_network,
+      collection_name,
+      registered_at: now
+    });
+
+    return {
+      success: true,
+      id: result.insertedId.toString(),
+      old_collection_address: oldAddr,
+      new_collection_address: newAddr,
+      collection_name,
+      isNew: true
+    };
+  });
 
   // ─────────────────────────────────────────────────────────────
   // GET /collections/:newAddress
@@ -91,7 +88,7 @@ export default async function (fastify) {
     async (request, reply) => {
       const { newAddress } = request.params;
 
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+      const db = fastify.mongo.client.db(getDbName());
       const col = db.collection(COLLECTION);
 
       const doc = await col.findOne({
@@ -120,7 +117,7 @@ export default async function (fastify) {
   fastify.get('/', { schema: schemas.list }, async request => {
     const { new_network, page = 1, limit = 20 } = request.query;
 
-    const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+    const db = fastify.mongo.client.db(getDbName());
     const col = db.collection(COLLECTION);
 
     const filter = new_network ? { new_network } : {};

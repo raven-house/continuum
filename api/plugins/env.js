@@ -8,14 +8,6 @@ export default fp(
       schema: {
         type: 'object',
         properties: {
-          RD_HOST: {
-            type: 'string',
-            default: '0.0.0.0'
-          },
-          RD_PORT: {
-            type: 'string',
-            default: '3004'
-          },
           CONTINUUM_API_HOST: {
             type: 'string',
             default: '0.0.0.0'
@@ -24,17 +16,21 @@ export default fp(
             type: 'string',
             default: '3004'
           },
-          RD_ADMIN_TOKEN: {
+          CONTINUUM_DB_CONNECTION_STRING: {
             type: 'string'
           },
-          RD_API_KEY_SECRET: {
-            type: 'string'
+          CONTINUUM_DB_NAME: {
+            type: 'string',
+            default: 'continuum'
           },
-          SUPABASE_URL: { type: 'string' },
-          SUPABASE_SERVICE_ROLE_KEY: { type: 'string' },
-          DISCORD_BOT_TOKEN: { type: 'string' },
-          DISCORD_PUBLIC_KEY: { type: 'string' },
-          RAVEN_APP_URL: { type: 'string' }
+          CONTINUUM_CORS_ORIGIN: {
+            type: 'string',
+            default: '*'
+          },
+          ATTESTER_SECRET: { type: 'string' },
+          FASTIFY_CLOSE_GRACE_DELAY: { type: 'string', default: '500' },
+          RD_HOST: { type: 'string' },
+          RD_PORT: { type: 'string' }
         }
       }
     });

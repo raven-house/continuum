@@ -13,7 +13,18 @@ db.createCollection('collection_registry');
 // Create indexes for events collection
 db.events.createIndex({ artifact_id: 1, event_type: 1, block_number: -1 });
 db.events.createIndex({ block_number: 1 });
-db.events.createIndex({ artifact_address: 1, block_number: -1 });
+db.events.createIndex({ contract_address: 1, block_number: -1 });
+db.events.createIndex({
+  contract_address: 1,
+  event_type: 1,
+  'data.migration_commitment': 1
+});
+db.events.createIndex({
+  contract_address: 1,
+  event_type: 1,
+  'data.token_id': 1,
+  block_number: -1
+});
 db.events.createIndex({ tx_hash: 1 });
 db.events.createIndex({ timestamp: -1 });
 db.events.createIndex({ created_at: 1 });
