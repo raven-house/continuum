@@ -84,17 +84,45 @@ async function main() {
   step(`✓ old collection: ${oldNft.address.toString()}`);
 
   section("[OLD] registering NFT artifact with the indexer...");
+  // The API now requires a migration manifest so /request_data can resolve
+  // ownership and registration events. Passing the manifest explicitly here
+  // matches the NFT defaults (Transfer/MigrationRegistered) and avoids the
+  // legacy "migration is null" path that blows up in migrationData.js.
+  const artifactId = `nft-${NETWORK}`;
   const upload = await api.uploadArtifact({
-    artifactId: "nft",
+    artifactId,
     name: "NFT",
     abi: raw,
     eventTypes: ["Transfer", "MigrationRegistered"],
     startBlock: { [NETWORK]: startBlock },
+    migration: {
+      type: "nft",
+      ownership_model: "latest_transfer_event",
+      addresses: [],
+      events: {
+        transfer: {
+          name: "Transfer",
+          token_id: "token_id",
+          from: "from",
+          to: "to",
+        },
+        registration: {
+          source: "contract_event",
+          name: "MigrationRegistered",
+          owner: "owner",
+          commitment: "migration_commitment",
+        },
+      },
+      claim: {
+        domain: "0x4e46544d",
+        attestation_fields: ["domain", "new_collection_address", "new_wallet_address", "token_id"],
+      },
+    },
   });
   step(
     upload === "registered"
-      ? `✓ artifact 'nft' registered (start_block.${NETWORK}=${startBlock})`
-      : "✓ artifact 'nft' already registered (reusing existing sync state)",
+      ? `✓ artifact '${artifactId}' registered (start_block.${NETWORK}=${startBlock})`
+      : `✓ artifact '${artifactId}' already registered (reusing existing sync state)`,
   );
 
   section("[OLD] minting public NFTs...");
@@ -136,7 +164,7 @@ async function main() {
     newAddress: newNft.address.toString(),
     network: NETWORK,
     name: "Continuum E2E",
-    artifactId: "nft",
+    artifactId,
   });
   step("✓ mapping registered");
 

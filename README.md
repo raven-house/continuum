@@ -451,6 +451,5 @@ Contributions are welcome! Please open an issue or pull request.
 
 ## TODOS
 
-- [] Connection pooling for mongodb
 - [] if sandbox, check sandbox up and running or not, otherwise stop container, flag with error, etc.
 - [] Create a top level script to generate random attestor secret
