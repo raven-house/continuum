@@ -92,7 +92,7 @@ try {
 export default async function (fastify) {
   fastify.post(
     '/upload',
-    { schema: schemas.uploadContract },
+    { schema: schemas.uploadContract, preHandler: [fastify.adminAuth] },
     async function (request, reply) {
       const {
         artifact_id,
@@ -314,81 +314,89 @@ export default async function (fastify) {
   );
 
   // PATCH /contracts/:id - Update indexing config (enabled, start_block, event_types)
-  fastify.patch('/:id', async function (request, reply) {
-    const { id } = request.params;
-    const { enabled, start_block, event_types } = request.body ?? {};
+  fastify.patch(
+    '/:id',
+    { preHandler: [fastify.adminAuth] },
+    async function (request, reply) {
+      const { id } = request.params;
+      const { enabled, start_block, event_types } = request.body ?? {};
 
-    const updates = {};
-    if (enabled !== undefined) updates.enabled = enabled;
-    if (start_block !== undefined) updates.start_block = start_block;
-    if (event_types !== undefined) updates.event_types = event_types;
+      const updates = {};
+      if (enabled !== undefined) updates.enabled = enabled;
+      if (start_block !== undefined) updates.start_block = start_block;
+      if (event_types !== undefined) updates.event_types = event_types;
 
-    if (Object.keys(updates).length === 0) {
-      reply.badRequest(
-        'No updatable fields provided (enabled, start_block, event_types)'
-      );
-      return;
-    }
-
-    try {
-      const db = this.mongo.client.db(getDbName());
-      const contractsCollection = db.collection('contracts');
-
-      const result = await contractsCollection.findOneAndUpdate(
-        { _id: new ObjectId(id) },
-        { $set: updates },
-        { returnDocument: 'after' }
-      );
-
-      if (!result) {
-        reply.notFound('Contract not found');
+      if (Object.keys(updates).length === 0) {
+        reply.badRequest(
+          'No updatable fields provided (enabled, start_block, event_types)'
+        );
         return;
       }
 
-      return {
-        success: true,
-        contractId: result._id.toString(),
-        artifact_id: result.artifact_id,
-        enabled: result.enabled,
-        start_block: result.start_block,
-        event_types: result.event_types
-      };
-    } catch (error) {
-      if (error.message.includes('ObjectId')) {
-        reply.badRequest('Invalid contract ID format');
-        return;
+      try {
+        const db = this.mongo.client.db(getDbName());
+        const contractsCollection = db.collection('contracts');
+
+        const result = await contractsCollection.findOneAndUpdate(
+          { _id: new ObjectId(id) },
+          { $set: updates },
+          { returnDocument: 'after' }
+        );
+
+        if (!result) {
+          reply.notFound('Contract not found');
+          return;
+        }
+
+        return {
+          success: true,
+          contractId: result._id.toString(),
+          artifact_id: result.artifact_id,
+          enabled: result.enabled,
+          start_block: result.start_block,
+          event_types: result.event_types
+        };
+      } catch (error) {
+        if (error.message.includes('ObjectId')) {
+          reply.badRequest('Invalid contract ID format');
+          return;
+        }
+        throw error;
       }
-      throw error;
     }
-  });
+  );
 
   // DELETE /contracts/:id - Delete a contract (optional admin endpoint)
-  fastify.delete('/:id', async function (request, reply) {
-    const { id } = request.params;
+  fastify.delete(
+    '/:id',
+    { preHandler: [fastify.adminAuth] },
+    async function (request, reply) {
+      const { id } = request.params;
 
-    try {
-      const db = this.mongo.client.db(getDbName());
-      const contractsCollection = db.collection('contracts');
+      try {
+        const db = this.mongo.client.db(getDbName());
+        const contractsCollection = db.collection('contracts');
 
-      const result = await contractsCollection.deleteOne({
-        _id: new ObjectId(id)
-      });
+        const result = await contractsCollection.deleteOne({
+          _id: new ObjectId(id)
+        });
 
-      if (result.deletedCount === 0) {
-        reply.notFound('Contract not found');
-        return;
+        if (result.deletedCount === 0) {
+          reply.notFound('Contract not found');
+          return;
+        }
+
+        return {
+          success: true,
+          message: 'Contract deleted successfully'
+        };
+      } catch (error) {
+        if (error.message.includes('ObjectId')) {
+          reply.badRequest('Invalid contract ID format');
+          return;
+        }
+        throw error;
       }
-
-      return {
-        success: true,
-        message: 'Contract deleted successfully'
-      };
-    } catch (error) {
-      if (error.message.includes('ObjectId')) {
-        reply.badRequest('Invalid contract ID format');
-        return;
-      }
-      throw error;
     }
-  });
+  );
 }

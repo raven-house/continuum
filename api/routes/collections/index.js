@@ -26,7 +26,7 @@ export default async function (fastify) {
   // ─────────────────────────────────────────────────────────────
   fastify.post(
     '/register',
-    { schema: schemas.register },
+    { schema: schemas.register, preHandler: [fastify.adminAuth] },
     async (request, reply) => {
       const {
         old_collection_address,

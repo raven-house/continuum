@@ -40,6 +40,7 @@ db.artifacts.createIndex({ address: 1 });
 db.artifacts.createIndex({ enabled: 1 });
 
 // Create indexes for contracts collection (ABI upload)
+db.contracts.createIndex({ artifact_id: 1 }, { unique: true });
 db.contracts.createIndex({ contractName: 1 });
 db.contracts.createIndex({ createdAt: -1 });
 db.contracts.createIndex({ 'events.eventSelector': 1 });

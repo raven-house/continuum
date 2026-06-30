@@ -7,7 +7,7 @@ import { getApiHost, getApiPort } from './shared/config.js';
 
 const fastify = Fastify({
   logger: true,
-  bodyLimit: 1073741824, // 1GB
+  bodyLimit: 52428800, // 50MB
   connectionTimeout: 300000, // 5 minutes
   requestTimeout: 300000 // 5 minutes
 });

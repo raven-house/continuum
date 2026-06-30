@@ -69,6 +69,7 @@ services:
       CONTINUUM_DB_NAME: ${CONTINUUM_DB_NAME:-continuum}
       CONTINUUM_CORS_ORIGIN: ${CONTINUUM_CORS_ORIGIN:-*}
       ATTESTER_SECRET: ${ATTESTER_SECRET:?ATTESTER_SECRET is required}
+      CONTINUUM_ADMIN_API_KEY: ${CONTINUUM_ADMIN_API_KEY:?CONTINUUM_ADMIN_API_KEY is required}
       NODE_ENV: production
     networks:
       - continuum-network

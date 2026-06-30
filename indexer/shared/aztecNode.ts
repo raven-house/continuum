@@ -1,15 +1,14 @@
 import { type AztecNode, createAztecNodeClient } from '@aztec/aztec.js/node'
+import logger from './logger'
 
-let cache: {
-  [key: string]: AztecNode | null,
-} = {
-  TESTNET: null,
-  SANDBOX: null
-}
+const cache = new Map<string, AztecNode>()
+
 export const getAztecNode = async (nodeUrl: string, mode: string) => {
-  if (cache[mode]) return cache[mode]
-  console.log('Setting up aztec node')
+  const key = mode.toLowerCase()
+  if (cache.has(key)) return cache.get(key)!
+
+  logger.info(`Setting up Aztec node client for network: ${key}`)
   const aztecNode = await createAztecNodeClient(nodeUrl)
-  cache[mode] = aztecNode
+  cache.set(key, aztecNode)
   return aztecNode
 }

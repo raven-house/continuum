@@ -28,6 +28,7 @@ export default fp(
             default: '*'
           },
           ATTESTER_SECRET: { type: 'string' },
+          CONTINUUM_ADMIN_API_KEY: { type: 'string' },
           FASTIFY_CLOSE_GRACE_DELAY: { type: 'string', default: '500' },
           RD_HOST: { type: 'string' },
           RD_PORT: { type: 'string' }

@@ -32,6 +32,10 @@ export class MigrationDataError extends Error {
   }
 }
 
+/**
+ *
+ * @param migration
+ */
 function mergeMigrationManifest(migration = {}) {
   return {
     ...DEFAULT_MIGRATION_MANIFEST,
@@ -49,20 +53,37 @@ function mergeMigrationManifest(migration = {}) {
   };
 }
 
+/**
+ *
+ * @param fieldName
+ */
 function dataField(fieldName) {
   return `data.${fieldName}`;
 }
 
+/**
+ *
+ * @param event
+ * @param fieldName
+ */
 function readEventData(event, fieldName) {
   return event?.data?.[fieldName];
 }
 
+/**
+ *
+ * @param db
+ * @param registryDoc
+ * @param oldCollectionAddress
+ */
 async function loadMigrationManifest(db, registryDoc, oldCollectionAddress) {
   const contracts = db.collection(CONTRACTS_COLLECTION);
 
   let contractDoc = null;
   if (registryDoc.artifact_id) {
-    contractDoc = await contracts.findOne({ artifact_id: registryDoc.artifact_id });
+    contractDoc = await contracts.findOne({
+      artifact_id: registryDoc.artifact_id
+    });
   }
 
   if (!contractDoc) {
@@ -91,6 +112,14 @@ async function loadMigrationManifest(db, registryDoc, oldCollectionAddress) {
   return mergeMigrationManifest(contractDoc?.migration);
 }
 
+/**
+ *
+ * @param root0
+ * @param root0.manifest
+ * @param root0.oldCollectionAddress
+ * @param root0.commitment
+ * @param root0.commitmentDecimal
+ */
 function buildRegistrationQuery({
   manifest,
   oldCollectionAddress,
@@ -100,7 +129,9 @@ function buildRegistrationQuery({
   const registration = manifest.events.registration;
   const query = {
     event_type: registration.name,
-    [dataField(registration.commitment)]: { $in: [commitment, commitmentDecimal] }
+    [dataField(registration.commitment)]: {
+      $in: [commitment, commitmentDecimal]
+    }
   };
 
   if (registration.source === 'continuum_registry') {
@@ -117,7 +148,19 @@ function buildRegistrationQuery({
   return query;
 }
 
-async function getLatestTransferTokens(eventsCollection, manifest, oldCollectionAddress, owner) {
+/**
+ *
+ * @param eventsCollection
+ * @param manifest
+ * @param oldCollectionAddress
+ * @param owner
+ */
+async function getLatestTransferTokens(
+  eventsCollection,
+  manifest,
+  oldCollectionAddress,
+  owner
+) {
   const transfer = manifest.events.transfer;
   const events = await eventsCollection
     .aggregate([
@@ -144,10 +187,24 @@ async function getLatestTransferTokens(eventsCollection, manifest, oldCollection
   return events.map(e => e._id);
 }
 
-async function getExplicitRegistrationTokens(eventsCollection, manifest, registrationQuery) {
+/**
+ *
+ * @param eventsCollection
+ * @param manifest
+ * @param registrationQuery
+ */
+async function getExplicitRegistrationTokens(
+  eventsCollection,
+  manifest,
+  registrationQuery
+) {
   const registration = manifest.events.registration;
-  const registrations = await eventsCollection.find(registrationQuery).toArray();
-  return registrations.map(event => readEventData(event, registration.token_id));
+  const registrations = await eventsCollection
+    .find(registrationQuery)
+    .toArray();
+  return registrations.map(event =>
+    readEventData(event, registration.token_id)
+  );
 }
 
 /**
@@ -177,12 +234,16 @@ export async function buildMigrationData(
     throw new MigrationDataError(
       404,
       `Collection ${collection_address} is not registered for migration. ` +
-        'The collection owner must call POST /collections/register first.'
+      'The collection owner must call POST /collections/register first.'
     );
   }
 
   const oldCollectionAddress = registryDoc.old_collection_address;
-  const manifest = await loadMigrationManifest(db, registryDoc, oldCollectionAddress);
+  const manifest = await loadMigrationManifest(
+    db,
+    registryDoc,
+    oldCollectionAddress
+  );
   const commitment = computeCommitment(migration_secret);
   const commitmentDecimal = BigInt(commitment).toString();
   const eventsCollection = db.collection(EVENTS_COLLECTION);
@@ -199,23 +260,29 @@ export async function buildMigrationData(
     throw new MigrationDataError(
       404,
       'No on-chain migration registration found for this secret on collection ' +
-        `${oldCollectionAddress}. The owner must call register_migration() on the ` +
-        'old rollup with the matching commitment before requesting migration data.'
+      `${oldCollectionAddress}. The owner must call register_migration() on the ` +
+      'old rollup with the matching commitment before requesting migration data.'
     );
   }
 
   const ownerField = manifest.events.registration.owner;
-  const oldWalletAddress = String(readEventData(registration, ownerField)).toLowerCase();
+  const oldWalletAddress = String(
+    readEventData(registration, ownerField)
+  ).toLowerCase();
 
   const tokenIds =
     manifest.ownership_model === 'explicit_token_registration_event'
-      ? await getExplicitRegistrationTokens(eventsCollection, manifest, registrationQuery)
+      ? await getExplicitRegistrationTokens(
+        eventsCollection,
+        manifest,
+        registrationQuery
+      )
       : await getLatestTransferTokens(
-          eventsCollection,
-          manifest,
-          oldCollectionAddress,
-          oldWalletAddress
-        );
+        eventsCollection,
+        manifest,
+        oldCollectionAddress,
+        oldWalletAddress
+      );
 
   const baseResponse = {
     old_wallet_address: oldWalletAddress,
