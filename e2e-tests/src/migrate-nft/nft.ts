@@ -1,10 +1,4 @@
-/**
- * NFT contract: artifact loading + the handful of interactions the flow needs.
- * These return values and do no logging — the orchestrator narrates.
- */
-
 import { readFileSync } from "fs";
-
 import { Fr } from "@aztec/aztec.js/fields";
 import { AztecAddress } from "@aztec/aztec.js/addresses";
 import { Contract } from "@aztec/aztec.js/contracts";
@@ -16,7 +10,6 @@ import {
 import { EmbeddedWallet } from "@aztec/wallets/embedded";
 
 import { ARTIFACT_PATH, SEND_TIMEOUT } from "./config.js";
-
 const sendOpts = (from: AztecAddress) => ({ from, wait: { timeout: SEND_TIMEOUT } });
 
 export type NftArtifact = {

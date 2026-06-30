@@ -13,27 +13,27 @@ import NFTContractArtifactJson from '../../target/nft_contract-NFT.json' with { 
 export const NFTContractArtifact = loadContractArtifact(NFTContractArtifactJson as NoirCompiledContract);
 
 
-      export type Transfer = {
-        from: AztecAddressLike
-to: AztecAddressLike
-token_id: FieldLike
-      }
-    
+export type Transfer = {
+  from: AztecAddressLike
+  to: AztecAddressLike
+  token_id: FieldLike
+}
+
 
 /**
  * Type-safe interface for contract NFT;
  */
 export class NFTContract extends ContractBase {
-  
+
   private constructor(
     address: AztecAddress,
     wallet: Wallet,
   ) {
     super(address, NFTContractArtifact, wallet);
   }
-  
 
-  
+
+
   /**
    * Creates a contract instance.
    * @param address - The deployed contract's address.
@@ -47,7 +47,7 @@ export class NFTContract extends ContractBase {
     return Contract.at(address, NFTContract.artifact, wallet) as NFTContract;
   }
 
-  
+
   /**
    * Creates a tx to deploy a new instance of this contract.
    * @param instantiation - Optional address-affecting parameters (salt, deployer / universalDeploy, publicKeys).
@@ -83,9 +83,9 @@ export class NFTContract extends ContractBase {
       opts.instantiation,
     );
   }
-  
 
-  
+
+
   /**
    * Returns this contract's artifact.
    */
@@ -99,35 +99,35 @@ export class NFTContract extends ContractBase {
   public static get artifactForPublic(): ContractArtifact {
     return loadContractArtifactForPublic(NFTContractArtifactJson as NoirCompiledContract);
   }
-  
+
 
   public static get storage(): ContractStorageLayout<'symbol' | 'name' | 'private_nfts' | 'nft_exists' | 'public_owners' | 'minter'> {
-      return {
-        symbol: {
-      slot: new Fr(1n),
-    },
-name: {
-      slot: new Fr(3n),
-    },
-private_nfts: {
-      slot: new Fr(5n),
-    },
-nft_exists: {
-      slot: new Fr(6n),
-    },
-public_owners: {
-      slot: new Fr(7n),
-    },
-minter: {
-      slot: new Fr(8n),
-    }
-      } as ContractStorageLayout<'symbol' | 'name' | 'private_nfts' | 'nft_exists' | 'public_owners' | 'minter'>;
-    }
-    
+    return {
+      symbol: {
+        slot: new Fr(1n),
+      },
+      name: {
+        slot: new Fr(3n),
+      },
+      private_nfts: {
+        slot: new Fr(5n),
+      },
+      nft_exists: {
+        slot: new Fr(6n),
+      },
+      public_owners: {
+        slot: new Fr(7n),
+      },
+      minter: {
+        slot: new Fr(8n),
+      }
+    } as ContractStorageLayout<'symbol' | 'name' | 'private_nfts' | 'nft_exists' | 'public_owners' | 'minter'>;
+  }
+
 
   /** Type-safe wrappers for the public methods exposed by the contract. */
   public declare methods: {
-    
+
     /** burn_private(from: struct, token_id: field, _nonce: field) */
     burn_private: ((from: AztecAddressLike, token_id: FieldLike, _nonce: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
@@ -189,56 +189,56 @@ minter: {
     transfer_public_to_public: ((from: AztecAddressLike, to: AztecAddressLike, token_id: FieldLike, _nonce: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
   };
 
-  
-    public static get events(): { Transfer: {abiType: AbiType, eventSelector: EventSelector, fieldNames: string[] } } {
+
+  public static get events(): { Transfer: { abiType: AbiType, eventSelector: EventSelector, fieldNames: string[] } } {
     return {
       Transfer: {
         abiType: {
-    "kind": "struct",
-    "fields": [
-        {
-            "name": "from",
-            "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "from",
+              "type": {
                 "kind": "struct",
                 "fields": [
-                    {
-                        "name": "inner",
-                        "type": {
-                            "kind": "field"
-                        }
+                  {
+                    "name": "inner",
+                    "type": {
+                      "kind": "field"
                     }
+                  }
                 ],
                 "path": "aztec::protocol_types::address::aztec_address::AztecAddress"
-            }
-        },
-        {
-            "name": "to",
-            "type": {
+              }
+            },
+            {
+              "name": "to",
+              "type": {
                 "kind": "struct",
                 "fields": [
-                    {
-                        "name": "inner",
-                        "type": {
-                            "kind": "field"
-                        }
+                  {
+                    "name": "inner",
+                    "type": {
+                      "kind": "field"
                     }
+                  }
                 ],
                 "path": "aztec::protocol_types::address::aztec_address::AztecAddress"
-            }
-        },
-        {
-            "name": "token_id",
-            "type": {
+              }
+            },
+            {
+              "name": "token_id",
+              "type": {
                 "kind": "field"
+              }
             }
-        }
-    ],
-    "path": "NFT::Transfer"
-},
+          ],
+          "path": "NFT::Transfer"
+        },
         eventSelector: EventSelector.fromString("0xf4d27d12"),
-        fieldNames: ["from","to","token_id"],
+        fieldNames: ["from", "to", "token_id"],
       }
     };
   }
-  
+
 }

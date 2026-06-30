@@ -1,14 +1,3 @@
-/**
- * Configuration + constants for the NFT public-state migration E2E.
- *
- * Env vars:
- *   AZTEC_NODE_URL     - Aztec node (default https://v5.testnet.rpc.aztec-labs.com)
- *   CONTINUUM_API_URL  - Continuum API base URL (default http://localhost:3004)
- *   CONTINUUM_NETWORK  - Network name used by the indexer/registry (default testnet)
- *   L1_PRIVATE_KEY     - Sepolia-funded key (testnet only, for fee-juice bridging)
- *   OLD_SECRET/OLD_SALT, NEW_SECRET/NEW_SALT - reuse funded accounts across runs
- */
-
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { createLogger } from "@aztec/aztec.js/log";

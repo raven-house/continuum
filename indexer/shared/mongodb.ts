@@ -1,9 +1,28 @@
-import { MongoClient, Db } from 'mongodb';
+import { MongoClient, Db, type MongoClientOptions } from 'mongodb';
+
+const DEFAULT_MAX_POOL_SIZE = 10;
+const DEFAULT_MIN_POOL_SIZE = 0;
+const DEFAULT_MAX_CONNECTING = 2;
+const DEFAULT_MAX_IDLE_TIME_MS = 30000;
+const DEFAULT_SOCKET_TIMEOUT_MS = 45000;
+const DEFAULT_CONNECT_TIMEOUT_MS = 30000;
+const DEFAULT_SERVER_SELECTION_TIMEOUT_MS = 5000;
+
+function readNumberEnv(name: string, fallback: number, min = 0): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= min ? value : fallback;
+}
 
 class MongoDBConnection {
   private static instance: MongoDBConnection;
   private client: MongoClient | null = null;
   private db: Db | null = null;
+  private connectionPromise: Promise<Db> | null = null;
 
   private constructor() { }
 
@@ -19,26 +38,52 @@ class MongoDBConnection {
       return this.db;
     }
 
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
     if (!process.env.CONTINUUM_DB_CONNECTION_STRING) {
       throw new Error('MongoDB connection string is not defined');
     }
 
-    this.client = new MongoClient(process.env.CONTINUUM_DB_CONNECTION_STRING, {
-      maxPoolSize: 50, // Adjust based on your needs (10-100 is typical)
-      minPoolSize: 5,
-      maxIdleTimeMS: 30000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,
-      serverSelectionTimeoutMS: 5000,
-    });
+    const options: MongoClientOptions = {
+      maxPoolSize: readNumberEnv('CONTINUUM_MONGODB_MAX_POOL_SIZE', DEFAULT_MAX_POOL_SIZE, 1),
+      minPoolSize: readNumberEnv('CONTINUUM_MONGODB_MIN_POOL_SIZE', DEFAULT_MIN_POOL_SIZE),
+      maxConnecting: readNumberEnv('CONTINUUM_MONGODB_MAX_CONNECTING', DEFAULT_MAX_CONNECTING, 1),
+      maxIdleTimeMS: readNumberEnv('CONTINUUM_MONGODB_MAX_IDLE_TIME_MS', DEFAULT_MAX_IDLE_TIME_MS),
+      socketTimeoutMS: readNumberEnv('CONTINUUM_MONGODB_SOCKET_TIMEOUT_MS', DEFAULT_SOCKET_TIMEOUT_MS),
+      connectTimeoutMS: readNumberEnv('CONTINUUM_MONGODB_CONNECT_TIMEOUT_MS', DEFAULT_CONNECT_TIMEOUT_MS),
+      serverSelectionTimeoutMS: readNumberEnv(
+        'CONTINUUM_MONGODB_SERVER_SELECTION_TIMEOUT_MS',
+        DEFAULT_SERVER_SELECTION_TIMEOUT_MS,
+      ),
+    };
 
-    await this.client.connect();
-    this.db = this.client.db(process.env.CONTINUUM_DB_NAME);
+    this.client = new MongoClient(process.env.CONTINUUM_DB_CONNECTION_STRING, options);
 
-    return this.db;
+    this.connectionPromise = this.client
+      .connect()
+      .then((client) => {
+        this.db = client.db(process.env.CONTINUUM_DB_NAME);
+        return this.db;
+      })
+      .catch((error) => {
+        this.client = null;
+        this.db = null;
+        throw error;
+      })
+      .finally(() => {
+        this.connectionPromise = null;
+      });
+
+    return this.connectionPromise;
   }
 
   async close(): Promise<void> {
+    if (this.connectionPromise) {
+      await this.connectionPromise.catch(() => undefined);
+    }
+
     if (this.client) {
       await this.client.close();
       this.client = null;
