@@ -24,47 +24,37 @@ const logger = winston.createLogger({
 });
 
 const intervalMs = Number(process.env.CONTINUUM_INDEXER_INTERVAL ?? 25000);
-const networks = (process.env.CONTINUUM_INDEXER_NETWORKS ?? 'testnet')
-  .split(',')
-  .map(network => network.trim().toLowerCase())
-  .filter(Boolean);
+const network = (process.env.AZTEC_NETWORK ?? 'sandbox').trim().toLowerCase() || 'sandbox';
 
-// Prevent the same network from running two indexer cycles concurrently
-const runningInstances = new Set<string>();
+let isRunning = false;
 
-async function runHandler(mode: string) {
-  if (runningInstances.has(mode)) {
-    logger.warn(`Indexer for mode ${mode} is already running, skipping`);
+async function runHandler() {
+  if (isRunning) {
+    logger.warn(`Indexer for network ${network} is already running, skipping`);
     return;
   }
 
-  runningInstances.add(mode);
-  logger.info(`Starting indexer for mode: ${mode}`);
+  isRunning = true;
+  logger.info(`Starting indexer for network: ${network}`);
 
   try {
-    await handler(mode);
-    logger.info(`Indexer finished. Mode: ${mode}`);
+    await handler(network);
+    logger.info(`Indexer finished. Network: ${network}`);
   } catch (err) {
-    logger.error(`Indexer failed. Mode: ${mode}, Error: ${err}`);
+    logger.error(`Indexer failed. Network: ${network}, Error: ${err}`);
   } finally {
-    runningInstances.delete(mode);
+    isRunning = false;
   }
-}
-
-async function runAllNetworks() {
-  await Promise.all(networks.map(network => runHandler(network)));
 }
 
 async function initializeApp() {
   try {
     await mongodbConnection.connect();
     logger.info('MongoDB connected');
-    logger.info(
-      `Indexer scheduled for networks [${networks.join(', ')}] every ${intervalMs}ms`
-    );
-    await runAllNetworks();
+    logger.info(`Indexer scheduled for network "${network}" every ${intervalMs}ms`);
+    await runHandler();
     setInterval(() => {
-      void runAllNetworks();
+      void runHandler();
     }, intervalMs);
   } catch (error) {
     logger.error('Failed to connect to MongoDB:', error);

@@ -12,8 +12,6 @@ Continuum provides a cryptographic bridge between old and new rollup state using
 - An attester service that signs user state claims with a Schnorr key
 - A Noir smart contract on the new rollup that verifies those signatures and records the migration
 
-
-
 ## Architecture
 
 ```
@@ -51,7 +49,17 @@ Continuum provides a cryptographic bridge between old and new rollup state using
 
    ```bash
    cp .env.example .env
-   # Edit .env with your settings
+   ```
+
+   The indexer reads one Aztec network at a time from the top-level `.env`.
+   It defaults to `sandbox`. To switch networks, edit `.env` or run:
+
+   ```bash
+   # Local sandbox
+   perl -0pi -e 's/^AZTEC_NETWORK=.*/AZTEC_NETWORK=sandbox/m' .env
+
+   # Or testnet
+   perl -0pi -e 's/^AZTEC_NETWORK=.*/AZTEC_NETWORK=testnet/m' .env
    ```
 
 3. **Start all services**
@@ -80,7 +88,6 @@ Continuum provides a cryptographic bridge between old and new rollup state using
        "enabled": true,
        "event_types": ["Transfer", "Mint"],
        "start_block": {
-         "devnet": 1000,
          "testnet": 5000,
          "sandbox": 0
        }
@@ -109,15 +116,21 @@ Continuum provides a cryptographic bridge between old and new rollup state using
 
 7. **Stop services**
 
-   ```bash
-   docker compose down
-   ```
+```bash
+docker compose down
+```
 
-   To also remove the MongoDB volume (WARNING: deletes all data):
+To also remove the MongoDB volume (WARNING: deletes all data):
 
-   ```bash
-   docker compose down -v
-   ```
+```bash
+docker compose down -v
+```
+
+List all docker volumes
+
+```bash
+docker volume ls
+```
 
 ## Development
 
@@ -256,18 +269,18 @@ continuum/
 
 ### Environment Variables
 
-| Variable                           | Description                 | Default                                   |
-| ---------------------------------- | --------------------------- | ----------------------------------------- |
-| `MONGO_ROOT_USERNAME`              | MongoDB root username       | `root`                                    |
-| `MONGO_ROOT_PASSWORD`              | MongoDB root password       | `password`                                |
-| `CONTINUUM_DB_CONNECTION_STRING`   | MongoDB connection string   | `mongodb://root:password@localhost:27017` |
-| `CONTINUUM_DB_NAME`                | Database name               | `continuum`                               |
-| `CONTINUUM_INDEXER_INTERVAL`       | Indexer run interval (ms)   | `30000`                                   |
-| `CONTINUUM_INDEXER_BLOCK_RANGE`    | Blocks per batch            | `14`                                      |
-| `CONTINUUM_AZTEC_NODE_URL_DEVNET`  | Aztec node URL for devnet   | -                                         |
-| `CONTINUUM_AZTEC_NODE_URL_TESTNET` | Aztec node URL for testnet  | -                                         |
-| `CONTINUUM_AZTEC_NODE_URL_SANDBOX` | Aztec node URL for sandbox  | `http://sandbox:8080`                     |
-| `CONTINUUM_API_PORT`               | API server port             | `3004`                                    |
+| Variable                           | Description                | Default                                   |
+| ---------------------------------- | -------------------------- | ----------------------------------------- |
+| `MONGO_ROOT_USERNAME`              | MongoDB root username      | `root`                                    |
+| `MONGO_ROOT_PASSWORD`              | MongoDB root password      | `password`                                |
+| `CONTINUUM_DB_CONNECTION_STRING`   | MongoDB connection string  | `mongodb://root:password@localhost:27017` |
+| `CONTINUUM_DB_NAME`                | Database name              | `continuum`                               |
+| `AZTEC_NETWORK`                    | Single Aztec network to index (`sandbox` or `testnet`) | `sandbox` |
+| `CONTINUUM_INDEXER_INTERVAL`       | Indexer run interval (ms)  | `30000`                                   |
+| `CONTINUUM_INDEXER_BLOCK_RANGE`    | Blocks per batch           | `14`                                      |
+| `CONTINUUM_AZTEC_NODE_URL_TESTNET` | Aztec node URL for testnet | -                                         |
+| `CONTINUUM_AZTEC_NODE_URL_SANDBOX` | Aztec node URL for sandbox | `http://localhost:8080`                   |
+| `CONTINUUM_API_PORT`               | API server port            | `3004`                                    |
 
 ### Contract Indexing Configuration
 
@@ -283,12 +296,12 @@ Contract indexing configuration is stored in MongoDB when an ABI is uploaded to
 
 ## Database Collections
 
-| Collection       | Purpose                                              |
-| ---------------- | ---------------------------------------------------- |
-| `events`         | All indexed contract events                          |
-| `sync_state`     | Last indexed block per artifact per network          |
+| Collection       | Purpose                                                             |
+| ---------------- | ------------------------------------------------------------------- |
+| `events`         | All indexed contract events                                         |
+| `sync_state`     | Last indexed block per artifact per network                         |
 | `contracts`      | Uploaded contract ABIs, extracted events, and indexer configuration |
-| `migration_keys` | Wallet → secret key mappings for rollup migration    |
+| `migration_keys` | Wallet → secret key mappings for rollup migration                   |
 
 See `database/init.js` for the full schema and indexes. Collections and indexes are created automatically when MongoDB first initializes.
 

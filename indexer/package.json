@@ -5,7 +5,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "bun run index.ts"
+    "start": "bun --env-file=../.env run index.ts"
   },
   "dependencies": {
     "@aztec/aztec.js": "5.0.0-rc.1",

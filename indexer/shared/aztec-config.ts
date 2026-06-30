@@ -1,22 +1,3 @@
-export const DEVNET = {
-  name: 'devnet',
-  environment: 'devnet',
-  network: {
-    nodeUrl: 'https://v4-devnet-2.aztec-labs.com',
-    l1RpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-    l1ChainId: 11155111,
-  },
-  settings: {
-    skipSandbox: true,
-    version: '4.0.0-devnet.2-patch.1',
-  },
-  timeouts: {
-    deployTimeout: 1200000,
-    txTimeout: 180000,
-    waitTimeout: 60000,
-  },
-}
-
 export const SANDBOX = {
   name: 'sandbox',
   environment: 'local',
@@ -27,7 +8,7 @@ export const SANDBOX = {
   },
   settings: {
     skipSandbox: false,
-    version: '4.0.0-devnet.2-patch.1',
+    version: "5.0.0-rc.1"
   },
   timeouts: {
     deployTimeout: 120000,

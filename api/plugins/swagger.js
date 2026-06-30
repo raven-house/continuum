@@ -19,8 +19,8 @@ export default fp(async fastify => {
         }
       },
       info: {
-        title: 'indexer.ravenhouse',
-        description: 'RavenHouse Indexer',
+        title: 'api.continuum',
+        description: 'Continuum API Server',
         version: '1.0.0-preview'
       },
       security: [{ bearerAuth: [] }]

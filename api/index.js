@@ -31,14 +31,13 @@ fastify.addHook('onClose', async (instance, done) => {
 });
 
 const host = process.env.RD_HOST || process.env.CONTINUUM_API_HOST || '0.0.0.0';
-const port = Number(process.env.RD_PORT || process.env.CONTINUUM_API_PORT || 3004);
-
-fastify.listen(
-  { host, port },
-  err => {
-    if (err) {
-      fastify.log.error(err);
-      process.exit(1);
-    }
-  }
+const port = Number(
+  process.env.RD_PORT || process.env.CONTINUUM_API_PORT || 3004
 );
+
+fastify.listen({ host, port }, err => {
+  if (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+});

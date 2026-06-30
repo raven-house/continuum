@@ -36,7 +36,9 @@ export default async function (fastify) {
       } = request.body;
 
       if (!old_collection_address?.trim() || !new_collection_address?.trim()) {
-        reply.badRequest('old_collection_address and new_collection_address are required');
+        reply.badRequest(
+          'old_collection_address and new_collection_address are required'
+        );
         return;
       }
 
@@ -115,39 +117,35 @@ export default async function (fastify) {
   // ─────────────────────────────────────────────────────────────
   // GET /collections
   // ─────────────────────────────────────────────────────────────
-  fastify.get(
-    '/',
-    { schema: schemas.list },
-    async (request) => {
-      const { new_network, page = 1, limit = 20 } = request.query;
+  fastify.get('/', { schema: schemas.list }, async request => {
+    const { new_network, page = 1, limit = 20 } = request.query;
 
-      const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
-      const col = db.collection(COLLECTION);
+    const db = fastify.mongo.client.db(process.env.CONTINUUM_DB_NAME);
+    const col = db.collection(COLLECTION);
 
-      const filter = new_network ? { new_network } : {};
-      const total = await col.countDocuments(filter);
-      const docs = await col
-        .find(filter)
-        .sort({ registered_at: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .toArray();
+    const filter = new_network ? { new_network } : {};
+    const total = await col.countDocuments(filter);
+    const docs = await col
+      .find(filter)
+      .sort({ registered_at: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
 
-      return {
-        collections: docs.map(d => ({
-          id: d._id.toString(),
-          old_collection_address: d.old_collection_address,
-          old_network: d.old_network,
-          new_collection_address: d.new_collection_address,
-          new_network: d.new_network,
-          collection_name: d.collection_name,
-          registered_at: d.registered_at
-        })),
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit)
-      };
-    }
-  );
+    return {
+      collections: docs.map(d => ({
+        id: d._id.toString(),
+        old_collection_address: d.old_collection_address,
+        old_network: d.old_network,
+        new_collection_address: d.new_collection_address,
+        new_network: d.new_network,
+        collection_name: d.collection_name,
+        registered_at: d.registered_at
+      })),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit)
+    };
+  });
 }

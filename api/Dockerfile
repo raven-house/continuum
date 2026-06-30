@@ -16,12 +16,12 @@ RUN bun install --frozen-lockfile
 COPY api/ ./
 
 # Production stage
-FROM node:20-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install curl for healthcheck and runtime libraries for native modules
+RUN apk add --no-cache curl cairo pango jpeg giflib librsvg
 
 # Copy dependencies from builder
 COPY --from=builder /app/node_modules ./node_modules
@@ -46,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3004/health || exit 1
 
 # Run the API server
-CMD ["npm", "run", "start"]
+CMD ["bun", "run", "start"]

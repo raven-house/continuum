@@ -1,25 +1,6 @@
-/**
- * Continuum Attester Service
- *
- * Signs migration claims with a Schnorr key over the Grumpkin curve.
- * The signature can be verified on-chain by the NFT contract's migrate_and_claim().
- *
- * Requires in package.json:
- *   "@aztec/foundation": "4.3.0"
- *   "@aztec/stdlib":     "4.3.0"
- *
- * Env vars:
- *   ATTESTER_SECRET  — 32-byte hex Schnorr secret key
- */
-
 import { Fr } from '@aztec/foundation/curves/bn254';
 import { Schnorr } from '@aztec/foundation/crypto/schnorr';
 import { deriveSigningKey } from '@aztec/stdlib/keys';
-// Use the SYNC poseidon (WASM via BarretenbergSync). The async variant in
-// @aztec/stdlib/auth-witness routes through a native `bb` process that isn't
-// present in the container (the bb.js postinstall is blocked in Docker), so it
-// throws "spawn .../bb ENOENT". The sync hash is identical to
-// computeInnerAuthWitHash(fields) = poseidon2HashWithSeparator(fields, AUTHWIT_INNER).
 import {
   poseidon2Hash,
   poseidon2HashWithSeparator
@@ -39,7 +20,7 @@ const MIGRATE_REGISTER_DOMAIN = Fr.fromString('0x4e46544d52');
 /**
  * Compute the migration-registration commitment from a user's secret.
  *
- *   commitment = Poseidon2([ MIGRATE_REGISTER_DOMAIN, secret ])
+ * commitment = Poseidon2([ MIGRATE_REGISTER_DOMAIN, secret ])
  *
  * The user computes this off-chain and passes it to `register_migration` on the
  * old rollup, where the contract emits `MigrationRegistered { owner: msg_sender,
@@ -47,7 +28,6 @@ const MIGRATE_REGISTER_DOMAIN = Fr.fromString('0x4e46544d52');
  * the on-chain event is an unforgeable binding between the real old-rollup owner
  * and this commitment. Later, in /request_data, the user reveals the secret and
  * Continuum recomputes the same commitment to resolve their verified owner.
- *
  * @param {string} secretHex  - The user's migration secret (0x-prefixed hex Field)
  * @returns {string} commitment as a canonical 0x-prefixed Field string
  */
@@ -59,7 +39,6 @@ export function computeMigrationCommitment(secretHex) {
 /**
  * Generate a fresh random migration secret and its commitment.
  * Stateless helper for the registration UI — Continuum stores nothing.
- *
  * @returns {{ secret: string, commitment: string }}
  */
 export function generateMigrationSecret() {
@@ -69,6 +48,9 @@ export function generateMigrationSecret() {
 
 let _cached = null;
 
+/**
+ *
+ */
 async function getAttester() {
   if (_cached) return _cached;
 
@@ -100,8 +82,7 @@ async function getAttester() {
  * Sign a migration claim for a single NFT token.
  *
  * Signed fields (order matters — must match Noir contract):
- *   [ MIGRATE_DOMAIN, collection_address, new_wallet_address, token_id ]
- *
+ * [ MIGRATE_DOMAIN, collection_address, new_wallet_address, token_id ]
  * @param {string} collectionAddress  - New rollup NFT contract address (0x-prefixed hex)
  * @param {string} newWalletAddress   - Claimer's address on the new rollup (0x-prefixed hex)
  * @param {string|bigint} tokenId     - Token ID to migrate
@@ -144,7 +125,6 @@ export async function signMigrationClaim(
 /**
  * Get the attester's public key coordinates (for display / documentation).
  * These are what collection owners embed in their NFT contract constructor.
- *
  * @returns {{ x: string, y: string }}
  */
 export async function getAttesterPublicKey() {

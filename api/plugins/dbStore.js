@@ -19,14 +19,6 @@ const TIME_RANGE_MS = {
   '30d': 30 * 24 * 60 * 60 * 1000
 };
 
-// Number of data points for sparkline based on time range
-// Aggregation runs every 10 minutes, so adjust expectations accordingly:
-// - 10m: at most 1-2 snapshots available
-// - 1h: ~6 snapshots (every 10 min)
-// - 6h: ~36 snapshots, sample to 12
-// - 1d: ~144 snapshots, sample to 24
-// - 7d: ~1008 snapshots, sample to 14
-// - 30d: ~4320 snapshots, sample to 30
 const SPARKLINE_POINTS = {
   '10m': 2, // Limited data available for short range
   '1h': 6, // 1 point per 10 minutes (matches aggregation)
@@ -75,6 +67,7 @@ export class DBStore {
     return collectionName;
   }
 
+  // We need to remove all raven house related codebase from here
   async getListingCreatedAndSold(token_id) {
     // if (typeof token_id !== 'number') {
     //   throw new Error('`tokenId` must be a number');

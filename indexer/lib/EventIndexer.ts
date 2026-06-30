@@ -4,18 +4,16 @@ import { getAztecNode } from '../shared/aztecNode'
 import { getBlockTimestamps, serializeEventData } from '../shared/utils'
 import { mongodbConnection } from '../shared/mongodb'
 import logger from '../shared/logger'
-import { DEVNET, SANDBOX, TESTNET } from '../shared/aztec-config'
+import { SANDBOX, TESTNET } from '../shared/aztec-config'
 
 const BLOCK_RANGE = Number(process.env.CONTINUUM_INDEXER_BLOCK_RANGE ?? 14)
 
 const DEFAULT_NODE_URL_MAP: Record<string, string | undefined> = {
-  devnet: DEVNET.network.nodeUrl,
   testnet: TESTNET.network.nodeUrl,
   sandbox: SANDBOX.network.nodeUrl,
 }
 
 const ENV_NODE_URL_MAP: Record<string, string | undefined> = {
-  devnet: process.env.CONTINUUM_AZTEC_NODE_URL_DEVNET,
   testnet: process.env.CONTINUUM_AZTEC_NODE_URL_TESTNET,
   sandbox: process.env.CONTINUUM_AZTEC_NODE_URL_SANDBOX,
 }
