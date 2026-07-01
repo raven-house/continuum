@@ -364,6 +364,10 @@ docker compose logs -f api
 curl http://localhost:3004/health
 ```
 
+
+Address of Migration registry contract is :- ```0x0f10ac27189276a91039bd47317783b1f76ce2fa1f26b89be1df464c08a5b3b3```
+
+
 ## License
 
 MIT
