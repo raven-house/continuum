@@ -27,7 +27,7 @@ fn scalar_from_be_bytes(bytes: [u8; 32]) -> EmbeddedCurveScalar {
 ///
 /// `signature` is the 64-byte big-endian `s || e` produced by
 /// `Schnorr.constructSignature(...).toBuffer()` in aztec.js. schnorr v0.4.0 (the
-/// version aztec 5.0.0-rc.1 uses) takes the signature as `(s, e)` scalars and the
+/// version aztec 5.0.0-rc.2 uses) takes the signature as `(s, e)` scalars and the
 /// message as a Field, so we split + decode the bytes here. The hash should be
 /// computed using `compute_attestation_hash`.
 pub fn assert_valid_signature(pubkey: EmbeddedCurvePoint, signature: [u8; 64], hash: Field) {

@@ -144,6 +144,11 @@ const schemas = Object.freeze({
           success: {
             type: 'boolean'
           },
+          updated: {
+            type: 'boolean',
+            description:
+              'True if an existing artifact_id was updated in place, false if newly created'
+          },
           contractId: {
             type: 'string',
             description: 'MongoDB ID of the stored contract'

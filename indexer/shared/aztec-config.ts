@@ -8,7 +8,7 @@ export const SANDBOX = {
   },
   settings: {
     skipSandbox: false,
-    version: "5.0.0-rc.1"
+    version: "5.0.0-rc.2"
   },
   timeouts: {
     deployTimeout: 120000,
@@ -28,7 +28,7 @@ export const TESTNET = {
   },
   settings: {
     skipSandbox: true,
-    version: "5.0.0-rc.1"
+    version: "5.0.0-rc.2"
   },
   timeouts: {
     deployTimeout: 1800000,

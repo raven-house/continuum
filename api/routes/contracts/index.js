@@ -97,14 +97,7 @@ export default async function (fastify) {
       const db = fastify.mongo.client.db(getDbName());
       const contractsCollection = db.collection('contracts');
 
-      // Enforce unique artifact_id
       const existing = await contractsCollection.findOne({ artifact_id });
-      if (existing) {
-        reply.conflict(
-          `Artifact with id "${artifact_id}" already exists (id: ${existing._id})`
-        );
-        return;
-      }
 
       try {
         // Process the ABI to extract events
@@ -138,31 +131,53 @@ export default async function (fastify) {
           ? mergeMigrationManifest(normalizedMigration)
           : undefined;
 
-        const docToInsert = {
+        const mergedNetworks = {
+          ...(existing?.networks ?? {}),
+          ...(normalizedNetworks ?? {})
+        };
+        const mergedStartBlock = {
+          ...(existing?.start_block ?? {}),
+          ...(resolvedStartBlock ?? {})
+        };
+
+        const fields = {
           artifact_id,
           contractName: processedContract.contractName,
           enabled,
-          start_block: resolvedStartBlock,
-          networks: normalizedNetworks,
+          start_block: mergedStartBlock,
+          networks: mergedNetworks,
           migration: migrationManifest,
           event_types,
           eventCount: processedContract.eventCount,
           events: processedContract.events,
           rawAbi: processedContract.rawAbi,
-          processedAt: processedContract.processedAt,
-          createdAt: new Date().toISOString()
+          processedAt: processedContract.processedAt
         };
 
-        const result = await contractsCollection.insertOne(docToInsert);
+        let contractId;
+        if (existing) {
+          await contractsCollection.updateOne(
+            { artifact_id },
+            { $set: { ...fields, updatedAt: new Date().toISOString() } }
+          );
+          contractId = existing._id.toString();
+        } else {
+          const result = await contractsCollection.insertOne({
+            ...fields,
+            createdAt: new Date().toISOString()
+          });
+          contractId = result.insertedId.toString();
+        }
 
         return {
           success: true,
-          contractId: result.insertedId.toString(),
+          updated: Boolean(existing),
+          contractId,
           artifact_id,
           contractName: processedContract.contractName,
           enabled,
-          start_block: resolvedStartBlock,
-          networks: normalizedNetworks,
+          start_block: mergedStartBlock,
+          networks: mergedNetworks,
           migration: migrationManifest,
           event_types,
           eventCount: processedContract.eventCount,
