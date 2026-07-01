@@ -1,5 +1,7 @@
 # Continuum
 
+[Watch the video walkthrough](https://drive.google.com/file/d/1eBhS4vm5zylCkWX-nCW42Thud1hECA5M/view?usp=sharing)
+
 Continuum solves one of the hardest problems in rollup development: **how do users carry their state forward when aztec rollup upgrades**
 
 # What Problem Continuum Solves
