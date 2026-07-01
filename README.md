@@ -50,10 +50,10 @@ Continuum provides a cryptographic bridge between old and new rollup state using
    ```bash
    cp .env.example .env
    ```
-   If trying on Aztec Sandbox, download Aztec CLI from https://docs.aztec.network/developers/getting_started_on_local_network and start sandbox using ```aztec start --local-network```
 
-   Set ```AZTEC_NETWORK=sandbox``` in `.env` file
-   
+   If trying on Aztec Sandbox, download Aztec CLI from https://docs.aztec.network/developers/getting_started_on_local_network and start sandbox using `aztec start --local-network`
+
+   Set `AZTEC_NETWORK=sandbox` in `.env` file
 
 3. **Start all services**
 
@@ -140,6 +140,11 @@ docker compose up -d
 
 # Only rebuild when adding/removing npm packages
 docker compose up -d --build
+```
+
+```bash
+# Run contract test cases
+aztec test
 ```
 
 ### Production deploy
@@ -251,9 +256,7 @@ curl -X POST http://localhost:3004/request_data \
 curl http://localhost:3004/attester
 ```
 
-
 ## Configuration
-
 
 ### Contract Indexing Configuration
 
@@ -304,12 +307,7 @@ Example migration-aware upload:
     },
     "claim": {
       "domain": "0x4e46544d",
-      "attestation_fields": [
-        "domain",
-        "new_collection_address",
-        "new_wallet_address",
-        "token_id"
-      ]
+      "attestation_fields": ["domain", "new_collection_address", "new_wallet_address", "token_id"]
     }
   }
 }
@@ -340,7 +338,6 @@ before restoring/minting state.
 | `collection_registry` | Old-rollup collection address to new-rollup collection address mappings |
 
 See `database/init.js` for the full schema and indexes. Collections and indexes are created automatically when MongoDB first initializes.
-
 
 ## Troubleshooting
 

@@ -212,7 +212,7 @@ pub contract NFT {
     }
 
     /// @notice Registers a privately-owned NFT for Continuum migration indexing.
-    /// @dev Proves private note ownership without nullifying or transferring the NFT.
+    /// @dev Consumes the private note and removes the token from old-rollup supply.
     /// @param token_id The private token id to register.
     /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
     #[external("private")]
@@ -220,8 +220,12 @@ pub contract NFT {
         assert(migration_commitment != 0, "zero migration commitment not supported");
 
         let owner = self.msg_sender();
-        self.internal._validate_private_token_owner(owner, token_id);
-        self.enqueue_self.register_nft_migration_internal(owner, token_id, migration_commitment);
+        self.internal._remove_private_token_owner(owner, token_id);
+        self.enqueue_self.finalize_private_nft_migration_registration(
+            owner,
+            token_id,
+            migration_commitment,
+        );
     }
     /// @notice Registers a publicly-owned NFT for Continuum migration indexing.
     /// @param token_id The public token id to register.
@@ -332,6 +336,24 @@ pub contract NFT {
         migration_commitment: Field,
     ) {
         self.internal._emit_nft_migration_registered(owner, token_id, migration_commitment);
+    }
+
+    /// @notice Finalizes a private migration registration by burning the old-rollup token.
+    /// @param owner The private owner that consumed the token note.
+    /// @param token_id The token id registered for migration.
+    /// @param migration_commitment A domain-separated hash derived from the user's migration secret.
+    #[external("public")]
+    #[only_self]
+    fn finalize_private_nft_migration_registration(
+        owner: AztecAddress,
+        token_id: Field,
+        migration_commitment: Field,
+    ) {
+        self.internal._set_nft_exists(token_id, false);
+        self.internal._emit_nft_migration_registered(owner, token_id, migration_commitment);
+        self.emit(
+            Transfer { from: PRIVATE_ADDRESS_MAGIC_VALUE, to: AztecAddress::zero(), token_id },
+        );
     }
 
     /// @notice Finalizes a mint to private by registering the token and emitting a Transfer event

@@ -47,6 +47,21 @@ export function mintPublic(nft: Contract, to: AztecAddress, tokenId: bigint, fro
   return nft.methods.mint_to_public(to, new Fr(tokenId)).send(sendOpts(from));
 }
 
+export function mintPrivate(nft: Contract, to: AztecAddress, tokenId: bigint, from: AztecAddress) {
+  return nft.methods.mint_to_private(to, new Fr(tokenId)).send(sendOpts(from));
+}
+
+export function registerPrivateNftMigration(
+  nft: Contract,
+  tokenId: bigint,
+  commitment: string,
+  from: AztecAddress,
+) {
+  return nft.methods
+    .register_private_nft_migration(new Fr(tokenId), Fr.fromString(commitment))
+    .send(sendOpts(from));
+}
+
 export function migrateAndClaim(
   nft: Contract,
   tokenId: string,
