@@ -10,7 +10,7 @@ Continuum is a cryptographic bridge that lets users carry state forward when an 
 - **API server**: Fastify v4 (ESM, Node/Bun), MongoDB via `@fastify/mongodb`
 - **Indexer**: TypeScript with `@aztec/aztec.js`, MongoDB, `node-cron`, Winston/Pino logging
 - **Database**: MongoDB (collections: `events`, `sync_state`, `contracts`, `collection_registry`)
-- **Smart contracts**: Noir, Aztec v5.0.0-rc.1 (contracts under `contracts/`)
+- **Smart contracts**: Noir, Aztec v5.0.0-rc.2 (contracts under `contracts/`)
 - **E2E tests**: Bun + `@aztec/aztec.js` (sandbox and testnet flows)
 - **Linting**: ESLint flat config + Prettier (per-package configs in `api/` and `indexer/`)
 - **Containerization**: Docker Compose (dev: `docker-compose.yml`, prod: `docker-compose.prod.yml`)
@@ -108,11 +108,11 @@ cd indexer && bun run start  # Indexer
 ### Noir Contracts
 
 ```bash
-cd contracts/nft_contract
-nargo compile
 
-cd contracts/migration_registry
-nargo compile
+cd contracts/nft_contract && aztec compile     
+
+cd contracts/migration_registry && aztec compile
+cd contracts/generic_proxy && aztec compile
 ```
 
 ### E2E Tests
@@ -139,7 +139,7 @@ bun run generate-attester-secret  # Generate a fresh Schnorr attester key
 
 ### Noir Contracts
 
-- Contracts target Aztec v5.0.0-rc.1 (pinned in `Nargo.toml` via git tag).
+- Contracts target Aztec v5.0.0-rc.2 (pinned in `Nargo.toml` via git tag).
 - Internal tests live in `src/test/` alongside `src/main.nr`.
 - Shared logic goes in `attestation_lib` (library type), not duplicated in each contract.
 - The `MIGRATE_DOMAIN` constant (`0x4e46544d` = "NFTM") must stay in sync between the API (`attester.js`) and `nft_contract/src/main.nr`.

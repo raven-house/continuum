@@ -36,7 +36,7 @@ export const getPublicEventsForContract = async ({
 
   // BlockNumber is a branded number at compile time; plain numbers are fine at runtime.
   const [logs] = await aztecNode.getPublicLogsByTags({
-    contractAddress: AztecAddress.fromString(contractAddress),
+    contractAddress: AztecAddress.fromStringUnsafe(contractAddress),
     tags: [logTag],
     fromBlock,
     toBlock,
