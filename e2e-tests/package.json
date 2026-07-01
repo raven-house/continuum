@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "description": "End-to-end tests for continuum service for aztec sandbox and testnet",
   "scripts": {
-    "generate-attester-secret": "bun run src/generate-attester-secret.ts",
-    "migrate-nft:testnet": "bun run src/testnet/index.ts",
-    "migrate-nft:sandbox": "bun run src/sandbox/index.ts"
+    "generate-attester-secret": "bun --env-file=../.env run src/generate-attester-secret.ts",
+    "migrate-nft:testnet": "bun --env-file=../.env run src/testnet/index.ts",
+    "migrate-nft:sandbox": "bun --env-file=../.env run src/sandbox/index.ts"
   },
   "dependencies": {
     "@aztec/accounts": "5.0.0-rc.1",

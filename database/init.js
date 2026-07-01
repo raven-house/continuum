@@ -6,7 +6,6 @@ const db = db.getSiblingDB('continuum');
 // Create collections
 db.createCollection('events');
 db.createCollection('sync_state');
-db.createCollection('artifacts');
 db.createCollection('contracts');
 db.createCollection('collection_registry');
 
@@ -34,11 +33,6 @@ db.sync_state.createIndex({ artifact_id: 1 }, { unique: true });
 db.sync_state.createIndex({ network: 1 });
 db.sync_state.createIndex({ is_syncing: 1 });
 
-// Create indexes for artifacts collection
-db.artifacts.createIndex({ id: 1 }, { unique: true });
-db.artifacts.createIndex({ address: 1 });
-db.artifacts.createIndex({ enabled: 1 });
-
 // Create indexes for contracts collection (ABI upload)
 db.contracts.createIndex({ artifact_id: 1 }, { unique: true });
 db.contracts.createIndex({ contractName: 1 });
@@ -58,6 +52,6 @@ db.collection_registry.createIndex({ new_network: 1 });
 
 console.log('Continuum database initialized successfully!');
 console.log(
-  'Created collections: events, sync_state, artifacts, contracts, collection_registry'
+  'Created collections: events, sync_state, contracts, collection_registry'
 );
 console.log('Created indexes for optimal query performance');

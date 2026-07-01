@@ -13,18 +13,14 @@ export function getDbName() {
  *
  */
 export function getApiHost() {
-  return (
-    process.env.CONTINUUM_API_HOST || process.env.RD_HOST || DEFAULT_API_HOST
-  );
+  return process.env.CONTINUUM_API_HOST || DEFAULT_API_HOST;
 }
 
 /**
  *
  */
 export function getApiPort() {
-  return Number(
-    process.env.CONTINUUM_API_PORT || process.env.RD_PORT || DEFAULT_API_PORT
-  );
+  return Number(process.env.CONTINUUM_API_PORT || DEFAULT_API_PORT);
 }
 
 /**

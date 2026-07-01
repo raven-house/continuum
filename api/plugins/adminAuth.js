@@ -19,7 +19,7 @@ export default fp(
     if (!adminKey) {
       fastify.log.warn(
         'CONTINUUM_ADMIN_API_KEY is not set — management endpoints (contract upload/update/delete, ' +
-        'collection register) are unauthenticated. Set CONTINUUM_ADMIN_API_KEY in production.'
+          'collection register) are unauthenticated. Set CONTINUUM_ADMIN_API_KEY in production.'
       );
     }
 

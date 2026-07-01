@@ -25,13 +25,15 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/index.ts ./
 COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/types.d.ts ./
-
-# Create logs directory
-RUN mkdir -p /app/logs
 
 # Environment
 ENV NODE_ENV=production
+ENV CONTINUUM_INDEXER_HEALTH_PORT=8080
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD ["bun", "-e", "fetch('http://localhost:8080/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
 
 # Run the indexer
 CMD ["bun", "run", "start"]

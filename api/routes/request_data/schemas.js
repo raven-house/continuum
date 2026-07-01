@@ -27,18 +27,19 @@ successfully call migrate_and_claim() on the contract.`,
       ],
       properties: {
         collection_address: {
-          type: 'string',
+          $ref: 'aztec-address',
           description: 'NFT contract address on the NEW rollup'
         },
         migration_secret: {
           type: 'string',
+          pattern: '^0x[0-9a-fA-F]{1,64}$',
           description:
             'The migration secret (0x-prefixed hex Field) whose commitment was registered ' +
             'on-chain via register_migration() on the old rollup. Obtained from ' +
             'GET /migration/new-secret.'
         },
         new_wallet_address: {
-          type: 'string',
+          $ref: 'aztec-address',
           description:
             'The wallet address on the new rollup that will call migrate_and_claim(). ' +
             'Attestations are bound to this address — only it can use the returned signatures.'

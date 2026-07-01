@@ -15,7 +15,10 @@ export type MigrationData = {
 };
 
 export class ContinuumApi {
-  constructor(private readonly baseUrl: string) {}
+  constructor(
+    private readonly baseUrl: string,
+    private readonly adminApiKey = process.env.CONTINUUM_ADMIN_API_KEY,
+  ) {}
 
   private async get(path: string): Promise<any> {
     const res = await fetch(`${this.baseUrl}${path}`);
@@ -23,10 +26,15 @@ export class ContinuumApi {
     return res.json();
   }
 
-  private post(path: string, body: unknown): Promise<Response> {
+  private post(path: string, body: unknown, opts: { admin?: boolean } = {}): Promise<Response> {
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (opts.admin && this.adminApiKey) {
+      headers.authorization = `Bearer ${this.adminApiKey}`;
+    }
+
     return fetch(`${this.baseUrl}${path}`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify(body),
     });
   }
@@ -48,16 +56,20 @@ export class ContinuumApi {
     networks?: Record<string, { start_block?: number; addresses?: string[] }>;
     migration?: unknown;
   }): Promise<"registered" | "already-registered"> {
-    const res = await this.post("/contracts/upload", {
-      artifact_id: input.artifactId,
-      name: input.name,
-      abi: input.abi,
-      enabled: true,
-      event_types: input.eventTypes,
-      start_block: input.startBlock,
-      networks: input.networks,
-      migration: input.migration,
-    });
+    const res = await this.post(
+      "/contracts/upload",
+      {
+        artifact_id: input.artifactId,
+        name: input.name,
+        abi: input.abi,
+        enabled: true,
+        event_types: input.eventTypes,
+        start_block: input.startBlock,
+        networks: input.networks,
+        migration: input.migration,
+      },
+      { admin: true },
+    );
     if (res.ok) return "registered";
     if (res.status === 409) return "already-registered";
     throw new Error(`/contracts/upload → ${res.status} ${await res.text()}`);
@@ -70,14 +82,18 @@ export class ContinuumApi {
     name: string;
     artifactId?: string;
   }): Promise<void> {
-    const res = await this.post("/collections/register", {
-      old_collection_address: input.oldAddress,
-      old_network: input.network,
-      new_collection_address: input.newAddress,
-      new_network: input.network,
-      collection_name: input.name,
-      artifact_id: input.artifactId,
-    });
+    const res = await this.post(
+      "/collections/register",
+      {
+        old_collection_address: input.oldAddress,
+        old_network: input.network,
+        new_collection_address: input.newAddress,
+        new_network: input.network,
+        collection_name: input.name,
+        artifact_id: input.artifactId,
+      },
+      { admin: true },
+    );
     if (!res.ok) throw new Error(`/collections/register → ${res.status} ${await res.text()}`);
   }
 

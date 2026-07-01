@@ -11,7 +11,7 @@ const schemas = Object.freeze({
       required: ['old_collection_address', 'new_collection_address'],
       properties: {
         old_collection_address: {
-          type: 'string',
+          $ref: 'aztec-address',
           description: 'NFT contract address on the old/deprecated rollup'
         },
         old_network: {
@@ -21,7 +21,7 @@ const schemas = Object.freeze({
           description: 'Network of the old rollup'
         },
         new_collection_address: {
-          type: 'string',
+          $ref: 'aztec-address',
           description: 'NFT contract address on the new rollup'
         },
         new_network: {
@@ -67,7 +67,7 @@ const schemas = Object.freeze({
       required: ['newAddress'],
       properties: {
         newAddress: {
-          type: 'string',
+          $ref: 'aztec-address',
           description: 'New rollup collection address'
         }
       }

@@ -1,6 +1,5 @@
 # Local Development Docker Compose
 # Default configuration used when running `docker compose up -d`.
-# Services mount source code for hot reloading and use development commands.
 
 services:
   mongodb:

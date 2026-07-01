@@ -29,7 +29,7 @@ export class EventIndexer {
 
   async run(): Promise<void> {
     const nodeUrl = ENV_NODE_URL_MAP[this.network] || DEFAULT_NODE_URL_MAP[this.network]
-    console.log(`Starting indexer for network "${this.network}" with node URL: ${nodeUrl}`)
+    logger.info(`Starting indexer for network "${this.network}" with node URL: ${nodeUrl}`)
     if (!nodeUrl) {
       logger.warn(`No Aztec node URL for network "${this.network}", skipping`)
       return

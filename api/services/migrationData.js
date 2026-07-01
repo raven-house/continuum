@@ -1,27 +1,9 @@
+import { mergeMigrationManifest } from '../shared/migrationManifest.js';
 import { computeMigrationCommitment, signMigrationClaim } from './attester.js';
 
 const COLLECTION_REGISTRY_COLLECTION = 'collection_registry';
 const CONTRACTS_COLLECTION = 'contracts';
 const EVENTS_COLLECTION = 'events';
-
-const DEFAULT_MIGRATION_MANIFEST = Object.freeze({
-  type: 'nft',
-  ownership_model: 'latest_transfer_event',
-  events: {
-    transfer: {
-      name: 'Transfer',
-      token_id: 'token_id',
-      to: 'to'
-    },
-    registration: {
-      source: 'contract_event',
-      name: 'MigrationRegistered',
-      owner: 'owner',
-      token_id: 'token_id',
-      commitment: 'migration_commitment'
-    }
-  }
-});
 
 export class MigrationDataError extends Error {
   constructor(statusCode, message) {
@@ -29,27 +11,6 @@ export class MigrationDataError extends Error {
     this.name = 'MigrationDataError';
     this.statusCode = statusCode;
   }
-}
-
-/**
- *
- * @param migration
- */
-function mergeMigrationManifest(migration = {}) {
-  return {
-    ...DEFAULT_MIGRATION_MANIFEST,
-    ...migration,
-    events: {
-      transfer: {
-        ...DEFAULT_MIGRATION_MANIFEST.events.transfer,
-        ...(migration.events?.transfer ?? {})
-      },
-      registration: {
-        ...DEFAULT_MIGRATION_MANIFEST.events.registration,
-        ...(migration.events?.registration ?? {})
-      }
-    }
-  };
 }
 
 /**
@@ -233,7 +194,7 @@ export async function buildMigrationData(
     throw new MigrationDataError(
       404,
       `Collection ${collection_address} is not registered for migration. ` +
-      'The collection owner must call POST /collections/register first.'
+        'The collection owner must call POST /collections/register first.'
     );
   }
 
@@ -259,8 +220,8 @@ export async function buildMigrationData(
     throw new MigrationDataError(
       404,
       'No on-chain migration registration found for this secret on collection ' +
-      `${oldCollectionAddress}. The owner must call register_migration() on the ` +
-      'old rollup with the matching commitment before requesting migration data.'
+        `${oldCollectionAddress}. The owner must call register_migration() on the ` +
+        'old rollup with the matching commitment before requesting migration data.'
     );
   }
 
@@ -272,16 +233,16 @@ export async function buildMigrationData(
   const tokenIds =
     manifest.ownership_model === 'explicit_token_registration_event'
       ? await getExplicitRegistrationTokens(
-        eventsCollection,
-        manifest,
-        registrationQuery
-      )
+          eventsCollection,
+          manifest,
+          registrationQuery
+        )
       : await getLatestTransferTokens(
-        eventsCollection,
-        manifest,
-        oldCollectionAddress,
-        oldWalletAddress
-      );
+          eventsCollection,
+          manifest,
+          oldCollectionAddress,
+          oldWalletAddress
+        );
 
   const baseResponse = {
     old_wallet_address: oldWalletAddress,

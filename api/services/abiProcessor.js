@@ -5,13 +5,13 @@
  * Uses Poseidon2 hashing for event selector computation (matching Noir's approach).
  */
 
-import { EventSelector, decodeFunctionSignature } from '@aztec/stdlib/abi';
+import { decodeFunctionSignature, EventSelector } from '@aztec/stdlib/abi';
 import { poseidon2HashBytes } from '@aztec/foundation/crypto/sync';
 
 /**
  * Load contract artifact and extract events from outputs.structs.events
- * @param {Object} abiJson - The raw Noir ABI JSON
- * @returns {Object} - The transformed artifact with events
+ * @param {object} abiJson - The raw Noir ABI JSON
+ * @returns {object} - The transformed artifact with events
  */
 export function loadContractArtifact(abiJson) {
   // The events are typically in outputs.structs.events in Noir ABI
@@ -40,7 +40,6 @@ export function loadContractArtifact(abiJson) {
  * stored selector matches both the on-chain event tag and what the indexer
  * recomputes from `signature` at load time. EventSelector.fromSignature hashes
  * with the pure-WASM Poseidon2 (no native `bb` binary required).
- *
  * @param {Array} events - Events array from artifact (each is a struct ABI type)
  * @returns {Promise<Array>} - Processed events with selectors
  */
@@ -85,8 +84,8 @@ async function processEvents(events) {
 
 /**
  * Main function to process contract ABI and extract events
- * @param {Object} abiJson - The contract ABI JSON
- * @returns {Promise<Object>} - Processed contract with events
+ * @param {object} abiJson - The contract ABI JSON
+ * @returns {Promise<object>} - Processed contract with events
  */
 export async function processContractAbi(abiJson) {
   // Validate input
@@ -121,8 +120,8 @@ export async function processContractAbi(abiJson) {
 
 /**
  * Validate ABI structure
- * @param {Object} abiJson - The ABI JSON to validate
- * @returns {Object} - Validation result
+ * @param {object} abiJson - The ABI JSON to validate
+ * @returns {object} - Validation result
  */
 export function validateAbi(abiJson) {
   const errors = [];

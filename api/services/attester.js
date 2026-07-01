@@ -10,11 +10,6 @@ import { DomainSeparator } from '@aztec/constants';
 // "NFTM" — must match MIGRATE_DOMAIN in nft_contract/src/main.nr
 const MIGRATE_DOMAIN = Fr.fromString('0x4e46544d');
 
-// The well-known default secret from .env.example / docker-compose.yml.
-// Using this in production means anyone can forge attestations.
-const DEFAULT_ATTESTER_SECRET =
-  '0x0000000000000000000000000000000000000000000000000000000000000001';
-
 // "NFTMR" — domain separator for the migration-registration commitment.
 // This value is NOT verified on-chain (register_migration just stores the
 // commitment); it only needs to be agreed between whoever computes the
@@ -63,17 +58,6 @@ async function getAttester() {
   if (!secretHex) {
     throw new Error(
       'ATTESTER_SECRET env var is required for attestation signing'
-    );
-  }
-
-  if (
-    secretHex === DEFAULT_ATTESTER_SECRET &&
-    process.env.NODE_ENV === 'production'
-  ) {
-    throw new Error(
-      'ATTESTER_SECRET is set to the well-known default value. ' +
-      'Generate a fresh secret with `bun run generate-attester-secret` ' +
-      'in e2e-tests before running in production.'
     );
   }
 

@@ -2,62 +2,44 @@ import {
   processContractAbi,
   validateAbi
 } from '../../services/abiProcessor.js';
+import { mergeMigrationManifest } from '../../shared/migrationManifest.js';
 import { getDbName } from '../../shared/config.js';
 import schemas from './schemas.js';
 
-const DEFAULT_MIGRATION_MANIFEST = Object.freeze({
-  type: 'nft',
-  ownership_model: 'latest_transfer_event',
-  addresses: [],
-  events: {
-    transfer: {
-      name: 'Transfer',
-      token_id: 'token_id',
-      from: 'from',
-      to: 'to'
-    },
-    registration: {
-      source: 'contract_event',
-      name: 'MigrationRegistered',
-      owner: 'owner',
-      commitment: 'migration_commitment'
-    }
-  },
-  claim: {
-    domain: '0x4e46544d',
-    attestation_fields: [
-      'domain',
-      'new_collection_address',
-      'new_wallet_address',
-      'token_id'
-    ]
-  }
-});
+/**
+ * Normalize a single Aztec address to lowercase.
+ * @param {string} addr - The address to normalize.
+ * @returns {string} - Lowercase address.
+ */
+function normalizeAddress(addr) {
+  return typeof addr === 'string' ? addr.toLowerCase().trim() : addr;
+}
 
 /**
- *
- * @param migration
+ * Normalize an array of Aztec addresses to lowercase.
+ * @param {string[]} addresses - The addresses to normalize.
+ * @returns {string[]} - Lowercase addresses.
  */
-function mergeMigrationManifest(migration = {}) {
-  return {
-    ...DEFAULT_MIGRATION_MANIFEST,
-    ...migration,
-    addresses: migration.addresses ?? DEFAULT_MIGRATION_MANIFEST.addresses,
-    events: {
-      transfer: {
-        ...DEFAULT_MIGRATION_MANIFEST.events.transfer,
-        ...(migration.events?.transfer ?? {})
-      },
-      registration: {
-        ...DEFAULT_MIGRATION_MANIFEST.events.registration,
-        ...(migration.events?.registration ?? {})
-      }
-    },
-    claim: {
-      ...DEFAULT_MIGRATION_MANIFEST.claim,
-      ...(migration.claim ?? {})
-    }
-  };
+function normalizeAddressArray(addresses) {
+  if (!Array.isArray(addresses)) return addresses;
+  return addresses.map(normalizeAddress).filter(Boolean);
+}
+
+/**
+ * Normalize all addresses inside per-network indexing metadata.
+ * @param {object} networks - Per-network config object.
+ * @returns {object} - Config with normalized addresses.
+ */
+function normalizeNetworks(networks) {
+  if (!networks || typeof networks !== 'object') return networks;
+  const normalized = {};
+  for (const [network, config] of Object.entries(networks)) {
+    normalized[network] = {
+      ...config,
+      addresses: normalizeAddressArray(config?.addresses)
+    };
+  }
+  return normalized;
 }
 
 /**
@@ -145,8 +127,15 @@ export default async function (fastify) {
         }
 
         const resolvedStartBlock = deriveStartBlock(start_block, networks);
-        const migrationManifest = migration
-          ? mergeMigrationManifest(migration)
+        const normalizedNetworks = normalizeNetworks(networks);
+        const normalizedMigration = migration
+          ? {
+              ...migration,
+              addresses: normalizeAddressArray(migration.addresses)
+            }
+          : undefined;
+        const migrationManifest = normalizedMigration
+          ? mergeMigrationManifest(normalizedMigration)
           : undefined;
 
         const docToInsert = {
@@ -154,7 +143,7 @@ export default async function (fastify) {
           contractName: processedContract.contractName,
           enabled,
           start_block: resolvedStartBlock,
-          networks,
+          networks: normalizedNetworks,
           migration: migrationManifest,
           event_types,
           eventCount: processedContract.eventCount,
@@ -173,7 +162,7 @@ export default async function (fastify) {
           contractName: processedContract.contractName,
           enabled,
           start_block: resolvedStartBlock,
-          networks,
+          networks: normalizedNetworks,
           migration: migrationManifest,
           event_types,
           eventCount: processedContract.eventCount,

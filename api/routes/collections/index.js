@@ -27,22 +27,15 @@ export default async function (fastify) {
   fastify.post(
     '/register',
     { schema: schemas.register, preHandler: [fastify.adminAuth] },
-    async (request, reply) => {
+    async request => {
       const {
         old_collection_address,
-        old_network = 'devnet',
+        old_network = 'sandbox',
         new_collection_address,
-        new_network = 'devnet',
+        new_network = 'sandbox',
         collection_name = '',
         artifact_id
       } = request.body;
-
-      if (!old_collection_address?.trim() || !new_collection_address?.trim()) {
-        reply.badRequest(
-          'old_collection_address and new_collection_address are required'
-        );
-        return;
-      }
 
       const db = fastify.mongo.client.db(getDbName());
       const col = db.collection(COLLECTION);

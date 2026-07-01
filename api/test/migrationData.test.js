@@ -209,7 +209,10 @@ test('buildMigrationData uses custom manifest event and field mappings', async (
   ]);
   assert.equal(db.calls.aggregate[0][0].$match.event_type, 'OwnerChanged');
   assert.equal(db.calls.aggregate[0][2].$group._id, '$data.id');
-  assert.equal(db.calls.aggregate[0][2].$group.latest_owner.$first, '$data.recipient');
+  assert.equal(
+    db.calls.aggregate[0][2].$group.latest_owner.$first,
+    '$data.recipient'
+  );
   assert.equal(result.tokens[0].token_id, '9');
 });
 

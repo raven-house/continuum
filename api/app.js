@@ -17,6 +17,7 @@ export default async function (fastify, opts) {
   // Place here your custom code!
 
   fastify.addSchema(schemas.address);
+  fastify.addSchema(schemas.aztecAddress);
 
   // Do not touch the following lines
 
