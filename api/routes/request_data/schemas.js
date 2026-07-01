@@ -7,7 +7,7 @@ const schemas = Object.freeze({
     description: `Request attested migration data for an NFT collection.
 
 Given a migration secret (the preimage of a commitment registered on-chain via
-register_migration on the old rollup) and the new-rollup collection address, Continuum:
+register_migration(old_collection, commitment) on the old rollup) and the new-rollup collection address, Continuum:
   1. Resolves collection_address → old-rollup collection address (via collection_registry)
   2. Recomputes commitment = Poseidon2([MIGRATE_REGISTER_DOMAIN, secret]) and resolves the
      verified old-rollup owner from the matching MigrationRegistered event (owner = the
@@ -35,7 +35,7 @@ successfully call migrate_and_claim() on the contract.`,
           pattern: '^0x[0-9a-fA-F]{1,64}$',
           description:
             'The migration secret (0x-prefixed hex Field) whose commitment was registered ' +
-            'on-chain via register_migration() on the old rollup. Obtained from ' +
+            'on-chain via register_migration(old_collection, commitment) on the old rollup. Obtained from ' +
             'GET /migration/new-secret.'
         },
         new_wallet_address: {

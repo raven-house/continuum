@@ -7,7 +7,7 @@ const schemas = Object.freeze({
     description:
       'Generate a fresh random migration secret and its commitment. Stateless — ' +
       'Continuum stores nothing. Register the commitment on the old rollup via ' +
-      'register_migration(commitment) and save the secret to claim later.',
+      'register_migration(old_collection, commitment) and save the secret to claim later.',
     response: {
       200: {
         type: 'object',
@@ -22,7 +22,7 @@ const schemas = Object.freeze({
             type: 'string',
             description:
               'Poseidon2([MIGRATE_REGISTER_DOMAIN, secret]). Pass this to ' +
-              'register_migration() on the old rollup.'
+              'register_migration(old_collection, commitment) on the old rollup.'
           }
         }
       }

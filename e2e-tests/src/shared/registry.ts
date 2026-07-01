@@ -34,6 +34,13 @@ export async function deployRegistry(
   return Contract.at(contract.address, artifact, wallet);
 }
 
-export function registerMigration(registry: Contract, commitment: string, from: AztecAddress) {
-  return registry.methods.register_migration(Fr.fromString(commitment)).send(sendOpts(from));
+export function registerMigration(
+  registry: Contract,
+  collection: AztecAddress,
+  commitment: string,
+  from: AztecAddress,
+) {
+  return registry.methods
+    .register_migration(collection, Fr.fromString(commitment))
+    .send(sendOpts(from));
 }

@@ -88,6 +88,7 @@ async function main() {
           name: "MigrationRegistered",
           owner: "owner",
           commitment: "migration_commitment",
+          collection: "collection",
           contract_address: registryAddr,
         },
       },
@@ -137,9 +138,9 @@ async function main() {
   step(`secret:     ${secret.slice(0, 18)}… (saved by the user)`);
   step(`commitment: ${commitment.slice(0, 18)}…`);
 
-  section("[OLD] Alice-OLD calls register_migration(commitment) on the registry...");
-  await registerMigration(registry, commitment, oldAddr);
-  step("✓ MigrationRegistered emitted from registry (owner = Alice-OLD)");
+  section("[OLD] Alice-OLD calls register_migration(collection, commitment) on the registry...");
+  await registerMigration(registry, oldNft.address, commitment, oldAddr);
+  step("✓ MigrationRegistered emitted from registry (owner = Alice-OLD, collection = old NFT)");
 
   section("[NEW] fetching attester public key...");
   const attester = await api.getAttester();

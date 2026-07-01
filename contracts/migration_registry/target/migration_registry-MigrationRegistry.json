@@ -1410,11 +1410,11 @@
       "function_locations": [
         {
           "name": "MigrationRegistry::register_migration",
-          "start": 393
+          "start": 468
         }
       ],
-      "path": "/Users/satyam/projects/aztec-projects/raven-house/continuum/contracts/migration_registry/src/main.nr",
-      "source": "use aztec::macros::aztec;\n\n#[aztec]\npub contract MigrationRegistry {\n    use aztec::{\n        macros::{events::event, functions::external},\n        protocol::address::AztecAddress,\n    };\n\n    #[event]\n    struct MigrationRegistered {\n        owner: AztecAddress,\n        migration_commitment: Field,\n    }\n    \n    #[external(\"public\")]\n    fn register_migration(migration_commitment: Field) {\n        assert(migration_commitment != 0, \"zero migration commitment not supported\");\n\n        self.emit(\n            MigrationRegistered {\n                owner: self.msg_sender(),\n                migration_commitment,\n            },\n        );\n    }\n}\n"
+      "path": "/Users/satyam/web3/noir/raven-project/continuum/contracts/migration_registry/src/main.nr",
+      "source": "use aztec::macros::aztec;\n\n#[aztec]\npub contract MigrationRegistry {\n    use aztec::{\n        macros::{events::event, functions::external},\n        protocol::{address::AztecAddress, traits::ToField},\n    };\n\n    #[event]\n    struct MigrationRegistered {\n        owner: AztecAddress,\n        collection: AztecAddress,\n        migration_commitment: Field,\n    }\n\n    #[external(\"public\")]\n    fn register_migration(collection: AztecAddress, migration_commitment: Field) {\n        assert(collection.to_field() != 0, \"zero collection not supported\");\n        assert(migration_commitment != 0, \"zero migration commitment not supported\");\n\n        self.emit(\n            MigrationRegistered {\n                owner: self.msg_sender(),\n                collection,\n                migration_commitment,\n            },\n        );\n    }\n}\n"
     },
     "62": {
       "function_locations": [
@@ -4228,9 +4228,29 @@
           "1109483226634412967": {
             "error_kind": "string",
             "string": "zero migration commitment not supported"
+          },
+          "2873630321524098032": {
+            "error_kind": "string",
+            "string": "zero collection not supported"
           }
         },
         "parameters": [
+          {
+            "name": "collection",
+            "type": {
+              "fields": [
+                {
+                  "name": "inner",
+                  "type": {
+                    "kind": "field"
+                  }
+                }
+              ],
+              "kind": "struct",
+              "path": "aztec::protocol_types::address::aztec_address::AztecAddress"
+            },
+            "visibility": "private"
+          },
           {
             "name": "migration_commitment",
             "type": {
@@ -4241,11 +4261,11 @@
         ],
         "return_type": null
       },
-      "bytecode": "JwACBAEoAAABBIBGJwAABEYlAAAAQScCAwQBJwIEBAAfCgADAAQARS0IRQIlAAAAbCcCAgRGJwIDBAA7DgADAAIsAABDADBkTnLhMaApuFBFtoGBWF0oM+hIeblwkUPh9ZPwAAAAJwBEBAMmHgIAAwAeAgADACcCAwAACioCAwQnAgMBAAoqBAMFJAIABQAAAJclAAAA5R4CAAQBCiIEQwUWCgUGHAoGBwAEKgcEBgoqBQMEJAIABAAAAMUnAgcEADwGBwEnAgMEBy0IAActCgYJLQoCCgAIAAMAJQAAAPctAgAAJioBAAEFD2WtHcfMY6c8BAIBJiwCAAQAKbPV/8I8tGObWu7wB/PEWc5QehXPlAk1Ogbrf+DDNuMnAgYEAycCCAQDACoGCActCAEFAAgBBwEnAwUEAQAiBQIHLQ4GBwAiBwIHLQ4GBycCBwQDACoFBwYtCgYHLQ4EBwAiBwIHLQ4CBwAiBwIHLQ4DBwAiBQIDLQsDAycCBAQDACoFBAI3DgADAAIm",
+      "bytecode": "JwACBAEoAAABBIBHJwAABEclAAAARScCBAQCJwIFBAAfCgAEAAUARS0IRQItCEYDJQAAAHAnAgIERycCAwQAOw4AAwACLAAAQwAwZE5y4TGgKbhQRbaBgVhdKDPoSHm5cJFD4fWT8AAAACcARAQEJh4CAAQAHgIABAAnAgQAAAoqAgQFJwIGAQAKKgUGByQCAAcAAACbJQAAAQQKKgMEBQoqBQYEJAIABAAAALIlAAABFh4CAAQBCiIEQwUWCgUHHAoHCAAEKggEBwoqBQYEJAIABAAAAOAnAggEADwGCAEnAgQECC0IAAgtCgcKLQoCCy0KAwwACAAEACUAAAEoLQIAACYqAQABBSfhL41iPEPwPAQCASYqAQABBQ9lrR3HzGOnPAQCASYsAgAFAA4yYA1YPrMlsNlXavV8wkJKqELp23+RBV9m1auEok+JJwIHBAQnAgkEAwAqBwkILQgBBgAIAQgBJwMGBAEAIgYCCC0OBwgAIggCCC0OBwgnAggEAwAqBggHLQoHCC0OBQgAIggCCC0OAggAIggCCC0OAwgAIggCCC0OBAgAIgYCAy0LAwMnAgQEAwAqBgQCNw4AAwACJg==",
       "custom_attributes": [
         "abi_public"
       ],
-      "debug_symbols": "rZbbiiIxEIbfJddepA45+SrDIK22Q0PTSo8uLOK7byKpPggJMjs39tcV608q9RtzV8d2f/vadcPp/K22H3e1H7u+7752/fnQXLvzEKN3pdMHaK+2ZqMASG1DesZ30BGQBFIEIhAJSIRtBgMRkoxJERfBgoDJQ04LpEiay2sBnyGQgFNbjMqoUcBmAC3AAiEDSoRTOkXwLBAyBImEHCFNAj4DSAQkgiiQlYlAwGZgibARkCkMC4iglSlsEozbQg4FbAYPAs/I47FR0sHddWzb1MBFS2OjL83YDle1HW59v1F/mv72/NL3pRmez2szxtHY1XY4xmcUPHV9m+ixmbN1OdVoY3O2AXCTAEBYSUBZgrXFLMGAXJTAsgT4IDVAAF2UoLIEarZSSWQ/izhYaXBFw3lRCIs6PL1bB6IDUSBHxTpsWYKYTZYgtmauwqwU3C/shP/fnaj4ikEayjQXYeDtfE2S78IP8o2RAsyiDy/5gLUC0E6uNsU+QM2SYJz8MiJ7U2oEcM0PQexgy52oL8NqPS3DGiwuo2JLRj0dE3rRkJ/t56KS1/2smDJo6WnAeQmMb3tqOmQ4FD2F1cMSJ1dpG0o1VBSQPEsrGBa78HJUVjbS0LwIMlRqZl1Cu1nCFiUqtgQ7GSJaCtbG/IyvzaEbV/eTRxIbu2bft/n1dBsOi9Hr34uMyP3mMp4P7fE2tklpccmJ/6MfrDeMn4802z8=",
+      "debug_symbols": "rZbdjuIwDIXfpddcxI6dH15lNRp1oIwqVQV1YKUV4t3XYeK2jJQIsXtDvjrk1HZO2l6bffdx+Xzvx8Pxq9n+ujYfUz8M/ef7cNy15/44SvTamPQDgM2WNzL6ZhtlRLkGk8BnsCkCCXwG0ggbBRZAAZciNgFn8FYhCHiBkCLpXiFkiJinov8GNBJBSOAzAGdAo0ACNkHMYK2Cz0CgwBlSzt+gkegEpAf2vvwOIQNphDTCqOAzOI04jXhQUOVgFDhD1EgkhXwLMlYhCxKgQhYkBIUkKB0jaxRIIWage+R22zRqgPfz1HVp/1eOEJ+c2qkbz812vAzDpvndDpf7n75O7Xgfz+0ks2KKbtzLKIKHfugS3TbLalNeyoZdXs1iuVkAID5IQFmCjMMsIX2hogSWJSBErQEimKKELUugIaeVCIdFxMODBlU0fFCFuKoj2GfrQPSgCtbbYh2uLGGJOEtYcrxUwQ8K/j90IvxrJyq+osCLrWYBhqfXzwkw8QvrefYkB//Ketb8nX0lfw9qaI/F/KHiRTlKbj5VXPQBcGUTgb12QThwyQhQ9WNUO7qyE+ppOGPmNBxjMY2KIQnN7CcTl4a+1s9VJT/6iZU9jUY9GXFJgfBZTzjS3XBc9BRi7WGN86kwLpZqqKSANpBuBcGqCz8e1ZVGsl2SsGxLm1mXMH6RcEWJii3BzYaAdTfvxnyTy3bXTw+fV7ckNvXtx9Dly8Nl3K1mz39OOqOfZ6fpuOv2l6lLSutvNHk5y7lgeLulu/0F",
       "is_unconstrained": true,
       "name": "register_migration"
     },
@@ -4402,6 +4422,10 @@
               }
             ],
             "length": 27
+          },
+          "2873630321524098032": {
+            "error_kind": "string",
+            "string": "zero collection not supported"
           }
         },
         "parameters": [
@@ -4415,11 +4439,11 @@
         ],
         "return_type": null
       },
-      "bytecode": "JwACBAEoAAABBIBGJwAABEYlAAAAQScCAwQBJwIEBAAfCgADAAQARS0IRQIlAAAAbCcCAgRGJwIDBAA7DgADAAIsAABDADBkTnLhMaApuFBFtoGBWF0oM+hIeblwkUPh9ZPwAAAAJwBEBAMmKQIAAwAi5LfNCioCAwQnAgMBACQCAAQAAACMIwAAAYknAgQEAS0IAQUnAgYEAgAIAQYBJwMFBAEAIgUCBh86AAQABAAGACoFBAYtCwYGHgIABAAeAgAEACcCBAAACioGBAUKKgUDBCQCAAQAAADgJQAAA1QeAgAEAQoiBEMFFgoFBxwKBwgABCoIBAcKKgUDBCQCAAQAAAEOJwIIBAA8BggBJwIEBAgtCAAILQoHCi0KBgsACAAEACUAAANmLQIAACcCBQQAJwIHBAMAKgUHBi0IAQQACAEGAScDBAQBACIEAgYtDgUGACIGAgYtDgUGJwIGBAMAKgQGBScCBQQAACIEAgctCwcHJwIIBAMAKgQIBjsOAAcABiMAAAGJJwIEAlUnAgUCbicCBgJrJwIHAm8nAggCdycCCQIgJwIKAnMnAgsCZScCDAJsJwINAmMnAg4CdCcCDwJyJwIQAnsnAhECfS0IARInAhMEHAAIARMBJwMSBAEAIhICEy0KExQtDgQUACIUAhQtDgUUACIUAhQtDgYUACIUAhQtDgUUACIUAhQtDgcUACIUAhQtDggUACIUAhQtDgUUACIUAhQtDgkUACIUAhQtDgoUACIUAhQtDgsUACIUAhQtDgwUACIUAhQtDgsUACIUAhQtDg0UACIUAhQtDg4UACIUAhQtDgcUACIUAhQtDg8UACIUAhQtDgkUACIUAhQtDhAUACIUAhQtDgoUACIUAhQtDgsUACIUAhQtDgwUACIUAhQtDgsUACIUAhQtDg0UACIUAhQtDg4UACIUAhQtDgcUACIUAhQtDg8UACIUAhQtDhEUJwIEAQEnAgUAAQoqAwQGJAIABgAAA1QnAgcEHi0IAQgnAgkEHgAIAQkBLQoICSoDAAkFm1u/90pb/xkAIgkCCQAiEgIKJwILBBstAgoDLQIJBC0CCwUlAAAD+CcCCgQbACoJCgktDgUJACIJAgktDgIJACIJAgk8DgcIKgEAAQUPZa0dx8xjpzwEAgEmLAIABAAps9X/wjy0Y5ta7vAH88RZzlB6Fc+UCTU6But/4MM24ycCBgQDJwIIBAMAKgYIBy0IAQUACAEHAScDBQQBACIFAgctDgYHACIHAgctDgYHJwIHBAMAKgUHBi0KBgctDgQHACIHAgctDgIHACIHAgctDgMHACIFAgMtCwMDJwIEBAMAKgUEAjcOAAMAAiYAAAMFBy0AAwgtAAQJIwAABBwtAQgGLQQGCQAACAIIAAAJAgkMAAgHCiQAAAoAAAQKJg==",
+      "bytecode": "JwACBAEoAAABBIBGJwAABEYlAAAAQScCAwQBJwIEBAAfCgADAAQARS0IRQIlAAAAbCcCAgRGJwIDBAA7DgADAAIsAABDADBkTnLhMaApuFBFtoGBWF0oM+hIeblwkUPh9ZPwAAAAJwBEBAQmKQIAAwDBGL09CioCAwQnAgMBACQCAAQAAACMIwAAAbInAgQEAScCBQQCLQgBBicCBwQDAAgBBwEnAwYEAQAiBgIHHzoABQAEAAcAKgYEBy0LBwcAKgYFBC0LBAQeAgAFAB4CAAUAJwIFAAAKKgcFBgoqBgMIJAIACAAAAO4lAAADfQoqBAUGCioGAwUkAgAFAAABBSUAAAOPHgIABQEKIgVDBhYKBggcCggJAAQqCQUICioGAwUkAgAFAAABMycCCQQAPAYJAScCBQQJLQgACS0KCAstCgcMLQoEDQAIAAUAJQAAA6EtAgAAJwIFBAAnAgcEAwAqBQcGLQgBBAAIAQYBJwMEBAEAIgQCBi0OBQYAIgYCBi0OBQYnAgYEAwAqBAYFJwIFBAAAIgQCBy0LBwcnAggEAwAqBAgGOw4ABwAGIwAAAbInAgQCVScCBQJuJwIGAmsnAgcCbycCCAJ3JwIJAiAnAgoCcycCCwJlJwIMAmwnAg0CYycCDgJ0JwIPAnInAhACeycCEQJ9LQgBEicCEwQcAAgBEwEnAxIEAQAiEgITLQoTFC0OBBQAIhQCFC0OBRQAIhQCFC0OBhQAIhQCFC0OBRQAIhQCFC0OBxQAIhQCFC0OCBQAIhQCFC0OBRQAIhQCFC0OCRQAIhQCFC0OChQAIhQCFC0OCxQAIhQCFC0ODBQAIhQCFC0OCxQAIhQCFC0ODRQAIhQCFC0ODhQAIhQCFC0OBxQAIhQCFC0ODxQAIhQCFC0OCRQAIhQCFC0OEBQAIhQCFC0OChQAIhQCFC0OCxQAIhQCFC0ODBQAIhQCFC0OCxQAIhQCFC0ODRQAIhQCFC0ODhQAIhQCFC0OBxQAIhQCFC0ODxQAIhQCFC0OERQnAgQBAScCBQABCioDBAYkAgAGAAADfScCBwQeLQgBCCcCCQQeAAgBCQEtCggJKgMACQWbW7/3Slv/GQAiCQIJACISAgonAgsEGy0CCgMtAgkELQILBSUAAAQ8JwIKBBsAKgkKCS0OBQkAIgkCCS0OAgkAIgkCCTwOBwgqAQABBSfhL41iPEPwPAQCASYqAQABBQ9lrR3HzGOnPAQCASYsAgAFAA4yYA1YPrMlsNlXavV8wkJKqELp23+RBV9m1auEok+JJwIHBAQnAgkEAwAqBwkILQgBBgAIAQgBJwMGBAEAIgYCCC0OBwgAIggCCC0OBwgnAggEAwAqBggHLQoHCC0OBQgAIggCCC0OAggAIggCCC0OAwgAIggCCC0OBAgAIgYCAy0LAwMnAgQEAwAqBgQCNw4AAwACJgAAAwUHLQADCC0ABAkjAAAEYC0BCAYtBAYJAAAIAggAAAkCCQwACAcKJAAACgAABE4m",
       "custom_attributes": [
         "abi_public"
       ],
-      "debug_symbols": "rZjdbtswDIXfxde5EClRP32VoSjSNh0CBGmRJQOGIu8+SuGxkwISgm431eeT6lASacn25/S6eT79fNru395/TQ8/Pqfnw3a32/582r2/rI/b972qn5Orf8jl6YFWE1G6tEFlX1uxtlxaCdbadbTraNdJ+0dtM1sb1Y8VCilUpVQlrSZ2BKhKViACFANWe+YKqnBQ8AGQ7afgAVXRECzeIBIgGiSdF1fnJIBikD0gGRQGmOLrmLlUiAYEhaCwA4iBh+JnpRiEAMgGbfANVPGaCx89AEpiQDLIUEr9Z1chXyA4D4BCUAgKQ2EoHoqHEqAEKAJFoEQoMRm0oTaAkqFkKLU2LiAXEOcAAVAMMHjB4IUZYIbiCRANAgwDQgQYCkJgFoJZCGYhmIUkGGaEyDAsCFFgWCxERAoiUhCJARYiMgEsRPQOIAAYhgCAIXIRBYYRISIME0IkGGaEyDDMCIFCiiik5BhgIRIRwEIkdgABVEPdGlK9cy8AJUARBiSDeudeIBokKG3wFXI2aENtYEp2HmCGmQhg3XMbagMoHgqGmjHUHGAYEKLuJF5WU2khKrScNoDCUFpOK7TKbAAlQGmVWUHg3CqzQTGIUNpWUCEhRELQDMOMEK0yUwUBlAuQazfYhZp2Pq8mnA9Px8NmU4+HqwNDj5GP9WGzP04P+9Nut5p+r3en9k+/Ptb71h7XB/1Vc7/Zv2qrhm/b3abSebX0dv2ugVK03oFKmg30lLrXIpcIi+KYuhbct+BQ2Cz0RPGLRfb3jqIEXzAK0ci9UYS+RdS8mEV0vCxm8HRjIaOJCOYRl8XUrf7eafjokjn45KQ7jdS3ECfIh+hDxmJB5cYiD6rCRZ6rgkPXovQtKBeUpT6QuK4FDRaDXZhLSzkvLuk2I0QDk5RhUUK3sgYzYU4EB598fyZ+kNYwF4YPcUlrkluL8D8WQ/51MdJov0BWg1+mIXR3f+fRP5Vv9NcnB9T2VSq+9KcymgAvG550M8GjsiR9SMEykj6V9DLBNKoI7DU+9jMxHoZuWPMwonB3GIPCDOzmvcJdJeR763k1k6/rOSjK4pDTwuVq07y7puadJpRuTfFwx+S5qlwsvTmMtu1lt1Pk7xyjPktZLHzXwo88nMzDcEm+c47qawDNa5H656gfHeduvj2uDo9w9xj0hTPAINBVTd1uuH6wW4pfUqrveb1bY2wxH8VqEbsWcXAIxvn20huUbvPxqJfrl+3h5hvBuZodtuvn3cYu3077l6tfj38+8Au+MXwc3l82r6fDpjotHxr0MfqHfgJY6Uv/Y/3cUC9jXlFyj+ca/S8=",
+      "debug_symbols": "rZjbbuM6DEX/xc950IWkpP7KoCjSNh0ECNIi0x7goMi/j2hzy8kAEoLMvFTL2/UmZVGX+Ht63T1//XzaH9/ef00PP76n59P+cNj/fDq8v2w/9+/Hqn5PTv94l6cHv5m8T0tLVY7a8tKyXTNZW5ZW7FrsOtl1DtND0jYtbfHTQ9FW5ja46udZoQbwqviqBKfABkEVr8AGMQJquiFUIFWiQjZgMZAaMiQFVTRE8gC2W9kBtJ/qXBwgLxBdBNS+xOocfQCIgaa6AAGygea8ABTSx0khGTAUhqLJLyAGCUqCoskvwIBiUAigimwmcgSA4iMgGwQoUf+ZFYoBQSEoDIWhCBSBkqAkKBlKhlKgFFPYESAbzKnOACVACVBiAIgBeQAbzFU8A0IgeRYYCgwTDFMyyDDMCFFgWBACvRD0QtALQS/Em6GEADBDiR5ghkIOAEMMgTAMGSEEhoIQCYYJITIMM0JgLARjIcUMk4sAM0w+AMwwBQ8wwxQdgAAWIhEMCSEYhowQAkNBiKSGWYENMpQMpURAXiC7AEgGHsqcvEIoBnOqM0AhKARDxuOMx+dUZ4CSoCDVjFRzhmG2EEWjU13rij4+gz6+AJQMRXs6g1bdAqZ451wjalRAWnlGGRSaFhIo+kYCouZMLRo1Z27RtAYpKOlUMkognUxGs3Y+byZsQ0+fp91Od6GLfanuVh/b0+74OT0cvw6HzfTf9vA1/9Ovj+1xbj+3p3q3xt4dX2tbDd/2h53SebM+7fqPkk9iT5MvqRnUzfBWi1wHziyKC75rEfoWgUowi8AxrhY53ppFqes0sqiLZjcLGlhwjrCoK02zoFCuLLhvIbXgzEJcWMeDor+ykNG7YLwKSRc53NyNW3PIf5vDYDSiuGQOMTnujoYfeLBj1BXXM9nq4a+Hw/tBeTsJrbwD9T0GxelzwQSrRzjX94iDF+qoTZLKeXVJ14PiBwMbUoZFoe4cGXUl1OMfLGKK/a4M6jNSK45Isg5t4muL9C/eRv7rtzFa+zKv9dUc2N9u0FKox6t7DLhVJ+d0lwGjC/XUdI9B8qjtenLpGQQabSBh3UC4Ww5hsGjWXzupLf+eM/fKIQzLEotelH45jNOoK2dLQzh00xhUJQXXasqV9YXe9z4vevLH+4yjrdChLOvZ6mL1vrkohDAcwt2qimG0dIc2M5yUXidGG8i66FYM95xL6k/CslrErkUc1ER03NJwie85mNSfcr69i9Q/mMThgtnmx8UmRjfnUL8VEAzIXxTV9bKvJ6huN+I6pJFjb26MLdqhoFpIz4IG+7mXNr/8ZW3O4/FYL7cv+9PVt52zmp322+fDzi7fvo4vF3c////AHXwb+ji9v+xev047dVo/ENUj/Y9Qz1bBl0f9TFQvfSobn/3jWaP/Bg==",
       "is_unconstrained": true,
       "name": "public_dispatch"
     },
@@ -4596,6 +4620,21 @@
               }
             },
             {
+              "name": "collection",
+              "type": {
+                "fields": [
+                  {
+                    "name": "inner",
+                    "type": {
+                      "kind": "field"
+                    }
+                  }
+                ],
+                "kind": "struct",
+                "path": "aztec::protocol_types::address::aztec_address::AztecAddress"
+              }
+            },
+            {
               "name": "migration_commitment",
               "type": {
                 "kind": "field"
@@ -4729,6 +4768,21 @@
               "name": "parameters",
               "type": {
                 "fields": [
+                  {
+                    "name": "collection",
+                    "type": {
+                      "fields": [
+                        {
+                          "name": "inner",
+                          "type": {
+                            "kind": "field"
+                          }
+                        }
+                      ],
+                      "kind": "struct",
+                      "path": "aztec::protocol_types::address::aztec_address::AztecAddress"
+                    }
+                  },
                   {
                     "name": "migration_commitment",
                     "type": {

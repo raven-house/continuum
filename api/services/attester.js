@@ -23,11 +23,12 @@ const MIGRATE_REGISTER_DOMAIN = Fr.fromString('0x4e46544d52');
  * commitment = Poseidon2([ MIGRATE_REGISTER_DOMAIN, secret ])
  *
  * The user computes this off-chain and passes it to `register_migration` on the
- * old rollup, where the contract emits `MigrationRegistered { owner: msg_sender,
- * migration_commitment }`. Because `owner` is the authenticated `msg_sender`,
- * the on-chain event is an unforgeable binding between the real old-rollup owner
- * and this commitment. Later, in /request_data, the user reveals the secret and
- * Continuum recomputes the same commitment to resolve their verified owner.
+ * old rollup with the old collection address. The registry emits
+ * `MigrationRegistered { owner: msg_sender, collection, migration_commitment }`.
+ * Because `owner` is the authenticated `msg_sender`, the on-chain event is an
+ * unforgeable binding between the real old-rollup owner, old collection, and this
+ * commitment. Later, in /request_data, the user reveals the secret and Continuum
+ * recomputes the same commitment to resolve their verified owner.
  * @param {string} secretHex  - The user's migration secret (0x-prefixed hex Field)
  * @returns {string} commitment as a canonical 0x-prefixed Field string
  */

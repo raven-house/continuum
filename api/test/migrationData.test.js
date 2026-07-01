@@ -216,6 +216,61 @@ test('buildMigrationData uses custom manifest event and field mappings', async (
   assert.equal(result.tokens[0].token_id, '9');
 });
 
+test('buildMigrationData scopes global registry registrations by collection', async () => {
+  const db = createDb({
+    registryDoc: {
+      old_collection_address: '0xold',
+      artifact_id: 'registry-backed-nft'
+    },
+    contractDoc: {
+      migration: {
+        events: {
+          registration: {
+            source: 'continuum_registry',
+            name: 'MigrationRegistered',
+            owner: 'owner',
+            commitment: 'migration_commitment',
+            collection: 'collection',
+            contract_address: '0xregistry'
+          }
+        }
+      }
+    },
+    registrationDoc: {
+      data: {
+        owner: '0xOWNER',
+        collection: '0xold'
+      }
+    },
+    ownedTokens: [{ _id: '7' }]
+  });
+
+  await buildMigrationData(
+    db,
+    {
+      collection_address: '0xNEW',
+      migration_secret: '0xsecret',
+      new_wallet_address: '0xWALLET'
+    },
+    {
+      computeMigrationCommitment: () => '0x0a',
+      signMigrationClaim: async () => ({
+        signature: '0xsig',
+        signatureBytes: [7]
+      })
+    }
+  );
+
+  assert.deepEqual(db.calls.eventFind, [
+    {
+      contract_address: '0xregistry',
+      event_type: 'MigrationRegistered',
+      'data.migration_commitment': { $in: ['0x0a', '10'] },
+      'data.collection': '0xold'
+    }
+  ]);
+});
+
 test('buildMigrationData supports explicit token registration manifests', async () => {
   const db = createDb({
     registryDoc: {

@@ -8,9 +8,10 @@
  * the NFT contract's migrate_and_claim(token_id, signature) function on the new rollup.
  *
  * Ownership identity is established ON-CHAIN, not by a trusted off-chain mapping:
- *   - On the old rollup the real owner called register_migration(commitment), which
- *     emitted MigrationRegistered { owner: msg_sender, migration_commitment }. The
- *     owner is the authenticated msg_sender, so it cannot be spoofed.
+ *   - On the old rollup the real owner called register_migration(old_collection,
+ *     commitment), which emitted MigrationRegistered { owner: msg_sender,
+ *     collection, migration_commitment }. The owner is the authenticated
+ *     msg_sender, so it cannot be spoofed.
  *   - Here the user reveals the secret. We recompute commitment = Poseidon2([
  *     MIGRATE_REGISTER_DOMAIN, secret ]) and look up the registered event to resolve
  *     the verified old-rollup owner. The commitment is public on-chain, so only the

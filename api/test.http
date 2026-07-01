@@ -2,7 +2,7 @@
 # Run the API first: bun run dev (port 3004)
 #
 # Migration identity is established ON-CHAIN: the real owner calls
-# register_migration(commitment) on the old rollup (owner = msg_sender, unforgeable).
+# register_migration(old_collection, commitment) on the old rollup (owner = msg_sender, unforgeable).
 # Continuum stores no wallet ↔ key mapping — it only mints secrets and resolves
 # commitments → owners from indexed MigrationRegistered events.
 #
@@ -24,7 +24,7 @@ GET {{BASE}}/attester HTTP/1.1
 
 ###
 # STEP 2 — Mint a fresh migration secret (stateless; nothing is stored)
-# Save `secret`. Pass `commitment` to register_migration() on the OLD rollup.
+# Save `secret`. Pass old collection + `commitment` to register_migration() on the OLD rollup.
 GET {{BASE}}/migration/new-secret HTTP/1.1
 
 ###

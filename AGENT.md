@@ -162,7 +162,7 @@ bun run generate-attester-secret  # Generate a fresh Schnorr attester key
 
 ## Key Domain Concepts
 
-- **Migration commitment**: `Poseidon2([ MIGRATE_REGISTER_DOMAIN, secret ])` — computed off-chain by the user, stored on the old rollup via `register_migration`. The secret is later revealed to Continuum to verify ownership.
+- **Migration commitment**: `Poseidon2([ MIGRATE_REGISTER_DOMAIN, secret ])` — computed off-chain by the user, stored on the old rollup via `register_migration(old_collection, commitment)`. The secret is later revealed to Continuum to verify ownership.
 - **Attestation**: The attester signs a claim (domain, collection address, wallet address, token ID) with a Schnorr key derived from `ATTESTER_SECRET`. The new-rollup contract verifies this signature before restoring state.
 - **Collection registry**: Maps old-rollup collection addresses to new-rollup collection addresses. Optionally linked to an `artifact_id` for migration manifest lookup.
 - **Migration manifest**: Optional config on contract upload that maps developer-specific event names/fields to Continuum ownership semantics. Falls back to legacy NFT defaults if omitted.
