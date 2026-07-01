@@ -30,7 +30,7 @@ Continuum is made of three off-chain services and a set of Noir contracts:
 3. **Register the commitment on the old rollup**: the user calls `MigrationRegistry.register_migration(collection, commitment)` (or the NFT contract’s own registration function), where `commitment = Poseidon2("NFTMR" ‖ secret)`.
 4. **Index events**:the indexer crawls the old rollup and stores `Transfer` and `MigrationRegistered` events.
 5. **Request signed claim data**: the user reveals the secret to `/request_data`; the API recomputes the commitment, resolves the verified owner, and returns Schnorr-signed attestations for each owned token.
-6. **Claim on the new rollup**: the user calls `newNFT.migrate_and_claim(token_id, commitment, signature)`, which verifies the signature and mints the token.
+6. **Claim on the new rollup**:the user calls `newNFT.migrate_and_claim(token_id, commitment, signature)`, which verifies the signature and mints the token.
 
 For a complete step-by-step example, see [`e2e-tests/src/sandbox/index.ts`](e2e-tests/src/sandbox/index.ts). For a recent testnet run, see [`e2e-tests/src/testnet/run_logs_july_1.txt`](e2e-tests/src/testnet/run_logs_july_1.txt).
 
@@ -243,7 +243,7 @@ cd ../nft_contract
 aztec test
 ```
 
-Address of Migration registry contract on testnet version 5.0.0-rc2 is :- `0x0f10ac27189276a91039bd47317783b1f76ce2fa1f26b89be1df464c08a5b3b3`
+Address of Migration registry contract on testnet version 5.0.0-rc2 is [0x0f10ac27189276a91039bd47317783b1f76ce2fa1f26b89be1df464c08a5b3b3](https://testnet.aztecscan.xyz/contracts/instances/0x0f10ac27189276a91039bd47317783b1f76ce2fa1f26b89be1df464c08a5b3b3)
 
 ## License
 
