@@ -1413,7 +1413,7 @@
           "start": 393
         }
       ],
-      "path": "/Users/satyam/web3/noir/raven-project/continuum/contracts/migration_registry/src/main.nr",
+      "path": "/Users/satyam/projects/aztec-projects/raven-house/continuum/contracts/migration_registry/src/main.nr",
       "source": "use aztec::macros::aztec;\n\n#[aztec]\npub contract MigrationRegistry {\n    use aztec::{\n        macros::{events::event, functions::external},\n        protocol::address::AztecAddress,\n    };\n\n    #[event]\n    struct MigrationRegistered {\n        owner: AztecAddress,\n        migration_commitment: Field,\n    }\n    \n    #[external(\"public\")]\n    fn register_migration(migration_commitment: Field) {\n        assert(migration_commitment != 0, \"zero migration commitment not supported\");\n\n        self.emit(\n            MigrationRegistered {\n                owner: self.msg_sender(),\n                migration_commitment,\n            },\n        );\n    }\n}\n"
     },
     "62": {

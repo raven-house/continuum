@@ -72,16 +72,16 @@ export class EventIndexer {
     )
   }
 
-  /** Distinct collection addresses to index for this network (old + new sides). */
   private async getIndexedAddresses(): Promise<string[]> {
     const db = mongodbConnection.getDb()
-    const docs = await db
+    const set = new Set<string>()
+
+    const collectionDocs = await db
       .collection('collection_registry')
       .find({ $or: [{ old_network: this.network }, { new_network: this.network }] })
       .toArray()
 
-    const set = new Set<string>()
-    for (const d of docs) {
+    for (const d of collectionDocs) {
       if (d.old_network === this.network && d.old_collection_address) {
         set.add(String(d.old_collection_address).toLowerCase())
       }
@@ -89,6 +89,21 @@ export class EventIndexer {
         set.add(String(d.new_collection_address).toLowerCase())
       }
     }
+
+    const contractDocs = await db
+      .collection('contracts')
+      .find({ enabled: true, [`networks.${this.network}.addresses`]: { $exists: true } })
+      .toArray()
+
+    for (const d of contractDocs) {
+      const addresses: unknown = d.networks?.[this.network]?.addresses
+      if (Array.isArray(addresses)) {
+        for (const addr of addresses) {
+          if (addr) set.add(String(addr).toLowerCase())
+        }
+      }
+    }
+
     return [...set]
   }
 

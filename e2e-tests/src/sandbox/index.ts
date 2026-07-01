@@ -5,7 +5,8 @@ import { EmbeddedWallet } from "@aztec/wallets/embedded";
 
 import { ALICE_TOKENS, OTHER_TOKEN } from "../shared/config.js";
 import { ContinuumApi } from "../shared/continuum-api.js";
-import { deployCollection, loadNftArtifact, migrateAndClaim, mintPublic, registerMigration } from "../shared/nft.js";
+import { deployCollection, loadNftArtifact, migrateAndClaim, mintPublic } from "../shared/nft.js";
+import { deployRegistry, loadRegistryArtifact, registerMigration } from "../shared/registry.js";
 import { assertExpectedTokens, verifyClaims } from "../shared/verify.js";
 import { resolveSandboxAccounts } from "./accounts.js";
 
@@ -19,6 +20,7 @@ const step = (msg: string) => console.log(`  ${msg}`);
 async function main() {
   const api = new ContinuumApi(API_URL);
   const { artifact, raw } = loadNftArtifact();
+  const { artifact: registryArtifact, raw: registryRaw } = loadRegistryArtifact();
 
   const node = createAztecNodeClient(NODE_URL);
   await node.getNodeInfo();
@@ -42,14 +44,20 @@ async function main() {
   });
   step(`✓ old collection: ${oldNft.address.toString()}`);
 
+  section("[OLD] deploying shared MigrationRegistry contract...");
+  const registry = await deployRegistry(wallet, registryArtifact, oldAddr);
+  const registryAddr = registry.address.toString();
+  step(`✓ migration registry: ${registryAddr}`);
+
   section("[OLD] registering NFT artifact with the indexer...");
   const artifactId = `nft-${NETWORK}`;
+  const registryArtifactId = `migration-registry-${NETWORK}`;
 
   const upload = await api.uploadArtifact({
     artifactId,
     name: "NFT",
     abi: raw,
-    eventTypes: ["Transfer", "MigrationRegistered"],
+    eventTypes: ["Transfer"],
     startBlock: { [NETWORK]: startBlock },
     migration: {
       type: "nft",
@@ -58,10 +66,11 @@ async function main() {
       events: {
         transfer: { name: "Transfer", token_id: "token_id", from: "from", to: "to" },
         registration: {
-          source: "contract_event",
+          source: "continuum_registry",
           name: "MigrationRegistered",
           owner: "owner",
           commitment: "migration_commitment",
+          contract_address: registryAddr,
         },
       },
       claim: {
@@ -75,6 +84,24 @@ async function main() {
     upload === "registered"
       ? `✓ artifact '${artifactId}' registered (start_block.${NETWORK}=${startBlock})`
       : `✓ artifact '${artifactId}' already registered (reusing existing sync state)`,
+  );
+
+  section("[OLD] registering MigrationRegistry artifact with the indexer...");
+  const registryUpload = await api.uploadArtifact({
+    artifactId: registryArtifactId,
+    name: "MigrationRegistry",
+    abi: registryRaw,
+    eventTypes: ["MigrationRegistered"],
+    startBlock: { [NETWORK]: startBlock },
+    // Tells the indexer to scan this standalone contract address (it is not part
+    // of any collection pair, so collection_registry would never surface it).
+    networks: { [NETWORK]: { start_block: startBlock, addresses: [registryAddr] } },
+  });
+
+  step(
+    registryUpload === "registered"
+      ? `✓ artifact '${registryArtifactId}' registered (registry=${registryAddr})`
+      : `✓ artifact '${registryArtifactId}' already registered (reusing existing sync state)`,
   );
 
   section("[OLD] minting public NFTs...");
@@ -92,9 +119,9 @@ async function main() {
   step(`secret:     ${secret.slice(0, 18)}… (saved by the user)`);
   step(`commitment: ${commitment.slice(0, 18)}…`);
 
-  section("[OLD] Alice-OLD calls register_migration(commitment)...");
-  await registerMigration(oldNft, commitment, oldAddr);
-  step("✓ MigrationRegistered emitted (owner = Alice-OLD, authenticated)");
+  section("[OLD] Alice-OLD calls register_migration(commitment) on the registry...");
+  await registerMigration(registry, commitment, oldAddr);
+  step("✓ MigrationRegistered emitted from registry (owner = Alice-OLD)");
 
   section("[NEW] fetching attester public key...");
   const attester = await api.getAttester();
