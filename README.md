@@ -14,20 +14,25 @@ Continuum provides a cryptographic bridge between old and new rollup state using
 
 ## Architecture
 
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────────┐
-│  MongoDB    │◄───│   Indexer   │◄───│  Fastify API    │
-│  (Events,   │    │  (Cron Jobs)│    │  (REST Server)  │
-│   SyncState,│    │             │    │  :3004          │
-│   Migration)│    │             │    │                 │
-└─────────────┘    └─────────────┘    └─────────────────┘
-                            │
-                            ▼
-                   ┌─────────────────┐
-                   │  Aztec Old Node │
-                   │  (Event Source) │
-                   └─────────────────┘
-```
+![Continuum architecture](architecture.png)
+
+Continuum is made of three off-chain services and a set of Noir contracts:
+
+- **MongoDB** stores indexed events, sync cursors, contract ABIs, and old→new collection mappings.
+- **Indexer** polls the old rollup’s Aztec node for public events and writes them to MongoDB.
+- **Fastify API** exposes admin and public endpoints; it signs migration claims with a Schnorr attester key.
+- **Noir contracts** live on both rollups. The old collection emits ownership and registration events; the new collection verifies Continuum’s attestation and mints the migrated asset.
+
+## Migration Flow
+
+1. **Register contracts**: upload the old collection ABI to the API and register the old→new collection address mapping.
+2. **Create a migration secret**: the user calls `/migration/new-secret` and saves the secret.
+3. **Register the commitment on the old rollup**: the user calls `MigrationRegistry.register_migration(collection, commitment)` (or the NFT contract’s own registration function), where `commitment = Poseidon2("NFTMR" ‖ secret)`.
+4. **Index events**:the indexer crawls the old rollup and stores `Transfer` and `MigrationRegistered` events.
+5. **Request signed claim data**: the user reveals the secret to `/request_data`; the API recomputes the commitment, resolves the verified owner, and returns Schnorr-signed attestations for each owned token.
+6. **Claim on the new rollup**: the user calls `newNFT.migrate_and_claim(token_id, commitment, signature)`, which verifies the signature and mints the token.
+
+For a complete step-by-step example, see [`e2e-tests/src/sandbox/index.ts`](e2e-tests/src/sandbox/index.ts). For a recent testnet run, see [`e2e-tests/src/testnet/run_logs_july_1.txt`](e2e-tests/src/testnet/run_logs_july_1.txt).
 
 ## Quick Start
 
@@ -159,34 +164,19 @@ docker compose -f docker-compose.prod.yml up -d
 
 All endpoints are on port **3004**.
 
-### Health Check
+### Available Endpoints
 
-```bash
-curl http://localhost:3004/health
-```
-
-### Get Events
-
-```bash
-# Get all events for an artifact
-curl http://localhost:3004/events/my-contract
-
-# Get specific event type
-curl http://localhost:3004/events/my-contract/Transfer
-
-# With pagination and block range
-curl "http://localhost:3004/events/my-contract?event_type=Transfer&from_block=1000&to_block=2000&page=1&limit=100"
-```
-
-### Get Sync Status
-
-```bash
-# Get sync status for all artifacts
-curl http://localhost:3004/sync
-
-# Get sync status for specific artifact
-curl http://localhost:3004/sync/my-contract
-```
+| Method | Path                                                           | Purpose                                |
+| ------ | -------------------------------------------------------------- | -------------------------------------- |
+| GET    | `/health`                                                      | API liveness                           |
+| POST   | `/contracts/upload`                                            | Upload ABI and indexing config (admin) |
+| GET    | `/contracts` / `/contracts/:id` / `/contracts/event/:selector` | Query uploaded contracts               |
+| POST   | `/collections/register`                                        | Map old→new collection address (admin) |
+| GET    | `/collections` / `/collections/:newAddress`                    | List / lookup mappings                 |
+| GET    | `/migration/new-secret`                                        | Generate migration secret + commitment |
+| POST   | `/migration/commitment`                                        | Recompute commitment from secret       |
+| POST   | `/request_data`                                                | Request signed token attestations      |
+| GET    | `/attester`                                                    | Get the attester public key            |
 
 ### Contract ABI Upload
 
@@ -216,129 +206,6 @@ curl http://localhost:3004/contracts/<contract-id>
 curl http://localhost:3004/contracts/event/0x12345678
 ```
 
-### Migration Attestations
-
-Migration identity is stateless in the API. Users generate a secret, register
-its commitment on the old rollup, then reveal the secret to request signed
-claim data for the new rollup. Continuum does not store wallet-to-secret
-mappings.
-
-```bash
-# Generate a fresh migration secret and commitment
-curl http://localhost:3004/migration/new-secret
-
-# Recompute a commitment from a saved secret
-curl -X POST http://localhost:3004/migration/commitment \
-  -H "Content-Type: application/json" \
-  -d '{ "secret": "0x..." }'
-
-# Register the old-rollup collection to new-rollup collection mapping
-curl -X POST http://localhost:3004/collections/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "old_collection_address": "0x...",
-    "old_network": "sandbox",
-    "new_collection_address": "0x...",
-    "new_network": "sandbox",
-    "collection_name": "Example NFT"
-  }'
-
-# Request Schnorr-signed token claims for a user migration
-curl -X POST http://localhost:3004/request_data \
-  -H "Content-Type: application/json" \
-  -d '{
-    "collection_address": "0x...",
-    "migration_secret": "0x...",
-    "new_wallet_address": "0x..."
-  }'
-
-# Fetch the attester public key for new collection constructors
-curl http://localhost:3004/attester
-```
-
-## Configuration
-
-### Contract Indexing Configuration
-
-Contract indexing configuration is stored in MongoDB when an ABI is uploaded to
-`POST /contracts/upload`. The request supports:
-
-- `artifact_id`: Unique identifier used by events and sync state
-- `abi`: Noir contract ABI JSON
-- `name`: Optional human-readable contract name
-- `enabled`: Whether the indexer should index this contract
-- `event_types`: Event names to index; omit or leave empty to index all events
-- `start_block`: Block to start indexing from per network
-- `networks`: Preferred per-network config for new integrations:
-  `{ "sandbox": { "start_block": 123, "addresses": ["0x..."] } }`
-- `migration`: Optional migration manifest that maps developer contract event
-  names/fields to Continuum ownership and claim semantics
-
-Example migration-aware upload:
-
-```json
-{
-  "artifact_id": "my-nft-v1",
-  "name": "MyNFT",
-  "abi": {},
-  "enabled": true,
-  "event_types": ["OwnerChanged", "ReadyToMigrate"],
-  "networks": {
-    "sandbox": {
-      "start_block": 123,
-      "addresses": ["0xoldcollection"]
-    }
-  },
-  "migration": {
-    "type": "nft",
-    "ownership_model": "latest_transfer_event",
-    "addresses": ["0xoldcollection"],
-    "events": {
-      "transfer": {
-        "name": "OwnerChanged",
-        "token_id": "id",
-        "to": "recipient"
-      },
-      "registration": {
-        "name": "ReadyToMigrate",
-        "owner": "account",
-        "commitment": "commitment"
-      }
-    },
-    "claim": {
-      "domain": "0x4e46544d",
-      "attestation_fields": ["domain", "new_collection_address", "new_wallet_address", "token_id"]
-    }
-  }
-}
-```
-
-If `migration` is omitted, Continuum uses the legacy NFT defaults:
-`Transfer.token_id`, `Transfer.to`, `MigrationRegistered.owner`, and
-`MigrationRegistered.migration_commitment`.
-
-Collections can optionally pass `artifact_id` to `POST /collections/register`.
-That links the old/new collection mapping to the exact uploaded migration
-manifest. Without it, Continuum attempts to find a manifest by old collection
-address and then falls back to the legacy defaults.
-
-The lowest-change public NFT migration pattern is to keep ownership events in
-the application contract and register migration commitments through a generic
-registry event with `{ collection, owner, migration_commitment }`. New-rollup
-contracts still need a small claim function that verifies Continuum's attestation
-before restoring/minting state.
-
-## Database Collections
-
-| Collection            | Purpose                                                                 |
-| --------------------- | ----------------------------------------------------------------------- |
-| `events`              | All indexed contract events                                             |
-| `sync_state`          | Last indexed block per artifact per network                             |
-| `contracts`           | Uploaded contract ABIs, extracted events, and indexer configuration     |
-| `collection_registry` | Old-rollup collection address to new-rollup collection address mappings |
-
-See `database/init.js` for the full schema and indexes. Collections and indexes are created automatically when MongoDB first initializes.
-
 ## Troubleshooting
 
 ### Indexer Not Processing Events
@@ -350,8 +217,8 @@ docker compose logs -f indexer
 # Verify registered contracts
 curl "http://localhost:3004/contracts?page=1&limit=10"
 
-# Check sync status
-curl http://localhost:3004/sync
+# Check indexer health (inside the indexer container)
+curl http://localhost:8080/health
 ```
 
 ### API Not Responding
@@ -364,9 +231,19 @@ docker compose logs -f api
 curl http://localhost:3004/health
 ```
 
+### Run NFT Contract Tests
 
-Address of Migration registry contract is :- ```0x0f10ac27189276a91039bd47317783b1f76ce2fa1f26b89be1df464c08a5b3b3```
+`nft_contract` tests need the compiled `generic_proxy` artifact in their target folder:
 
+```bash
+cd contracts/generic_proxy
+aztec-nargo compile
+cp target/generic_proxy-GenericProxy.json ../nft_contract/target/
+cd ../nft_contract
+aztec test
+```
+
+Address of Migration registry contract on testnet version 5.0.0-rc2 is :- `0x0f10ac27189276a91039bd47317783b1f76ce2fa1f26b89be1df464c08a5b3b3`
 
 ## License
 
@@ -375,8 +252,3 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please open an issue or pull request.
-
-## TODOS
-
-- [] if sandbox, check sandbox up and running or not, otherwise stop container, flag with error, etc.
-- [] Create a top level script to generate random attestor secret
