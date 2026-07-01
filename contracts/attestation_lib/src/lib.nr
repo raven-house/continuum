@@ -53,6 +53,38 @@ pub fn assert_valid_attestation<let N: u32>(
     assert_valid_signature(pubkey, signature, hash);
 }
 
+/// Verify a Continuum migration attestation over the exact migration claim tuple.
+/// Keeping the field ordering inside the library reduces contract/API drift.
+pub fn assert_valid_migration_attestation(
+    pubkey: EmbeddedCurvePoint,
+    signature: [u8; 64],
+    domain: Field,
+    source_rollup_id: Field,
+    old_collection: Field,
+    old_registry: Field,
+    new_collection: Field,
+    claimer: Field,
+    token_id: Field,
+    migration_commitment: Field,
+    migration_epoch: Field,
+) {
+    assert_valid_attestation(
+        pubkey,
+        signature,
+        [
+            domain,
+            source_rollup_id,
+            old_collection,
+            old_registry,
+            new_collection,
+            claimer,
+            token_id,
+            migration_commitment,
+            migration_epoch,
+        ],
+    );
+}
+
 /// Validate that a public key point is on the Grumpkin curve.
 /// Use this to validate attester public keys at contract initialization.
 pub fn assert_pubkey_on_curve(pubkey_x: Field, pubkey_y: Field) {

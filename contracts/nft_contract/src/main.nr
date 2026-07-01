@@ -6,7 +6,7 @@ use aztec::macros::aztec;
 #[aztec]
 pub contract NFT {
     global MIGRATE_DOMAIN: Field = 0x4e46544d;
-    use attestation_lib::{assert_pubkey_on_curve, assert_valid_attestation};
+    use attestation_lib::{assert_pubkey_on_curve, assert_valid_migration_attestation};
     use aztec::{
         macros::{
             events::event,
@@ -37,6 +37,10 @@ pub contract NFT {
     pub struct MigrationConfig {
         attester_pubkey_x: Field,
         attester_pubkey_y: Field,
+        source_rollup_id: Field,
+        old_collection: AztecAddress,
+        old_registry: AztecAddress,
+        migration_epoch: Field,
     }
     #[storage]
     struct Storage<Context> {
@@ -81,6 +85,10 @@ pub contract NFT {
         // Pass 0 for both to deploy without migration support.
         migration_attester_pubkey_x: Field,
         migration_attester_pubkey_y: Field,
+        source_rollup_id: Field,
+        old_collection: AztecAddress,
+        old_registry: AztecAddress,
+        migration_epoch: Field,
     ) {
         self.storage.name.initialize(FieldCompressedString::from_string(name));
         self.storage.symbol.initialize(FieldCompressedString::from_string(symbol));
@@ -88,11 +96,18 @@ pub contract NFT {
 
         if migration_attester_pubkey_x != 0 {
             assert_pubkey_on_curve(migration_attester_pubkey_x, migration_attester_pubkey_y);
+            assert(old_collection.to_field() != 0, "old collection required");
+        } else {
+            assert(migration_attester_pubkey_y == 0, "invalid disabled migration key");
         }
         self.storage.migration_attester.initialize(
             MigrationConfig {
                 attester_pubkey_x: migration_attester_pubkey_x,
                 attester_pubkey_y: migration_attester_pubkey_y,
+                source_rollup_id,
+                old_collection,
+                old_registry,
+                migration_epoch,
             },
         );
     }
@@ -626,8 +641,9 @@ pub contract NFT {
     }
 
     #[external("private")]
-    fn migrate_and_claim(token_id: Field, signature: [u8; 64]) {
+    fn migrate_and_claim(token_id: Field, migration_commitment: Field, signature: [u8; 64]) {
         assert(token_id != 0, "zero token ID not supported");
+        assert(migration_commitment != 0, "zero migration commitment not supported");
 
         let config = self.storage.migration_attester.read();
         assert(config.attester_pubkey_x != 0, "migration not enabled for this collection");
@@ -637,11 +653,19 @@ pub contract NFT {
 
         let claimer = self.msg_sender();
 
-        // Fields must match exactly what Continuum signs in POST /request_data
-        let fields =
-            [MIGRATE_DOMAIN, self.context.this_address().to_field(), claimer.to_field(), token_id];
-
-        assert_valid_attestation(attester_pubkey, signature, fields);
+        assert_valid_migration_attestation(
+            attester_pubkey,
+            signature,
+            MIGRATE_DOMAIN,
+            config.source_rollup_id,
+            config.old_collection.to_field(),
+            config.old_registry.to_field(),
+            self.context.this_address().to_field(),
+            claimer.to_field(),
+            token_id,
+            migration_commitment,
+            config.migration_epoch,
+        );
 
         // Mint the NFT as a private note for the claimer
         self.storage.private_nfts.at(claimer).insert(NFTNote { token_id }).deliver(
@@ -673,5 +697,13 @@ pub contract NFT {
     fn get_migration_attester() -> (Field, Field) {
         let config = self.storage.migration_attester.read();
         (config.attester_pubkey_x, config.attester_pubkey_y)
+    }
+
+    /// Returns immutable migration source metadata.
+    #[external("public")]
+    #[view]
+    fn get_migration_config() -> (Field, AztecAddress, AztecAddress, Field) {
+        let config = self.storage.migration_attester.read();
+        (config.source_rollup_id, config.old_collection, config.old_registry, config.migration_epoch)
     }
 }

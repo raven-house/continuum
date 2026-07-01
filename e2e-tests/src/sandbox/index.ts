@@ -94,7 +94,17 @@ async function main() {
       },
       claim: {
         domain: "0x4e46544d",
-        attestation_fields: ["domain", "new_collection_address", "new_wallet_address", "token_id"],
+        attestation_fields: [
+          "domain",
+          "source_rollup_id",
+          "old_collection_address",
+          "old_registry_address",
+          "new_collection_address",
+          "new_wallet_address",
+          "token_id",
+          "migration_commitment",
+          "migration_epoch",
+        ],
       },
     },
   });
@@ -152,6 +162,10 @@ async function main() {
     symbol: "CNEW",
     minter: oldAddr, // irrelevant for migration
     attester: { x: Fr.fromString(attester.x), y: Fr.fromString(attester.y) },
+    migration: {
+      oldCollection: oldNft.address,
+      oldRegistry: registry.address,
+    },
     from: oldAddr,
   });
   step(`✓ new collection: ${newNft.address.toString()}`);
@@ -183,7 +197,13 @@ async function main() {
 
   section("[CLAIM] Alice-NEW migrate_and_claim() for each token...");
   for (const token of tokens) {
-    await migrateAndClaim(newNft, token.token_id, token.signature_bytes, newAddr);
+    await migrateAndClaim(
+      newNft,
+      token.token_id,
+      token.migration_commitment,
+      token.signature_bytes,
+      newAddr,
+    );
     step(`✓ claimed #${BigInt(token.token_id)}`);
   }
 
@@ -225,7 +245,17 @@ async function main() {
       },
       claim: {
         domain: "0x4e46544d",
-        attestation_fields: ["domain", "new_collection_address", "new_wallet_address", "token_id"],
+        attestation_fields: [
+          "domain",
+          "source_rollup_id",
+          "old_collection_address",
+          "old_registry_address",
+          "new_collection_address",
+          "new_wallet_address",
+          "token_id",
+          "migration_commitment",
+          "migration_epoch",
+        ],
       },
     },
   });
@@ -259,6 +289,9 @@ async function main() {
     symbol: "CPNEW",
     minter: oldAddr,
     attester: { x: Fr.fromString(attester.x), y: Fr.fromString(attester.y) },
+    migration: {
+      oldCollection: privateOldNft.address,
+    },
     from: oldAddr,
   });
   step(`✓ private new collection: ${privateNewNft.address.toString()}`);
@@ -292,6 +325,7 @@ async function main() {
   await migrateAndClaim(
     privateNewNft,
     privateTokens[0].token_id,
+    privateTokens[0].migration_commitment,
     privateTokens[0].signature_bytes,
     newAddr,
   );

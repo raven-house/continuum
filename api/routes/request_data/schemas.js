@@ -13,7 +13,8 @@ register_migration(old_collection, commitment) on the old rollup) and the new-ro
      verified old-rollup owner from the matching MigrationRegistered event (owner = the
      authenticated msg_sender that registered it — cannot be spoofed)
   3. Finds tokens whose latest Transfer.to is that owner (current public ownership)
-  4. Signs each token ID with a Schnorr attestation bound to new_wallet_address
+  4. Signs each token ID with a Schnorr attestation bound to source migration metadata,
+     migration_commitment, collection_address, and new_wallet_address
   5. Returns the signatures ready to pass to migrate_and_claim() on the new rollup
 
 The caller (new_wallet_address) must use these signatures from the same address to
@@ -65,6 +66,22 @@ successfully call migrate_and_claim() on the contract.`,
             description:
               'Old rollup collection address (resolved from collection_registry)'
           },
+          migration_commitment: {
+            type: 'string',
+            description:
+              'Commitment recomputed from migration_secret; pass this to migrate_and_claim()'
+          },
+          migration_config: {
+            type: 'object',
+            description:
+              'Source metadata that the new-rollup NFT contract must store immutably to verify these attestations',
+            properties: {
+              source_rollup_id: { type: 'string' },
+              old_collection_address: { type: 'string' },
+              old_registry_address: { type: 'string' },
+              migration_epoch: { type: 'string' }
+            }
+          },
           tokens: {
             type: 'array',
             description: 'One entry per NFT the user owned on the old rollup',
@@ -72,6 +89,11 @@ successfully call migrate_and_claim() on the contract.`,
               type: 'object',
               properties: {
                 token_id: { type: 'string' },
+                migration_commitment: {
+                  type: 'string',
+                  description:
+                    'Commitment to pass with this token_id to migrate_and_claim()'
+                },
                 signature: {
                   type: 'string',
                   description: '64-byte Schnorr signature as 0x-prefixed hex'
@@ -79,7 +101,7 @@ successfully call migrate_and_claim() on the contract.`,
                 signature_bytes: {
                   type: 'array',
                   description:
-                    '64-byte array — pass directly to migrate_and_claim()',
+                    '64-byte array — pass to migrate_and_claim() with token_id and migration_commitment',
                   items: { type: 'integer' }
                 }
               }

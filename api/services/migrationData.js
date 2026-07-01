@@ -4,6 +4,7 @@ import { computeMigrationCommitment, signMigrationClaim } from './attester.js';
 const COLLECTION_REGISTRY_COLLECTION = 'collection_registry';
 const CONTRACTS_COLLECTION = 'contracts';
 const EVENTS_COLLECTION = 'events';
+const ZERO_ADDRESS = '0x0';
 
 export class MigrationDataError extends Error {
   constructor(statusCode, message) {
@@ -106,6 +107,21 @@ function buildRegistrationQuery({
   }
 
   return query;
+}
+
+/**
+ *
+ * @param manifest
+ */
+function getOldRegistryAddress(manifest) {
+  const registration = manifest.events.registration;
+  if (
+    registration.source === 'continuum_registry' &&
+    registration.contract_address
+  ) {
+    return registration.contract_address.toLowerCase();
+  }
+  return ZERO_ADDRESS;
 }
 
 /**
@@ -248,7 +264,14 @@ export async function buildMigrationData(
     old_wallet_address: oldWalletAddress,
     new_wallet_address,
     collection_address: newCollectionAddr,
-    old_collection_address: oldCollectionAddress
+    old_collection_address: oldCollectionAddress,
+    migration_commitment: commitment,
+    migration_config: {
+      source_rollup_id: String(registryDoc.source_rollup_id ?? 0),
+      old_collection_address: oldCollectionAddress,
+      old_registry_address: getOldRegistryAddress(manifest),
+      migration_epoch: String(registryDoc.migration_epoch ?? 0)
+    }
   };
 
   if (tokenIds.length === 0) {
@@ -257,14 +280,20 @@ export async function buildMigrationData(
 
   const tokens = await Promise.all(
     tokenIds.map(async tokenId => {
-      const { signature, signatureBytes } = await signClaim(
-        newCollectionAddr,
-        new_wallet_address.toLowerCase(),
-        BigInt(tokenId)
-      );
+      const { signature, signatureBytes } = await signClaim({
+        sourceRollupId: registryDoc.source_rollup_id ?? 0,
+        oldCollectionAddress,
+        oldRegistryAddress: baseResponse.migration_config.old_registry_address,
+        newCollectionAddress: newCollectionAddr,
+        newWalletAddress: new_wallet_address.toLowerCase(),
+        tokenId: BigInt(tokenId),
+        migrationCommitment: commitment,
+        migrationEpoch: registryDoc.migration_epoch ?? 0
+      });
 
       return {
         token_id: String(tokenId),
+        migration_commitment: commitment,
         signature,
         signature_bytes: signatureBytes
       };

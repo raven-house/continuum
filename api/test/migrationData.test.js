@@ -106,11 +106,11 @@ test('buildMigrationData returns signed token claims for the verified old owner'
         assert.equal(secret, '0xsecret');
         return '0x0a';
       },
-      signMigrationClaim: async (collection, wallet, tokenId) => {
-        signed.push({ collection, wallet, tokenId });
+      signMigrationClaim: async claim => {
+        signed.push(claim);
         return {
-          signature: `0xsig${tokenId}`,
-          signatureBytes: [Number(tokenId)]
+          signature: `0xsig${claim.tokenId}`,
+          signatureBytes: [Number(claim.tokenId)]
         };
       }
     }
@@ -130,22 +130,49 @@ test('buildMigrationData returns signed token claims for the verified old owner'
   assert.equal(db.calls.aggregate[0][0].$match.contract_address, '0xold');
   assert.equal(db.calls.aggregate[0][3].$match.latest_owner, '0xowner');
   assert.deepEqual(signed, [
-    { collection: '0xnew', wallet: '0xwallet', tokenId: 7n },
-    { collection: '0xnew', wallet: '0xwallet', tokenId: 42n }
+    {
+      sourceRollupId: 0,
+      oldCollectionAddress: '0xold',
+      oldRegistryAddress: '0x0',
+      newCollectionAddress: '0xnew',
+      newWalletAddress: '0xwallet',
+      tokenId: 7n,
+      migrationCommitment: '0x0a',
+      migrationEpoch: 0
+    },
+    {
+      sourceRollupId: 0,
+      oldCollectionAddress: '0xold',
+      oldRegistryAddress: '0x0',
+      newCollectionAddress: '0xnew',
+      newWalletAddress: '0xwallet',
+      tokenId: 42n,
+      migrationCommitment: '0x0a',
+      migrationEpoch: 0
+    }
   ]);
   assert.deepEqual(result, {
     old_wallet_address: '0xowner',
     new_wallet_address: '0xWALLET',
     collection_address: '0xnew',
     old_collection_address: '0xold',
+    migration_commitment: '0x0a',
+    migration_config: {
+      source_rollup_id: '0',
+      old_collection_address: '0xold',
+      old_registry_address: '0x0',
+      migration_epoch: '0'
+    },
     tokens: [
       {
         token_id: '7',
+        migration_commitment: '0x0a',
         signature: '0xsig7',
         signature_bytes: [7]
       },
       {
         token_id: '42',
+        migration_commitment: '0x0a',
         signature: '0xsig42',
         signature_bytes: [42]
       }

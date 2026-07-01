@@ -21,9 +21,14 @@ export const DEFAULT_MIGRATION_MANIFEST = Object.freeze({
     domain: '0x4e46544d',
     attestation_fields: [
       'domain',
+      'source_rollup_id',
+      'old_collection_address',
+      'old_registry_address',
       'new_collection_address',
       'new_wallet_address',
-      'token_id'
+      'token_id',
+      'migration_commitment',
+      'migration_epoch'
     ]
   }
 });

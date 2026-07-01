@@ -4,7 +4,11 @@
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export type TokenAttestation = { token_id: string; signature_bytes: number[] };
+export type TokenAttestation = {
+  token_id: string;
+  migration_commitment: string;
+  signature_bytes: number[];
+};
 
 export type MigrationData = {
   old_wallet_address: string;

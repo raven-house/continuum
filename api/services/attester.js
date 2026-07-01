@@ -83,24 +83,41 @@ async function getAttester() {
  * Sign a migration claim for a single NFT token.
  *
  * Signed fields (order matters — must match Noir contract):
- * [ MIGRATE_DOMAIN, collection_address, new_wallet_address, token_id ]
- * @param {string} collectionAddress  - New rollup NFT contract address (0x-prefixed hex)
- * @param {string} newWalletAddress   - Claimer's address on the new rollup (0x-prefixed hex)
- * @param {string|bigint} tokenId     - Token ID to migrate
+ * [
+ *   MIGRATE_DOMAIN,
+ *   source_rollup_id,
+ *   old_collection_address,
+ *   old_registry_address,
+ *   new_collection_address,
+ *   new_wallet_address,
+ *   token_id,
+ *   migration_commitment,
+ *   migration_epoch
+ * ]
+ * @param {object} claim
+ * @param {string|bigint} claim.sourceRollupId
+ * @param {string} claim.oldCollectionAddress
+ * @param {string} claim.oldRegistryAddress
+ * @param {string} claim.newCollectionAddress
+ * @param {string} claim.newWalletAddress
+ * @param {string|bigint} claim.tokenId
+ * @param {string} claim.migrationCommitment
+ * @param {string|bigint} claim.migrationEpoch
  * @returns {{ signature: string, signatureBytes: number[] }}
  */
-export async function signMigrationClaim(
-  collectionAddress,
-  newWalletAddress,
-  tokenId
-) {
+export async function signMigrationClaim(claim) {
   const { signingKey, schnorr } = await getAttester();
 
   const fields = [
     MIGRATE_DOMAIN,
-    Fr.fromHexString(collectionAddress),
-    Fr.fromHexString(newWalletAddress),
-    new Fr(BigInt(tokenId))
+    new Fr(BigInt(claim.sourceRollupId)),
+    Fr.fromHexString(claim.oldCollectionAddress),
+    Fr.fromHexString(claim.oldRegistryAddress),
+    Fr.fromHexString(claim.newCollectionAddress),
+    Fr.fromHexString(claim.newWalletAddress),
+    new Fr(BigInt(claim.tokenId)),
+    Fr.fromHexString(claim.migrationCommitment),
+    new Fr(BigInt(claim.migrationEpoch))
   ];
 
   // Poseidon2 with the AUTHWIT_INNER domain separator — matches the Noir

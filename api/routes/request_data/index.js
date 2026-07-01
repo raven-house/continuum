@@ -4,8 +4,9 @@
  * Given a migration secret and a new-rollup collection address, return Schnorr-attested
  * ownership data for every NFT the user held (publicly) on the old rollup.
  *
- * The returned { token_id, signature_bytes } pairs are ready to be passed directly to
- * the NFT contract's migrate_and_claim(token_id, signature) function on the new rollup.
+ * The returned { token_id, migration_commitment, signature_bytes } pairs are ready to
+ * be passed to the NFT contract's migrate_and_claim(token_id, commitment, signature)
+ * function on the new rollup.
  *
  * Ownership identity is established ON-CHAIN, not by a trusted off-chain mapping:
  *   - On the old rollup the real owner called register_migration(old_collection,
@@ -23,6 +24,7 @@
  * Security:
  *   - Attestations are bound to new_wallet_address — only that address can use them
  *   - Attestations are bound to collection_address — can't be replayed on another contract
+ *   - Attestations are bound to old collection, registry, commitment, and migration epoch
  *   - MIGRATE_DOMAIN (0x4e46544d) prevents replay against other contract methods
  */
 

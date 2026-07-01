@@ -30,13 +30,30 @@ export async function deployCollection(
     symbol: string;
     minter: AztecAddress;
     attester: { x: Fr; y: Fr };
+    migration?: {
+      sourceRollupId?: Fr;
+      oldCollection?: AztecAddress;
+      oldRegistry?: AztecAddress;
+      migrationEpoch?: Fr;
+    };
     from: AztecAddress;
   },
 ): Promise<Contract> {
+  const migration = opts.migration ?? {};
   const { contract } = await Contract.deploy(
     wallet,
     artifact,
-    [opts.name, opts.symbol, opts.minter, opts.attester.x, opts.attester.y],
+    [
+      opts.name,
+      opts.symbol,
+      opts.minter,
+      opts.attester.x,
+      opts.attester.y,
+      migration.sourceRollupId ?? Fr.ZERO,
+      migration.oldCollection ?? AztecAddress.ZERO,
+      migration.oldRegistry ?? AztecAddress.ZERO,
+      migration.migrationEpoch ?? Fr.ZERO,
+    ],
     "constructor_with_minter",
     { salt: Fr.random() },
   ).send(sendOpts(opts.from));
@@ -65,11 +82,12 @@ export function registerPrivateNftMigration(
 export function migrateAndClaim(
   nft: Contract,
   tokenId: string,
+  migrationCommitment: string,
   signatureBytes: number[],
   from: AztecAddress,
 ) {
   return nft.methods
-    .migrate_and_claim(new Fr(BigInt(tokenId)), signatureBytes)
+    .migrate_and_claim(new Fr(BigInt(tokenId)), Fr.fromString(migrationCommitment), signatureBytes)
     .send(sendOpts(from));
 }
 

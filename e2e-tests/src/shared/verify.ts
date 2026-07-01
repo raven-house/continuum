@@ -39,7 +39,7 @@ export async function verifyClaims(
   console.log("\n[VERIFY] double-claim must be rejected...");
   const first = tokens[0];
   try {
-    await migrateAndClaim(nft, first.token_id, first.signature_bytes, owner);
+    await migrateAndClaim(nft, first.token_id, first.migration_commitment, first.signature_bytes, owner);
     throw new Error("second claim should have reverted but did not");
   } catch (err) {
     if (err instanceof Error && err.message.includes("should have reverted")) throw err;
