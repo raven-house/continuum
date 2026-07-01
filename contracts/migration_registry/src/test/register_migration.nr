@@ -13,7 +13,7 @@ unconstrained fn setup() -> (TestEnvironment, AztecAddress, AztecAddress) {
 
 #[test]
 unconstrained fn register_migration_accepts_collection_and_nonzero_commitment() {
-    let (env, registry_address, owner) = setup();
+    let (mut env, registry_address, owner) = setup();
     let collection = env.create_light_account();
     let migration_commitment = 123456789;
 
@@ -25,7 +25,7 @@ unconstrained fn register_migration_accepts_collection_and_nonzero_commitment() 
 
 #[test(should_fail_with = "zero collection not supported")]
 unconstrained fn register_migration_rejects_zero_collection() {
-    let (env, registry_address, owner) = setup();
+    let (mut env, registry_address, owner) = setup();
 
     env.call_public(
         owner,
@@ -36,7 +36,7 @@ unconstrained fn register_migration_rejects_zero_collection() {
 
 #[test(should_fail_with = "zero migration commitment not supported")]
 unconstrained fn register_migration_rejects_zero_commitment() {
-    let (env, registry_address, owner) = setup();
+    let (mut env, registry_address, owner) = setup();
     let collection = env.create_light_account();
 
     env.call_public(owner, MigrationRegistry::at(registry_address).register_migration(collection, 0));

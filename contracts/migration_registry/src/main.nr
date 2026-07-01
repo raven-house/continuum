@@ -1,5 +1,7 @@
 use aztec::macros::aztec;
 
+mod test;
+
 #[aztec]
 pub contract MigrationRegistry {
     use aztec::{
