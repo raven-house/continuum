@@ -54,7 +54,8 @@ unconstrained fn register_private_nft_migration_accepts_owner() {
             .register_private_nft_migration(token_id, migration_commitment),
     );
 
-    utils::assert_owns_private_nft(env, nft_contract_address, owner, token_id);
+    utils::assert_private_nft_nullified(env, nft_contract_address, owner, token_id);
+    utils::assert_nft_does_not_exist(env, nft_contract_address, token_id);
 }
 
 #[test(should_fail_with = "nft not found")]
