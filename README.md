@@ -249,7 +249,7 @@ Address of Migration registry contract on testnet version 5.0.0-rc2 is [0x0f10ac
 
 ## License
 
-MIT
+Apache License 2.0 — see [LICENSE](LICENSE)
 
 ## Contributing
 
